@@ -751,15 +751,58 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 }
 .player-row.diff{background:rgba(255,107,0,0.05);border-color:rgba(255,107,0,0.15)}
 .p-num{width:18px;font-family:'Rajdhani';font-size:12px;font-weight:700;color:rgba(255,255,255,0.2);text-align:right;flex-shrink:0}
-.p-name{flex:1;font-family:'Rajdhani';font-size:15px;font-weight:600;color:#fff;min-width:0}
-.p-role{font-size:9px;font-weight:700;font-family:'Barlow Condensed';letter-spacing:1px;padding:2px 7px;border-radius:10px;flex-shrink:0}
+.p-name{flex:1;font-family:'Rajdhani';font-size:15px;font-weight:600;color:#fff;min-width:0;transition:.3s}
+.p-role{font-size:9px;font-weight:700;font-family:'Barlow Condensed';letter-spacing:1px;padding:2px 7px;border-radius:10px;flex-shrink:0;transition:.3s}
 .role-wk{background:rgba(255,204,0,0.12);color:var(--gold)}
 .role-bat{background:rgba(0,212,255,0.1);color:var(--cyan)}
 .role-all{background:rgba(184,255,0,0.1);color:var(--lime)}
 .role-bowl{background:rgba(255,107,0,0.12);color:var(--orange)}
 .p-diff-tag{font-size:9px;font-weight:700;font-family:'Barlow Condensed';letter-spacing:1px;padding:1px 5px;border-radius:6px;background:rgba(255,107,0,0.15);color:var(--orange);flex-shrink:0}
-.p-credits{font-family:'Bebas Neue';font-size:15px;color:rgba(255,255,255,0.3);flex-shrink:0;width:32px;text-align:right}
+.p-credits{font-family:'Bebas Neue';font-size:15px;color:rgba(255,255,255,0.3);flex-shrink:0;width:32px;text-align:right;transition:.3s}
 .teams-watermark{text-align:center;margin-top:16px;padding-bottom:8px;font-family:'Barlow Condensed';font-size:10px;color:rgba(255,255,255,0.12);letter-spacing:2px}
+
+/* ── TAP-TO-REVEAL SYSTEM ── */
+/* Locked state — name is blurred, row shows lock icon */
+.player-row.locked .p-name{
+  filter:blur(5px);
+  color:rgba(255,255,255,0.3);
+  pointer-events:none;
+}
+.player-row.locked .p-role{filter:blur(4px)}
+.player-row.locked .p-credits{filter:blur(4px)}
+.player-row.locked .p-diff-tag{filter:blur(4px)}
+.player-row.locked::after{
+  content:'👆 tap';
+  font-family:'Barlow Condensed';font-size:10px;font-weight:700;
+  letter-spacing:1px;color:rgba(0,212,255,0.5);
+  margin-left:auto;flex-shrink:0;
+}
+.player-row{cursor:pointer;transition:background .15s}
+.player-row.locked:hover{background:rgba(0,212,255,0.04)}
+
+/* Unlock-all bar */
+.unlock-all-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px;border-radius:10px;margin-bottom:10px;
+  background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.15);
+  font-family:'Barlow Condensed';font-size:12px;font-weight:700;
+  letter-spacing:1px;color:rgba(0,212,255,0.7);cursor:pointer;
+}
+.unlock-all-bar:hover{background:rgba(0,212,255,0.1)}
+.unlock-count{
+  font-family:'Bebas Neue';font-size:18px;color:var(--cyan);
+}
+
+/* Auto-relock countdown bar */
+.relock-bar{
+  height:3px;background:rgba(0,212,255,0.15);border-radius:2px;
+  margin-bottom:10px;overflow:hidden;display:none;
+}
+.relock-bar.active{display:block}
+.relock-fill{
+  height:100%;background:var(--cyan);border-radius:2px;
+  transition:width 1s linear;
+}
 
 /* Copy team button */
 .copy-team-btn{
@@ -769,6 +812,47 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   cursor:pointer;transition:.2s;
 }
 .copy-team-btn:hover{background:rgba(184,255,0,0.14)}
+
+/* ── ANTI-PIRACY ── */
+/* Warning banner — always visible, shows on every screenshot */
+.piracy-warning{
+  background:rgba(255,179,0,0.08);
+  border:1px solid rgba(255,179,0,0.2);
+  border-radius:8px;padding:8px 12px;
+  font-family:'Barlow Condensed';font-size:11px;font-weight:700;
+  color:rgba(255,179,0,0.7);letter-spacing:0.5px;line-height:1.5;
+  text-align:center;margin-bottom:12px;
+}
+/* Mid-list watermark — embedded between players */
+.mid-watermark{
+  text-align:center;padding:5px 0;
+  font-family:'Barlow Condensed';font-size:9px;font-weight:700;
+  letter-spacing:3px;color:rgba(0,212,255,0.2);
+  text-transform:uppercase;
+}
+/* Invisible forensic watermark overlaid on team panel */
+.teams-panel{position:relative}
+.teams-panel::after{
+  content:attr(data-wm);
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Barlow Condensed';font-size:11px;font-weight:700;
+  letter-spacing:3px;color:rgba(255,255,255,0.04);
+  pointer-events:none;text-align:center;
+  transform:rotate(-30deg);white-space:pre-line;
+  z-index:10;line-height:2.5;
+}
+/* Screenshot deterrent — blur on print */
+@media print{
+  body{filter:blur(20px)!important}
+  .teams-panel{display:none!important}
+}
+/* Disable text selection on player names */
+.players-grid,.cap-row{
+  -webkit-user-select:none;
+  -moz-user-select:none;
+  user-select:none;
+}
 
 /* ── TICKER ── */
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -1090,6 +1174,10 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 
     <!-- SAFE TEAM — scrollable panel -->
     <div class="teams-panel active" id="panelSafe">
+      <!-- Anti-piracy warning — visible on every screenshot -->
+      <div class="piracy-warning">
+        ⚠️ Sharing this team may invalidate your results. Each team is uniquely generated for your device.
+      </div>
       <div class="team-header">
         <div class="team-label safe">SAFE TEAM</div>
         <div class="team-conf">AI Confidence: 65%</div>
@@ -1106,10 +1194,20 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
           <div class="cap-team">CSK · BAT · 9.5 cr</div>
         </div>
       </div>
-      <div class="players-grid">
+      <!-- Tap-to-reveal controls -->
+      <div class="unlock-all-bar" onclick="unlockAllPlayers('safe')">
+        <span>👁️ TAP TO REVEAL ALL 11 PLAYERS</span>
+        <span class="unlock-count" id="safeUnlockCount">0/11</span>
+      </div>
+      <div class="relock-bar" id="safeRelockBar">
+        <div class="relock-fill" id="safeRelockFill" style="width:100%"></div>
+      </div>
+      <div class="players-grid" id="safePlayersGrid">
         <div class="player-row"><span class="p-num">1</span><span class="p-name">MS Dhoni</span><span class="p-role role-wk">WK</span><span class="p-credits">10.0</span></div>
         <div class="player-row"><span class="p-num">2</span><span class="p-name">Rohit Sharma</span><span class="p-role role-bat">BAT</span><span class="p-credits">10.5</span></div>
         <div class="player-row"><span class="p-num">3</span><span class="p-name">Suryakumar Yadav ©</span><span class="p-role role-bat">BAT</span><span class="p-credits">10.0</span></div>
+        <!-- Mid watermark — embedded between players, shows on screenshot -->
+        <div class="mid-watermark" id="safeWatermarkMid">CHAMP11.IN · UNIQUE TO THIS DEVICE</div>
         <div class="player-row"><span class="p-num">4</span><span class="p-name">Ruturaj Gaikwad vc</span><span class="p-role role-bat">BAT</span><span class="p-credits">9.5</span></div>
         <div class="player-row"><span class="p-num">5</span><span class="p-name">Devon Conway</span><span class="p-role role-bat">BAT</span><span class="p-credits">9.0</span></div>
         <div class="player-row"><span class="p-num">6</span><span class="p-name">Hardik Pandya</span><span class="p-role role-all">ALL</span><span class="p-credits">10.0</span></div>
@@ -1120,7 +1218,7 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
         <div class="player-row"><span class="p-num">11</span><span class="p-name">Matheesha Pathirana</span><span class="p-role role-bowl">BOWL</span><span class="p-credits">8.0</span></div>
       </div>
       <button class="copy-team-btn" onclick="copyTeam('safe')">📋 COPY SAFE TEAM NAMES</button>
-      <div class="teams-watermark" id="safeWatermark">CHAMP11.IN · AI POWERED · IPL 2026</div>
+      <div class="teams-watermark" id="safeWatermark">CHAMP11.IN · UNIQUE TO THIS DEVICE · DO NOT SHARE</div>
     </div>
 
     <!-- BOLD TEAM — scrollable panel -->
@@ -1141,10 +1239,20 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
           <div class="cap-team">CSK · ALL · 8.5 cr</div>
         </div>
       </div>
-      <div class="players-grid">
+      <!-- Tap-to-reveal controls -->
+      <div class="unlock-all-bar" onclick="unlockAllPlayers('bold')" style="border-color:rgba(255,107,0,0.2);color:rgba(255,107,0,0.7)">
+        <span>👁️ TAP TO REVEAL ALL 11 PLAYERS</span>
+        <span class="unlock-count" id="boldUnlockCount">0/11</span>
+      </div>
+      <div class="relock-bar" id="boldRelockBar">
+        <div class="relock-fill" id="boldRelockFill" style="width:100%;background:var(--orange)"></div>
+      </div>
+      <div class="players-grid" id="boldPlayersGrid">
         <div class="player-row"><span class="p-num">1</span><span class="p-name">Ishan Kishan</span><span class="p-role role-wk">WK</span><span class="p-credits">9.0</span></div>
         <div class="player-row"><span class="p-num">2</span><span class="p-name">Rohit Sharma</span><span class="p-role role-bat">BAT</span><span class="p-credits">10.5</span></div>
         <div class="player-row"><span class="p-num">3</span><span class="p-name">Tim David</span><span class="p-role role-bat">BAT</span><span class="p-credits">8.5</span><span class="p-diff-tag">DIFF</span></div>
+        <!-- Mid watermark -->
+        <div class="mid-watermark" id="boldWatermarkMid">CHAMP11.IN · UNIQUE TO THIS DEVICE</div>
         <div class="player-row diff"><span class="p-num">4</span><span class="p-name">Ruturaj Gaikwad</span><span class="p-role role-bat">BAT</span><span class="p-credits">9.5</span></div>
         <div class="player-row diff"><span class="p-num">5</span><span class="p-name">Shivam Dube vc</span><span class="p-role role-all">ALL</span><span class="p-credits">8.5</span><span class="p-diff-tag">DIFF</span></div>
         <div class="player-row"><span class="p-num">6</span><span class="p-name">Hardik Pandya</span><span class="p-role role-all">ALL</span><span class="p-credits">10.0</span></div>
@@ -1155,7 +1263,7 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
         <div class="player-row diff"><span class="p-num">11</span><span class="p-name">Tushar Deshpande</span><span class="p-role role-bowl">BOWL</span><span class="p-credits">8.0</span><span class="p-diff-tag">DIFF</span></div>
       </div>
       <button class="copy-team-btn" onclick="copyTeam('bold')" style="border-color:rgba(255,107,0,0.2);color:var(--orange)">📋 COPY BOLD TEAM NAMES</button>
-      <div class="teams-watermark">CHAMP11.IN · AI POWERED · IPL 2026</div>
+      <div class="teams-watermark" id="boldWatermark">CHAMP11.IN · UNIQUE TO THIS DEVICE · DO NOT SHARE</div>
     </div>
 
   </div>
@@ -1230,18 +1338,24 @@ function switchTab(which) {
 
 function copyTeam(which) {
   const panel = document.getElementById(which === 'safe' ? 'panelSafe' : 'panelBold');
+  // Strip invisible watermark chars from names before copying
   const names = Array.from(panel.querySelectorAll('.p-name')).map(el =>
-    el.textContent.replace(' ©','').replace(' vc','').trim()
+    el.textContent.replace(/[\u200B\u200C\u200D\uFEFF]/g,'').replace(' ©','').replace(' vc','').trim()
   );
-  const capCard = panel.querySelectorAll('.cap-name');
-  const text = `CHAMP11 · ${currentMatch}\n` +
-    `C: ${capCard[0]?.textContent} | VC: ${capCard[1]?.textContent}\n\n` +
+  const capCards = panel.querySelectorAll('.cap-name');
+  const wm = panel.getAttribute('data-wm') || 'CHAMP11.IN';
+  const wmLine = wm.split('\n').join(' · ');
+
+  const text = `🏏 CHAMP11 · ${currentMatch}\n` +
+    `C: ${capCards[0]?.textContent || '—'} | VC: ${capCards[1]?.textContent || '—'}\n\n` +
     names.map((n,i) => `${i+1}. ${n}`).join('\n') +
-    `\n\nGenerated by champ11.in`;
+    `\n\n📲 Get your team: champ11.in\n${wmLine}`;
+
   navigator.clipboard.writeText(text).then(() => {
-    showToast('✅ Team copied to clipboard!');
+    showToast('✅ Team copied! Paste in Dream11/My11Circle.');
   }).catch(() => {
-    showToast('📋 ' + text.split('\n').slice(2,13).join(', '));
+    // Fallback for browsers that block clipboard
+    showToast('📋 Select & copy manually');
   });
 }
 
@@ -1380,6 +1494,12 @@ function showTeamsAfterPayment(teams, paymentId) {
   document.getElementById('teamsModal').classList.add('open');
   if (teams) loadTeamsIntoModal(teams);
 
+  // Lock all players — user must tap to reveal
+  setTimeout(initLockPlayers, 100);
+
+  // Inject forensic watermark with buyer's payment ID
+  injectForensicWatermark(paymentId, currentUserPhone);
+
   // Save to localStorage for refresh recovery
   if (paymentId) {
     setTimeout(() => {
@@ -1414,7 +1534,222 @@ function loadTeamsIntoModal(teams) {
 let currentMatchId = '';
 let currentUserPhone = '';
 
-// ─── SESSION PERSISTENCE ─────────────────────────────────────────────────────
+// ─── ANTI-PIRACY SYSTEM ───────────────────────────────────────────────────────
+
+// 1. Disable right-click on team panels
+document.addEventListener('contextmenu', e => {
+  if (e.target.closest('#panelSafe, #panelBold, #teamsModal')) {
+    e.preventDefault();
+    showToast('⚠️ Right-click disabled on team view');
+    return false;
+  }
+});
+
+// 2. Disable keyboard shortcuts for copying/saving on team modal
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('teamsModal')?.classList.contains('open')) return;
+  // Block Ctrl+C, Ctrl+S, Ctrl+P, Ctrl+U, F12, PrintScreen
+  const blocked = (e.ctrlKey && ['c','s','p','u','a'].includes(e.key.toLowerCase()))
+    || e.key === 'F12'
+    || e.key === 'PrintScreen';
+  if (blocked) {
+    e.preventDefault();
+    showToast('⚠️ Copying disabled. Use the Copy button below.');
+  }
+});
+
+// 3. DevTools detection — blur teams if DevTools opened
+(function detectDevTools() {
+  let devOpen = false;
+  const threshold = 160;
+  setInterval(() => {
+    const widthDiff  = window.outerWidth  - window.innerWidth  > threshold;
+    const heightDiff = window.outerHeight - window.innerHeight > threshold;
+    if ((widthDiff || heightDiff) && !devOpen) {
+      devOpen = true;
+      const panels = document.querySelectorAll('.teams-panel');
+      panels.forEach(p => p.style.filter = 'blur(8px)');
+      showToast('⚠️ Close DevTools to view team');
+    } else if (!widthDiff && !heightDiff && devOpen) {
+      devOpen = false;
+      const panels = document.querySelectorAll('.teams-panel');
+      panels.forEach(p => p.style.filter = '');
+    }
+  }, 1000);
+})();
+
+// 4. Inject unique forensic watermark into team panels
+// Each purchase gets a unique watermark with masked payment ID
+// If team screenshot is shared, we can trace which buyer leaked it
+function injectForensicWatermark(paymentId, phone) {
+  const masked = paymentId
+    ? paymentId.slice(-6).toUpperCase()
+    : Math.random().toString(36).slice(-6).toUpperCase();
+  const phoneTag = phone ? phone.slice(-4) : '????';
+  const wm = `CHAMP11.IN\n${masked}\n••••${phoneTag}`;
+
+  // Invisible diagonal watermark (CSS pseudo-element)
+  document.getElementById('panelSafe')?.setAttribute('data-wm', wm);
+  document.getElementById('panelBold')?.setAttribute('data-wm', wm);
+
+  // Stamp buyer ID into the VISIBLE mid-list watermarks
+  // This appears clearly in any screenshot
+  const midText = `CHAMP11.IN · ${masked} · ••••${phoneTag}`;
+  const safeMid = document.getElementById('safeWatermarkMid');
+  const boldMid = document.getElementById('boldWatermarkMid');
+  if (safeMid) safeMid.textContent = midText;
+  if (boldMid) boldMid.textContent = midText;
+
+  // Also stamp bottom watermarks
+  const safeBot = document.getElementById('safeWatermark');
+  const boldBot = document.getElementById('boldWatermark');
+  if (safeBot) safeBot.textContent = `CHAMP11.IN · ${masked} · DO NOT SHARE`;
+  if (boldBot) boldBot.textContent = `CHAMP11.IN · ${masked} · DO NOT SHARE`;
+
+  // Inject invisible steganographic watermark into player name text
+  injectInvisibleWatermark(masked);
+}
+
+function injectInvisibleWatermark(code) {
+  // Encodes buyer ID as invisible zero-width characters in player names
+  // ZWS = zero-width space, ZWNJ = zero-width non-joiner
+  const ZWS  = '\u200B'; // bit 0
+  const ZWNJ = '\u200C'; // bit 1
+  const binary = code.split('').map(c =>
+    c.charCodeAt(0).toString(2).padStart(8,'0')
+  ).join('');
+
+  document.querySelectorAll('.p-name').forEach((el, idx) => {
+    const bit = binary[idx % binary.length];
+    // Insert invisible char after first letter
+    const text = el.textContent;
+    if (text.length > 1) {
+      el.textContent = text[0] + (bit === '1' ? ZWNJ : ZWS) + text.slice(1);
+    }
+  });
+}
+
+// 5. Auto-expire team view 10 minutes before match starts
+// (in production this checks match lock time from backend)
+function scheduleTeamExpiry(matchStartISO) {
+  if (!matchStartISO) return;
+  const lockTime = new Date(matchStartISO).getTime() - (10 * 60 * 1000); // 10 min before
+  const now = Date.now();
+  const delay = lockTime - now;
+  if (delay > 0 && delay < 24 * 60 * 60 * 1000) {
+    setTimeout(() => {
+      const modal = document.getElementById('teamsModal');
+      if (modal?.classList.contains('open')) {
+        closeModal('teamsModal');
+        showToast('🔒 Team locked — match starting soon!');
+      }
+      // Clear from localStorage too
+      const key = localStorage.getItem('c11_latest_purchase');
+      if (key) localStorage.removeItem(key);
+      localStorage.removeItem('c11_latest_purchase');
+    }, delay);
+  }
+}
+
+// ─── TAP-TO-REVEAL SYSTEM ────────────────────────────────────────────────────
+const RELOCK_SECONDS = 30; // auto-relock after 30 seconds
+let relockTimers = { safe: null, bold: null };
+let relockIntervals = { safe: null, bold: null };
+
+function initLockPlayers() {
+  // Lock all player rows in both panels on modal open
+  ['safe','bold'].forEach(which => {
+    const grid = document.getElementById(which + 'PlayersGrid') ||
+                 document.querySelector('#panel' + which.charAt(0).toUpperCase() + which.slice(1) + ' .players-grid');
+    if (!grid) return;
+    grid.querySelectorAll('.player-row').forEach(row => {
+      row.classList.add('locked');
+      row.onclick = (e) => { e.stopPropagation(); revealPlayer(row, which); };
+    });
+    updateUnlockCount(which);
+  });
+}
+
+function revealPlayer(row, which) {
+  if (!row.classList.contains('locked')) return;
+  row.classList.remove('locked');
+  row.onclick = null;
+  updateUnlockCount(which);
+  resetRelockTimer(which);
+}
+
+function unlockAllPlayers(which) {
+  const grid = document.getElementById(which + 'PlayersGrid') ||
+               document.querySelector('#panel' + which.charAt(0).toUpperCase() + which.slice(1) + ' .players-grid');
+  if (!grid) return;
+  grid.querySelectorAll('.player-row.locked').forEach(row => {
+    row.classList.remove('locked');
+    row.onclick = null;
+  });
+  updateUnlockCount(which);
+  resetRelockTimer(which);
+}
+
+function updateUnlockCount(which) {
+  const panel = document.getElementById('panel' + which.charAt(0).toUpperCase() + which.slice(1));
+  if (!panel) return;
+  const total   = panel.querySelectorAll('.player-row').length;
+  const unlocked = panel.querySelectorAll('.player-row:not(.locked)').length;
+  const countEl = document.getElementById(which + 'UnlockCount');
+  if (countEl) {
+    countEl.textContent = unlocked + '/' + total;
+    // Change button text when all revealed
+    const bar = countEl.parentElement;
+    if (unlocked === total) {
+      bar.querySelector('span:first-child').textContent = '🔓 ALL PLAYERS REVEALED';
+    } else {
+      bar.querySelector('span:first-child').textContent = '👁️ TAP TO REVEAL ALL ' + total + ' PLAYERS';
+    }
+  }
+}
+
+function resetRelockTimer(which) {
+  // Clear existing timers
+  if (relockTimers[which])    clearTimeout(relockTimers[which]);
+  if (relockIntervals[which]) clearInterval(relockIntervals[which]);
+
+  // Show relock countdown bar
+  const bar  = document.getElementById(which + 'RelockBar');
+  const fill = document.getElementById(which + 'RelockFill');
+  if (!bar || !fill) return;
+
+  bar.classList.add('active');
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+
+  // Animate bar draining over RELOCK_SECONDS
+  requestAnimationFrame(() => {
+    fill.style.transition = `width ${RELOCK_SECONDS}s linear`;
+    fill.style.width = '0%';
+  });
+
+  // Auto-relock after RELOCK_SECONDS
+  relockTimers[which] = setTimeout(() => {
+    lockAllPlayers(which);
+    bar.classList.remove('active');
+    showToast('🔒 Players hidden. Tap to reveal again.');
+  }, RELOCK_SECONDS * 1000);
+}
+
+function lockAllPlayers(which) {
+  const panel = document.getElementById('panel' + which.charAt(0).toUpperCase() + which.slice(1));
+  if (!panel) return;
+  panel.querySelectorAll('.player-row').forEach(row => {
+    row.classList.add('locked');
+    row.onclick = (e) => { e.stopPropagation(); revealPlayer(row, which); };
+  });
+  updateUnlockCount(which);
+}
+
+// Call initLockPlayers every time teams modal opens
+const _origShowTeams = showTeamsAfterPayment;
+
+
 // Saves purchased teams to localStorage so they survive page refresh
 
 function savePurchaseToLocal(paymentId, match, plan, safeTeamHTML, boldTeamHTML) {
@@ -1522,6 +1857,7 @@ function restoreTeamView(paymentId) {
 
     showTeamsAfterPayment(null); // show modal with restored content
     document.getElementById('restoreBanner')?.remove();
+    setTimeout(initLockPlayers, 150);
   } catch(e) {
     showToast('⚠️ Could not restore team. Contact support@champ11.in');
   }
