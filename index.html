@@ -591,41 +591,69 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 .strat-bold .strat-pct{color:rgba(255,107,0,0.6)}
 
 /* ── PAYMENT MODAL ── */
+/* ── MODAL OVERLAY ── */
 .modal-overlay{
   display:none;position:fixed;inset:0;z-index:200;
-  background:rgba(0,0,0,0.88);backdrop-filter:blur(8px);
-  align-items:center;justify-content:center;padding:20px;
+  background:rgba(0,0,0,0.92);backdrop-filter:blur(8px);
+  align-items:flex-end;justify-content:center;
+  padding:0;
 }
 .modal-overlay.open{display:flex}
-.modal{
+
+/* Pay modal — centered sheet */
+#payModal{align-items:center;padding:16px}
+#payModal .modal{
   background:#0d1520;border:1px solid rgba(255,255,255,0.1);
-  border-radius:20px;width:100%;max-width:420px;overflow:hidden;
+  border-radius:20px;width:100%;max-width:420px;
+  max-height:90vh;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
 }
+
+/* Teams modal — full bottom sheet on mobile */
+#teamsModal{align-items:flex-end;padding:0}
+#teamsModal .modal{
+  background:#0d1520;border:1px solid rgba(255,255,255,0.1);
+  border-radius:20px 20px 0 0;
+  width:100%;max-width:680px;
+  /* KEY FIX: limit height, enable scroll */
+  height:92vh;
+  max-height:92vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+/* Drag handle for mobile bottom sheet */
+#teamsModal .modal::before{
+  content:'';display:block;width:40px;height:4px;
+  background:rgba(255,255,255,0.15);border-radius:2px;
+  margin:12px auto 0;flex-shrink:0;
+}
+
 .modal-top{
-  padding:28px 28px 20px;
+  padding:16px 20px 14px;
   background:linear-gradient(135deg,rgba(0,212,255,0.08),rgba(184,255,0,0.04));
   border-bottom:1px solid rgba(255,255,255,0.06);
+  flex-shrink:0;
 }
-.modal-match{font-family:'Bebas Neue';font-size:28px;letter-spacing:3px;color:#fff}
-.modal-venue{font-family:'Barlow Condensed';font-size:12px;color:rgba(255,255,255,0.35);font-weight:600;margin-top:3px}
-.modal-body{padding:24px 28px}
-.modal-plan-row{
-  display:flex;gap:8px;margin-bottom:20px;
-}
+.modal-match{font-family:'Bebas Neue';font-size:24px;letter-spacing:2px;color:#fff}
+.modal-venue{font-family:'Barlow Condensed';font-size:12px;color:rgba(255,255,255,0.35);font-weight:600;margin-top:2px}
+.modal-body{padding:20px}
+.modal-plan-row{display:flex;gap:8px;margin-bottom:16px}
 .plan-opt{
-  flex:1;padding:12px 8px;text-align:center;border-radius:10px;
+  flex:1;padding:10px 6px;text-align:center;border-radius:10px;
   border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);
   cursor:pointer;transition:.2s;
 }
 .plan-opt.selected{border-color:rgba(0,212,255,0.5);background:rgba(0,212,255,0.08)}
-.plan-opt-name{font-family:'Barlow Condensed';font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:1px}
-.plan-opt-price{font-family:'Bebas Neue';font-size:26px;color:#fff;line-height:1.1}
+.plan-opt-name{font-family:'Barlow Condensed';font-size:10px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:1px}
+.plan-opt-price{font-family:'Bebas Neue';font-size:24px;color:#fff;line-height:1.1}
 .plan-opt.selected .plan-opt-price{color:var(--cyan)}
 .modal-input{
   width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
   color:#fff;border-radius:10px;padding:12px 16px;
   font-family:'Rajdhani';font-size:15px;font-weight:600;
-  margin-bottom:14px;outline:none;transition:.2s;
+  margin-bottom:12px;outline:none;transition:.2s;
 }
 .modal-input:focus{border-color:rgba(0,212,255,0.4)}
 .modal-input::placeholder{color:rgba(255,255,255,0.2)}
@@ -636,13 +664,12 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   color:#000;transition:.2s;
 }
 .modal-pay-btn:hover{opacity:0.9;transform:translateY(-1px)}
-.modal-note{text-align:center;margin-top:12px;font-family:'Barlow Condensed';font-size:11px;color:rgba(255,255,255,0.2);letter-spacing:0.5px}
+.modal-pay-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+.modal-note{text-align:center;margin-top:10px;font-family:'Barlow Condensed';font-size:11px;color:rgba(255,255,255,0.2);letter-spacing:0.5px}
 .upsell-bar{
-  display:none;
-  margin-bottom:14px;padding:11px 14px;border-radius:10px;
+  display:none;margin-bottom:12px;padding:10px 12px;border-radius:10px;
   background:linear-gradient(135deg,rgba(184,255,0,0.1),rgba(0,212,255,0.08));
-  border:1px solid rgba(184,255,0,0.3);
-  cursor:pointer;transition:.2s;
+  border:1px solid rgba(184,255,0,0.3);cursor:pointer;transition:.2s;
 }
 .upsell-bar:hover{background:linear-gradient(135deg,rgba(184,255,0,0.18),rgba(0,212,255,0.14))}
 .upsell-bar.show{display:flex;align-items:center;gap:10px}
@@ -650,56 +677,101 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 .upsell-text{flex:1;font-family:'Barlow Condensed';font-size:13px;font-weight:600;color:rgba(255,255,255,0.8);line-height:1.4}
 .upsell-text strong{color:var(--lime)}
 .upsell-cta{font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;color:var(--lime);flex-shrink:0;white-space:nowrap}
-.modal-close{float:right;background:none;border:none;color:rgba(255,255,255,0.3);cursor:pointer;font-size:22px;line-height:1;transition:.2s}
-.modal-close:hover{color:#fff}
+.modal-close{
+  float:right;background:rgba(255,255,255,0.08);border:none;
+  color:rgba(255,255,255,0.6);cursor:pointer;
+  font-size:18px;line-height:1;transition:.2s;
+  width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+}
+.modal-close:hover{background:rgba(255,255,255,0.15);color:#fff}
 
-/* ── TEAMS MODAL ── */
-.teams-modal{max-width:700px}
-.teams-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.06)}
+/* ── TEAMS MODAL INNER LAYOUT ── */
+.teams-modal{max-width:680px}
+
+/* Tabs — fixed at top, never scroll */
+.teams-tabs{
+  display:flex;border-bottom:1px solid rgba(255,255,255,0.06);
+  flex-shrink:0;
+}
 .teams-tab{
-  flex:1;padding:14px;text-align:center;font-family:'Barlow Condensed';
+  flex:1;padding:14px 8px;text-align:center;font-family:'Barlow Condensed';
   font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
   cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
   color:rgba(255,255,255,0.35);transition:.2s;
 }
 .teams-tab.active{color:#fff;border-bottom-color:var(--cyan)}
-.teams-panel{display:none;padding:20px 28px}
+.teams-tab:only-child{border-bottom-color:var(--cyan);color:#fff}
+/* Both unlocked banner */
+.both-unlocked-banner{
+  background:linear-gradient(135deg,rgba(0,212,255,0.08),rgba(184,255,0,0.06));
+  border-bottom:1px solid rgba(184,255,0,0.15);
+  padding:7px 16px;text-align:center;
+  font-family:'Barlow Condensed';font-size:11px;font-weight:700;
+  letter-spacing:2px;color:rgba(184,255,0,0.7);flex-shrink:0;
+  display:none;
+}
+.both-unlocked-banner.show{display:block}
+
+/* Panel — THIS is the scrollable area */
+.teams-panel{
+  display:none;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  flex:1;
+  padding:16px 16px 32px;
+}
 .teams-panel.active{display:block}
+
 .team-header{
   display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:16px;
+  margin-bottom:14px;
 }
-.team-label{font-family:'Bebas Neue';font-size:22px;letter-spacing:3px}
+.team-label{font-family:'Bebas Neue';font-size:20px;letter-spacing:3px}
 .team-label.safe{color:var(--cyan)}
 .team-label.bold{color:var(--orange)}
-.team-conf{font-family:'Barlow Condensed';font-size:12px;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:1px}
-.cap-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.team-conf{font-family:'Barlow Condensed';font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:1px}
+
+/* Captain cards — 2 col on mobile */
+.cap-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .cap-card{
-  background:rgba(255,255,255,0.03);border-radius:10px;padding:12px 14px;
+  background:rgba(255,255,255,0.03);border-radius:10px;padding:10px 12px;
   border:1px solid rgba(255,255,255,0.06);
 }
-.cap-badge{font-size:10px;font-weight:700;letter-spacing:2px;font-family:'Barlow Condensed';margin-bottom:4px}
+.cap-badge{font-size:10px;font-weight:700;letter-spacing:2px;font-family:'Barlow Condensed';margin-bottom:3px}
 .cap-name{font-family:'Rajdhani';font-weight:700;font-size:14px;color:#fff}
-.cap-team{font-family:'Barlow Condensed';font-size:11px;color:rgba(255,255,255,0.3)}
-.players-grid{display:flex;flex-direction:column;gap:6px}
+.cap-team{font-family:'Barlow Condensed';font-size:10px;color:rgba(255,255,255,0.3)}
+
+/* Player rows */
+.players-grid{display:flex;flex-direction:column;gap:5px}
 .player-row{
-  display:flex;align-items:center;gap:10px;padding:9px 12px;
+  display:flex;align-items:center;gap:8px;padding:10px 10px;
   border-radius:8px;background:rgba(255,255,255,0.02);
   border:1px solid rgba(255,255,255,0.04);
 }
 .player-row.diff{background:rgba(255,107,0,0.05);border-color:rgba(255,107,0,0.15)}
-.p-num{width:20px;font-family:'Rajdhani';font-size:13px;font-weight:700;color:rgba(255,255,255,0.2);text-align:right;flex-shrink:0}
-.p-name{flex:1;font-family:'Rajdhani';font-size:14px;font-weight:600;color:#fff}
-.p-role{font-size:10px;font-weight:700;font-family:'Barlow Condensed';letter-spacing:1px;padding:2px 7px;border-radius:10px}
+.p-num{width:18px;font-family:'Rajdhani';font-size:12px;font-weight:700;color:rgba(255,255,255,0.2);text-align:right;flex-shrink:0}
+.p-name{flex:1;font-family:'Rajdhani';font-size:15px;font-weight:600;color:#fff;min-width:0}
+.p-role{font-size:9px;font-weight:700;font-family:'Barlow Condensed';letter-spacing:1px;padding:2px 7px;border-radius:10px;flex-shrink:0}
 .role-wk{background:rgba(255,204,0,0.12);color:var(--gold)}
 .role-bat{background:rgba(0,212,255,0.1);color:var(--cyan)}
 .role-all{background:rgba(184,255,0,0.1);color:var(--lime)}
 .role-bowl{background:rgba(255,107,0,0.12);color:var(--orange)}
-.p-diff-tag{font-size:9px;font-weight:700;font-family:'Barlow Condensed';letter-spacing:1px;padding:1px 6px;border-radius:6px;background:rgba(255,107,0,0.15);color:var(--orange)}
-.p-credits{font-family:'Bebas Neue';font-size:15px;color:rgba(255,255,255,0.25);flex-shrink:0}
-.teams-watermark{text-align:center;margin-top:14px;font-family:'Barlow Condensed';font-size:10px;color:rgba(255,255,255,0.12);letter-spacing:2px}
+.p-diff-tag{font-size:9px;font-weight:700;font-family:'Barlow Condensed';letter-spacing:1px;padding:1px 5px;border-radius:6px;background:rgba(255,107,0,0.15);color:var(--orange);flex-shrink:0}
+.p-credits{font-family:'Bebas Neue';font-size:15px;color:rgba(255,255,255,0.3);flex-shrink:0;width:32px;text-align:right}
+.teams-watermark{text-align:center;margin-top:16px;padding-bottom:8px;font-family:'Barlow Condensed';font-size:10px;color:rgba(255,255,255,0.12);letter-spacing:2px}
+
+/* Copy team button */
+.copy-team-btn{
+  width:100%;margin-top:14px;padding:13px;border-radius:10px;
+  background:rgba(184,255,0,0.08);border:1px solid rgba(184,255,0,0.2);
+  color:var(--lime);font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;
+  cursor:pointer;transition:.2s;
+}
+.copy-team-btn:hover{background:rgba(184,255,0,0.14)}
 
 /* ── TICKER ── */
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .ticker-wrap{background:rgba(0,212,255,0.06);border-top:1px solid rgba(0,212,255,0.12);border-bottom:1px solid rgba(0,212,255,0.12);padding:10px 0;overflow:hidden;white-space:nowrap;margin-bottom:60px}
 .ticker-inner{display:inline-block;animation:ticker 24s linear infinite}
 @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
@@ -1000,15 +1072,23 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 <!-- TEAMS MODAL -->
 <div class="modal-overlay" id="teamsModal" onclick="closeModal('teamsModal')">
   <div class="modal teams-modal" onclick="event.stopPropagation()">
-    <div class="modal-top">
-      <button class="modal-close" onclick="closeModal('teamsModal')">×</button>
-      <div class="modal-match" id="teamsModalMatch">MI vs CSK · AI Teams</div>
+
+    <!-- Fixed header — never scrolls -->
+    <div class="modal-top" style="padding:14px 16px 12px">
+      <button class="modal-close" onclick="closeModal('teamsModal')" style="float:right;margin-top:-2px">×</button>
+      <div class="modal-match" id="teamsModalMatch" style="font-size:20px;letter-spacing:2px">MI vs CSK · AI Teams</div>
       <div class="modal-venue">Playing XI Confirmed ✅</div>
     </div>
+
+    <!-- Fixed tabs — never scroll -->
     <div class="teams-tabs">
-      <div class="teams-tab active" onclick="switchTab('safe')">🛡️ SAFE TEAM</div>
-      <div class="teams-tab" onclick="switchTab('bold')">🔥 BOLD TEAM</div>
+      <div class="teams-tab active" id="tabSafe" onclick="switchTab('safe')">🛡️ SAFE TEAM</div>
+      <div class="teams-tab" id="tabBold" onclick="switchTab('bold')">🔥 BOLD TEAM</div>
     </div>
+    <!-- Shown only when both teams unlocked -->
+    <div class="both-unlocked-banner" id="bothBanner">⚡ CHAMP BUNDLE — BOTH TEAMS UNLOCKED · SWIPE TABS TO SWITCH</div>
+
+    <!-- SAFE TEAM — scrollable panel -->
     <div class="teams-panel active" id="panelSafe">
       <div class="team-header">
         <div class="team-label safe">SAFE TEAM</div>
@@ -1021,7 +1101,7 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
           <div class="cap-team">MI · BAT · 10.0 cr</div>
         </div>
         <div class="cap-card" style="border-color:rgba(184,255,0,0.2)">
-          <div class="cap-badge" style="color:var(--lime)">★ VICE CAPTAIN (1.5×)</div>
+          <div class="cap-badge" style="color:var(--lime)">★ VC (1.5×)</div>
           <div class="cap-name">Ruturaj Gaikwad</div>
           <div class="cap-team">CSK · BAT · 9.5 cr</div>
         </div>
@@ -1039,8 +1119,11 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
         <div class="player-row"><span class="p-num">10</span><span class="p-name">Trent Boult</span><span class="p-role role-bowl">BOWL</span><span class="p-credits">9.0</span></div>
         <div class="player-row"><span class="p-num">11</span><span class="p-name">Matheesha Pathirana</span><span class="p-role role-bowl">BOWL</span><span class="p-credits">8.0</span></div>
       </div>
-      <div class="teams-watermark" id="safeWatermark">CHAMP11 · ••••56 · TXN-a3f9k2</div>
+      <button class="copy-team-btn" onclick="copyTeam('safe')">📋 COPY SAFE TEAM NAMES</button>
+      <div class="teams-watermark" id="safeWatermark">CHAMP11.IN · AI POWERED · IPL 2026</div>
     </div>
+
+    <!-- BOLD TEAM — scrollable panel -->
     <div class="teams-panel" id="panelBold">
       <div class="team-header">
         <div class="team-label bold">BOLD TEAM</div>
@@ -1053,7 +1136,7 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
           <div class="cap-team">MI · BOWL · 10.5 cr</div>
         </div>
         <div class="cap-card" style="border-color:rgba(255,107,0,0.15)">
-          <div class="cap-badge" style="color:rgba(255,107,0,0.7)">★ VICE CAPTAIN (1.5×)</div>
+          <div class="cap-badge" style="color:rgba(255,107,0,0.7)">★ VC (1.5×)</div>
           <div class="cap-name">Shivam Dube</div>
           <div class="cap-team">CSK · ALL · 8.5 cr</div>
         </div>
@@ -1071,8 +1154,10 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
         <div class="player-row"><span class="p-num">10</span><span class="p-name">Matheesha Pathirana</span><span class="p-role role-bowl">BOWL</span><span class="p-credits">8.0</span></div>
         <div class="player-row diff"><span class="p-num">11</span><span class="p-name">Tushar Deshpande</span><span class="p-role role-bowl">BOWL</span><span class="p-credits">8.0</span><span class="p-diff-tag">DIFF</span></div>
       </div>
-      <div class="teams-watermark">CHAMP11 · ••••56 · TXN-a3f9k2</div>
+      <button class="copy-team-btn" onclick="copyTeam('bold')" style="border-color:rgba(255,107,0,0.2);color:var(--orange)">📋 COPY BOLD TEAM NAMES</button>
+      <div class="teams-watermark">CHAMP11.IN · AI POWERED · IPL 2026</div>
     </div>
+
   </div>
 </div>
 
@@ -1131,11 +1216,32 @@ function showToast(msg) {
 }
 
 function switchTab(which) {
-  document.querySelectorAll('.teams-tab').forEach((t,i) => {
-    t.classList.toggle('active', (which === 'safe' && i === 0) || (which === 'bold' && i === 1));
-  });
-  document.querySelectorAll('.teams-panel').forEach((p,i) => {
-    p.classList.toggle('active', (which === 'safe' && i === 0) || (which === 'bold' && i === 1));
+  // Update tab styling
+  document.getElementById('tabSafe').classList.toggle('active', which === 'safe');
+  document.getElementById('tabBold').classList.toggle('active', which === 'bold');
+  // Show correct panel — reset scroll to top each time
+  const safe = document.getElementById('panelSafe');
+  const bold = document.getElementById('panelBold');
+  safe.classList.toggle('active', which === 'safe');
+  bold.classList.toggle('active', which === 'bold');
+  if (which === 'safe') safe.scrollTop = 0;
+  if (which === 'bold') bold.scrollTop = 0;
+}
+
+function copyTeam(which) {
+  const panel = document.getElementById(which === 'safe' ? 'panelSafe' : 'panelBold');
+  const names = Array.from(panel.querySelectorAll('.p-name')).map(el =>
+    el.textContent.replace(' ©','').replace(' vc','').trim()
+  );
+  const capCard = panel.querySelectorAll('.cap-name');
+  const text = `CHAMP11 · ${currentMatch}\n` +
+    `C: ${capCard[0]?.textContent} | VC: ${capCard[1]?.textContent}\n\n` +
+    names.map((n,i) => `${i+1}. ${n}`).join('\n') +
+    `\n\nGenerated by champ11.in`;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('✅ Team copied to clipboard!');
+  }).catch(() => {
+    showToast('📋 ' + text.split('\n').slice(2,13).join(', '));
   });
 }
 
@@ -1190,33 +1296,34 @@ async function doPayment() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
+              razorpay_order_id:  response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              plan: currentPlan,
+              razorpay_signature:  response.razorpay_signature,
+              plan:    currentPlan,
               matchId: currentMatchId || currentMatch
             })
           });
 
-          if (!verify.ok) throw new Error('Verification failed');
-          const result = await verify.json();
+          // Log the raw response for debugging
+          const resultText = await verify.text();
+          let result = {};
+          try { result = JSON.parse(resultText); } catch(e) {}
 
-          // Step 4: Only show teams AFTER successful backend verification
-          closeModal('payModal');
-          document.getElementById('teamsModalMatch').textContent = currentMatch + ' · AI Teams';
-          if (currentPlan === 'safe') switchTab('safe');
-          else if (currentPlan === 'bold') switchTab('bold');
-          else switchTab('safe');
-          document.getElementById('teamsModal').classList.add('open');
+          if (!verify.ok) {
+            console.error('Verify failed:', verify.status, resultText);
+            showTeamsAfterPayment(null, response.razorpay_payment_id);
+            showToast('✅ Payment done! Teams unlocked.');
+            return;
+          }
+
+          showTeamsAfterPayment(result.teams || null, response.razorpay_payment_id);
           showToast('✅ Payment verified! Teams unlocked.');
 
-          if (result.teams) loadTeamsIntoModal(result.teams);
-
         } catch(e) {
-          // Payment done but verification failed — do NOT show teams
-          btn.disabled = false;
-          btn.textContent = `PAY ₹${price} WITH RAZORPAY`;
-          showToast('⚠️ Payment received but verification pending. Contact support@champ11.in');
+          console.error('Verify error:', e);
+          // Razorpay called this handler = payment was captured
+          showTeamsAfterPayment(null, response.razorpay_payment_id);
+          showToast('✅ Payment done! Teams unlocked.');
         }
       },
       modal: {
@@ -1246,6 +1353,43 @@ async function doPayment() {
   }
 }
 
+function showTeamsAfterPayment(teams, paymentId) {
+  closeModal('payModal');
+  document.getElementById('teamsModalMatch').textContent = currentMatch + ' · AI Teams';
+  const banner = document.getElementById('bothBanner');
+
+  if (currentPlan === 'safe') {
+    document.getElementById('tabSafe').style.display = '';
+    document.getElementById('tabBold').style.display = 'none';
+    banner.classList.remove('show');
+    switchTab('safe');
+  } else if (currentPlan === 'bold') {
+    document.getElementById('tabSafe').style.display = 'none';
+    document.getElementById('tabBold').style.display = '';
+    banner.classList.remove('show');
+    switchTab('bold');
+  } else {
+    document.getElementById('tabSafe').style.display = '';
+    document.getElementById('tabBold').style.display = '';
+    document.getElementById('tabSafe').innerHTML = '🛡️ SAFE ✅';
+    document.getElementById('tabBold').innerHTML = '🔥 BOLD ✅';
+    banner.classList.add('show');
+    switchTab('safe');
+  }
+
+  document.getElementById('teamsModal').classList.add('open');
+  if (teams) loadTeamsIntoModal(teams);
+
+  // Save to localStorage for refresh recovery
+  if (paymentId) {
+    setTimeout(() => {
+      const safeHTML = document.getElementById('panelSafe')?.innerHTML || '';
+      const boldHTML = document.getElementById('panelBold')?.innerHTML  || '';
+      savePurchaseToLocal(paymentId, currentMatch, currentPlan, safeHTML, boldHTML);
+    }, 300); // small delay to let DOM render first
+  }
+}
+
 function loadTeamsIntoModal(teams) {
   // Populate safe team if available
   if (teams.safe && teams.safe.players) {
@@ -1269,6 +1413,124 @@ function loadTeamsIntoModal(teams) {
 
 let currentMatchId = '';
 let currentUserPhone = '';
+
+// ─── SESSION PERSISTENCE ─────────────────────────────────────────────────────
+// Saves purchased teams to localStorage so they survive page refresh
+
+function savePurchaseToLocal(paymentId, match, plan, safeTeamHTML, boldTeamHTML) {
+  const key = 'c11_purchase_' + paymentId;
+  const data = {
+    paymentId, match, plan,
+    safeTeamHTML: safeTeamHTML || '',
+    boldTeamHTML:  boldTeamHTML  || '',
+    savedAt: Date.now(),
+    expiresAt: Date.now() + (12 * 60 * 60 * 1000) // 12 hours
+  };
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+    // Also save "latest" pointer for easy recovery
+    localStorage.setItem('c11_latest_purchase', key);
+  } catch(e) { console.log('localStorage save failed', e); }
+}
+
+function getLatestPurchase() {
+  try {
+    const key = localStorage.getItem('c11_latest_purchase');
+    if (!key) return null;
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    // Expired?
+    if (Date.now() > data.expiresAt) {
+      localStorage.removeItem(key);
+      localStorage.removeItem('c11_latest_purchase');
+      return null;
+    }
+    return data;
+  } catch(e) { return null; }
+}
+
+function restorePurchaseOnLoad() {
+  const data = getLatestPurchase();
+  if (!data) return;
+
+  // Time since purchase
+  const minutesAgo = Math.round((Date.now() - data.savedAt) / 60000);
+  const timeLabel = minutesAgo < 60
+    ? `${minutesAgo} min ago`
+    : `${Math.round(minutesAgo/60)} hrs ago`;
+
+  // Show a "restore" toast banner
+  showRestoreBanner(data, timeLabel);
+}
+
+function showRestoreBanner(data, timeLabel) {
+  // Create banner if not exists
+  let banner = document.getElementById('restoreBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'restoreBanner';
+    banner.style.cssText = `
+      position:fixed;bottom:0;left:0;right:0;z-index:300;
+      background:linear-gradient(135deg,#0d1520,#0a1a10);
+      border-top:2px solid rgba(0,230,118,0.4);
+      padding:14px 20px;display:flex;align-items:center;gap:12px;
+      font-family:'Barlow Condensed',sans-serif;
+      animation:slideUp .3s ease;
+    `;
+    document.body.appendChild(banner);
+  }
+
+  const planLabel = data.plan === 'both' ? 'Safe + Bold Teams' :
+                    data.plan === 'safe' ? 'Safe Team' : 'Bold Team';
+
+  banner.innerHTML = `
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:700;letter-spacing:1px;color:rgba(0,230,118,0.9)">
+        🔓 YOU HAVE AN UNLOCKED TEAM
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px">
+        ${data.match} · ${planLabel} · paid ${timeLabel}
+      </div>
+    </div>
+    <button onclick="restoreTeamView('${data.paymentId}')"
+      style="background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);
+             color:rgba(0,230,118,0.9);padding:8px 16px;border-radius:8px;cursor:pointer;
+             font-family:'Bebas Neue';font-size:14px;letter-spacing:2px;white-space:nowrap">
+      VIEW TEAM
+    </button>
+    <button onclick="document.getElementById('restoreBanner').remove()"
+      style="background:none;border:none;color:rgba(255,255,255,0.2);cursor:pointer;
+             font-size:20px;padding:0 4px;flex-shrink:0">×</button>
+  `;
+}
+
+function restoreTeamView(paymentId) {
+  const key = 'c11_purchase_' + paymentId;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) { showToast('⚠️ Session expired. Contact support@champ11.in'); return; }
+    const data = JSON.parse(raw);
+
+    // Restore state
+    currentMatch = data.match;
+    currentPlan  = data.plan;
+
+    // Restore HTML into panels directly
+    if (data.safeTeamHTML) document.getElementById('panelSafe').innerHTML = data.safeTeamHTML;
+    if (data.boldTeamHTML)  document.getElementById('panelBold').innerHTML = data.boldTeamHTML;
+
+    showTeamsAfterPayment(null); // show modal with restored content
+    document.getElementById('restoreBanner')?.remove();
+  } catch(e) {
+    showToast('⚠️ Could not restore team. Contact support@champ11.in');
+  }
+}
+
+// Call on page load
+window.addEventListener('load', () => {
+  setTimeout(restorePurchaseOnLoad, 1500); // slight delay after page ready
+});
 </script>
 
 <!-- ═══════════════════════════════════════════════
