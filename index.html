@@ -1086,7 +1086,7 @@ let currentMatch = '';
 
 function openPayModal(match, venue, plan) {
   currentMatch = match;
-  currentMatchId = matchId || match;  // store match ID for backend
+  currentMatchId = match;  // use match name as ID until real IDs come from CricAPI
   document.getElementById('modalMatch').textContent = match;
   document.getElementById('modalVenue').textContent = venue ? '📍 ' + venue : '📍 Select match above';
   // Reset upsell first
@@ -1144,9 +1144,15 @@ async function doPayment() {
   const price = prices[currentPlan] || 15;
   const btn = document.querySelector('.modal-pay-btn');
 
+  // Check Razorpay SDK loaded
+  if (typeof Razorpay === 'undefined') {
+    showToast('❌ Payment SDK not loaded. Check your internet connection.');
+    return;
+  }
+
   // Disable button to prevent double clicks
   btn.disabled = true;
-  btn.textContent = 'Creating order...';
+  btn.textContent = '⏳ Creating order...';
 
   try {
     // Step 1: Create Razorpay order on backend
@@ -1160,12 +1166,15 @@ async function doPayment() {
       })
     });
 
-    if (!res.ok) throw new Error('Order creation failed');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Server error ${res.status}`);
+    }
     const order = await res.json();
 
     // Step 2: Open Razorpay checkout
     const options = {
-      key: order.razorpayKeyId,  // backend sends the key
+      key: order.razorpayKeyId,
       amount: order.amount,
       currency: 'INR',
       name: 'Champ11',
@@ -1175,7 +1184,7 @@ async function doPayment() {
       theme: { color: '#00e676' },
       handler: async function(response) {
         // Step 3: Verify payment on backend
-        btn.textContent = 'Verifying...';
+        btn.textContent = '⏳ Verifying payment...';
         try {
           const verify = await fetch(`${API_BASE}/api/payment/verify`, {
             method: 'POST',
@@ -1192,42 +1201,48 @@ async function doPayment() {
           if (!verify.ok) throw new Error('Verification failed');
           const result = await verify.json();
 
-          // Step 4: Show teams
+          // Step 4: Only show teams AFTER successful backend verification
           closeModal('payModal');
           document.getElementById('teamsModalMatch').textContent = currentMatch + ' · AI Teams';
           if (currentPlan === 'safe') switchTab('safe');
           else if (currentPlan === 'bold') switchTab('bold');
           else switchTab('safe');
           document.getElementById('teamsModal').classList.add('open');
-          showToast('✅ Payment successful! Teams unlocked.');
+          showToast('✅ Payment verified! Teams unlocked.');
 
-          // Load real teams from backend if available
           if (result.teams) loadTeamsIntoModal(result.teams);
 
         } catch(e) {
-          showToast('⚠️ Payment done but verification failed. Contact support.', 'warning');
+          // Payment done but verification failed — do NOT show teams
+          btn.disabled = false;
+          btn.textContent = `PAY ₹${price} WITH RAZORPAY`;
+          showToast('⚠️ Payment received but verification pending. Contact support@champ11.in');
         }
       },
       modal: {
         ondismiss: function() {
+          // User closed checkout — re-enable button, do NOT show teams
           btn.disabled = false;
           btn.textContent = `PAY ₹${price} WITH RAZORPAY`;
+          showToast('Payment cancelled.');
         }
       }
     };
 
     const rzp = new Razorpay(options);
     rzp.on('payment.failed', function(response) {
-      showToast('❌ Payment failed. Please try again.');
+      showToast('❌ Payment failed: ' + (response.error.description || 'Please try again.'));
       btn.disabled = false;
       btn.textContent = `PAY ₹${price} WITH RAZORPAY`;
     });
     rzp.open();
 
   } catch(e) {
-    showToast('❌ Could not connect to payment server. Try again.');
+    // Network/server error — do NOT show teams
+    console.error('Payment error:', e);
     btn.disabled = false;
     btn.textContent = `PAY ₹${price} WITH RAZORPAY`;
+    showToast('❌ ' + (e.message || 'Could not connect. Try again.'));
   }
 }
 
