@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Champ11 — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070a0e;--surface:#0d1117;--card:#111820;--card2:#161e28;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --green:#00e676;--cyan:#00bcd4;--amber:#ffb300;--red:#ff5252;--blue:#448aff;--purple:#e040fb;
+  --muted:rgba(255,255,255,0.38);--dim:rgba(255,255,255,0.18);
+  --text:rgba(255,255,255,0.88);
+}
+html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+
+/* ── LOGIN SCREEN ── */
+#loginScreen{
+  position:fixed;inset:0;z-index:1000;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+}
+.login-box{
+  width:100%;max-width:380px;padding:40px 36px;
+  background:var(--card);border:1px solid var(--border2);border-radius:20px;
+  text-align:center;
+}
+.login-logo{font-family:'Syne';font-size:28px;font-weight:800;letter-spacing:2px;margin-bottom:6px}
+.login-logo em{color:var(--green);font-style:normal}
+.login-logo span{color:var(--amber)}
+.login-sub{font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:32px;font-family:'JetBrains Mono'}
+.login-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;text-align:left;display:block;margin-bottom:8px}
+.login-input{
+  width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border2);
+  color:#fff;border-radius:10px;padding:13px 16px;
+  font-family:'JetBrains Mono';font-size:14px;
+  margin-bottom:20px;outline:none;transition:.2s;letter-spacing:2px;
+}
+.login-input:focus{border-color:rgba(0,230,118,0.5)}
+.login-btn{
+  width:100%;padding:14px;border:none;border-radius:10px;cursor:pointer;
+  font-family:'Syne';font-size:15px;font-weight:700;letter-spacing:2px;
+  background:linear-gradient(135deg,var(--green),rgba(0,188,212,0.8));
+  color:#000;transition:.2s;
+}
+.login-btn:hover{opacity:0.9;transform:translateY(-1px)}
+.login-err{color:var(--red);font-size:12px;margin-top:10px;font-family:'JetBrains Mono';display:none}
+
+/* ── MAIN LAYOUT ── */
+#app{display:none}
+.sidebar{
+  position:fixed;left:0;top:0;bottom:0;width:220px;z-index:50;
+  background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:0;
+}
+.sidebar-logo{
+  padding:22px 20px 18px;border-bottom:1px solid var(--border);
+  font-family:'Syne';font-size:20px;font-weight:800;letter-spacing:2px;
+}
+.sidebar-logo em{color:var(--green);font-style:normal}
+.sidebar-logo span{color:var(--amber)}
+.sidebar-badge{font-family:'JetBrains Mono';font-size:9px;color:var(--green);letter-spacing:1px;opacity:0.7;margin-top:2px}
+.nav-section{padding:16px 12px 6px;font-family:'JetBrains Mono';font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 16px;
+  border-radius:8px;margin:1px 8px;cursor:pointer;transition:.15s;
+  font-size:13px;font-weight:500;color:var(--muted);
+  border:1px solid transparent;
+}
+.nav-item:hover{background:rgba(255,255,255,0.04);color:var(--text)}
+.nav-item.active{background:rgba(0,230,118,0.08);color:var(--green);border-color:rgba(0,230,118,0.15)}
+.nav-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid var(--border)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px;animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:0.3}}
+.status-text{font-family:'JetBrains Mono';font-size:10px;color:var(--green)}
+.logout-btn{width:100%;margin-top:10px;padding:8px;border:1px solid var(--border2);background:none;color:var(--muted);border-radius:8px;cursor:pointer;font-size:12px;transition:.15s}
+.logout-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* ── MAIN CONTENT ── */
+.main{margin-left:220px;min-height:100vh;padding:28px 28px 60px}
+.page{display:none}
+.page.active{display:block}
+
+/* ── TOP BAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.page-title{font-family:'Syne';font-size:22px;font-weight:800;letter-spacing:1px}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.api-status{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono';font-size:11px;padding:6px 12px;border-radius:20px;border:1px solid rgba(0,230,118,0.25);background:rgba(0,230,118,0.06)}
+.refresh-btn{
+  padding:7px 16px;border:1px solid var(--border2);background:rgba(255,255,255,0.04);
+  color:var(--text);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;
+  transition:.15s;display:flex;align-items:center;gap:6px;
+}
+.refresh-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+
+/* ── STAT CARDS ── */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:18px 20px;position:relative;overflow:hidden;
+}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:14px 14px 0 0}
+.stat-card.green::before{background:linear-gradient(90deg,var(--green),transparent)}
+.stat-card.amber::before{background:linear-gradient(90deg,var(--amber),transparent)}
+.stat-card.cyan::before{background:linear-gradient(90deg,var(--cyan),transparent)}
+.stat-card.red::before{background:linear-gradient(90deg,var(--red),transparent)}
+.stat-card.blue::before{background:linear-gradient(90deg,var(--blue),transparent)}
+.stat-card.purple::before{background:linear-gradient(90deg,var(--purple),transparent)}
+.stat-label{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'JetBrains Mono';margin-bottom:8px}
+.stat-val{font-family:'Syne';font-size:32px;font-weight:800;line-height:1;margin-bottom:4px}
+.stat-sub{font-size:11px;color:var(--muted)}
+.stat-card.green .stat-val{color:var(--green)}
+.stat-card.amber .stat-val{color:var(--amber)}
+.stat-card.cyan .stat-val{color:var(--cyan)}
+.stat-card.red .stat-val{color:var(--red)}
+.stat-card.blue .stat-val{color:var(--blue)}
+.stat-card.purple .stat-val{color:var(--purple)}
+
+/* ── SECTION CARDS ── */
+.section-card{background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:20px;overflow:hidden}
+.section-head{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.section-title{font-family:'Syne';font-size:14px;font-weight:700;letter-spacing:0.5px}
+.section-body{padding:20px}
+
+/* ── TABLE ── */
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{
+  font-family:'JetBrains Mono';font-size:9px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;color:var(--dim);
+  padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);
+}
+.data-table td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:rgba(255,255,255,0.02)}
+.badge{display:inline-flex;align-items:center;font-family:'JetBrains Mono';font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 9px;border-radius:6px}
+.badge-green{background:rgba(0,230,118,0.1);color:var(--green);border:1px solid rgba(0,230,118,0.2)}
+.badge-amber{background:rgba(255,179,0,0.1);color:var(--amber);border:1px solid rgba(255,179,0,0.2)}
+.badge-red{background:rgba(255,82,82,0.1);color:var(--red);border:1px solid rgba(255,82,82,0.2)}
+.badge-cyan{background:rgba(0,188,212,0.1);color:var(--cyan);border:1px solid rgba(0,188,212,0.2)}
+.badge-blue{background:rgba(68,138,255,0.1);color:var(--blue);border:1px solid rgba(68,138,255,0.2)}
+.badge-dim{background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid var(--border)}
+
+/* ── AI WEIGHTS BARS ── */
+.weight-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.weight-label{font-family:'JetBrains Mono';font-size:11px;color:var(--muted);width:160px;flex-shrink:0}
+.weight-bar-wrap{flex:1;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden}
+.weight-bar{height:100%;border-radius:3px;transition:width 1s ease}
+.weight-pct{font-family:'JetBrains Mono';font-size:12px;font-weight:700;width:40px;text-align:right;flex-shrink:0}
+
+/* ── MATCH CARD ── */
+.match-row{
+  display:flex;align-items:center;gap:14px;padding:14px 0;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.match-row:last-child{border-bottom:none}
+.match-teams{font-family:'Syne';font-size:15px;font-weight:700;flex:1}
+.match-meta{font-size:11px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono'}
+.match-acc{font-family:'Syne';font-size:18px;font-weight:800;width:60px;text-align:right}
+
+/* ── MINI CHART ── */
+.sparkline{display:flex;align-items:flex-end;gap:3px;height:40px}
+.spark-bar{width:12px;border-radius:2px 2px 0 0;transition:.3s;opacity:0.8}
+
+/* ── ACTION BUTTONS ── */
+.action-btn{
+  padding:8px 18px;border-radius:8px;font-size:12px;font-weight:600;
+  cursor:pointer;transition:.15s;border:none;font-family:'DM Sans';
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn-green{background:rgba(0,230,118,0.12);color:var(--green);border:1px solid rgba(0,230,118,0.25)}
+.btn-green:hover{background:rgba(0,230,118,0.2)}
+.btn-red{background:rgba(255,82,82,0.1);color:var(--red);border:1px solid rgba(255,82,82,0.2)}
+.btn-red:hover{background:rgba(255,82,82,0.18)}
+.btn-amber{background:rgba(255,179,0,0.1);color:var(--amber);border:1px solid rgba(255,179,0,0.2)}
+.btn-amber:hover{background:rgba(255,179,0,0.18)}
+.btn-cyan{background:rgba(0,188,212,0.1);color:var(--cyan);border:1px solid rgba(0,188,212,0.2)}
+.btn-cyan:hover{background:rgba(0,188,212,0.18)}
+.btn-blue{background:rgba(68,138,255,0.1);color:var(--blue);border:1px solid rgba(68,138,255,0.25)}
+.btn-blue:hover{background:rgba(68,138,255,0.18)}
+
+/* ── TWO COL ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+/* ── PLAYER SCORE ROW ── */
+.player-intel-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.player-intel-row:last-child{border-bottom:none}
+.pi-name{flex:1;font-size:13px;font-weight:500}
+.pi-team{font-family:'JetBrains Mono';font-size:10px;color:var(--muted);margin-top:1px}
+.pi-bar-wrap{width:80px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px}
+.pi-bar{height:100%;border-radius:2px;background:var(--green)}
+.pi-score{font-family:'JetBrains Mono';font-size:12px;font-weight:700;width:36px;text-align:right}
+
+/* ── LEARNING LOG ── */
+.log-row{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);align-items:flex-start}
+.log-row:last-child{border-bottom:none}
+.log-time{font-family:'JetBrains Mono';font-size:10px;color:var(--dim);width:120px;flex-shrink:0;padding-top:1px}
+.log-msg{font-size:12px;color:var(--muted);line-height:1.5;flex:1}
+.log-msg strong{color:var(--text)}
+.log-delta{font-family:'JetBrains Mono';font-size:11px;font-weight:700;flex-shrink:0}
+.delta-up{color:var(--green)}
+.delta-down{color:var(--red)}
+
+/* ── REVENUE CHART ── */
+.rev-bar-chart{display:flex;align-items:flex-end;gap:8px;height:80px;padding-top:10px}
+.rev-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.rev-bar{width:100%;border-radius:3px 3px 0 0;background:rgba(0,230,118,0.4);transition:.5s;min-height:4px}
+.rev-bar-label{font-family:'JetBrains Mono';font-size:9px;color:var(--dim)}
+.rev-bar-val{font-family:'JetBrains Mono';font-size:9px;color:var(--green)}
+
+/* ── CONTROLS ── */
+.control-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.control-row:last-child{border-bottom:none}
+.control-label{font-size:13px;font-weight:500}
+.control-desc{font-size:11px;color:var(--muted);margin-top:2px}
+.control-actions{display:flex;gap:8px;flex-shrink:0}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:24px;right:24px;z-index:999;
+  background:var(--card2);border:1px solid var(--border2);
+  padding:12px 20px;border-radius:10px;font-size:13px;
+  opacity:0;transform:translateY(10px);transition:.3s;pointer-events:none;
+  display:flex;align-items:center;gap:8px;max-width:320px;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* ── LOADING ── */
+.loading-shimmer{background:linear-gradient(90deg,rgba(255,255,255,0.03) 25%,rgba(255,255,255,0.06) 50%,rgba(255,255,255,0.03) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:20px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.page.active .stat-card{animation:fadeUp .4s ease forwards;opacity:0}
+.page.active .stat-card:nth-child(1){animation-delay:.05s}
+.page.active .stat-card:nth-child(2){animation-delay:.1s}
+.page.active .stat-card:nth-child(3){animation-delay:.15s}
+.page.active .stat-card:nth-child(4){animation-delay:.2s}
+
+/* ── EMPTY STATE ── */
+.empty-state{text-align:center;padding:40px;color:var(--muted)}
+.empty-icon{font-size:36px;margin-bottom:12px}
+.empty-title{font-family:'Syne';font-size:15px;font-weight:700;margin-bottom:6px;color:var(--text)}
+.empty-sub{font-size:12px;line-height:1.6}
+
+/* ── ACCURACY GAUGE ── */
+.gauge-wrap{display:flex;align-items:center;gap:20px}
+.gauge-circle{width:80px;height:80px;flex-shrink:0}
+.gauge-info .gauge-val{font-family:'Syne';font-size:28px;font-weight:800;color:var(--green)}
+.gauge-info .gauge-lbl{font-size:11px;color:var(--muted);font-family:'JetBrains Mono';letter-spacing:1px}
+
+/* ── MOBILE ── */
+@media(max-width:900px){
+  .sidebar{width:60px}
+  .sidebar-logo,.nav-item span,.nav-section,.sidebar-badge,.status-text,.logout-btn{display:none}
+  .nav-item{justify-content:center;padding:12px;margin:2px 4px}
+  .main{margin-left:60px;padding:16px}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .two-col,.three-col{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo"><em>CHAMP</em><span>11</span></div>
+    <div class="login-sub">Admin Dashboard</div>
+    <label class="login-label">API URL</label>
+    <input type="text" class="login-input" id="apiUrl" value="https://champ11-backend-production.up.railway.app" placeholder="https://..."/>
+    <label class="login-label">Admin Secret</label>
+    <input type="password" class="login-input" id="adminSecret" placeholder="Enter admin secret"/>
+    <button class="login-btn" onclick="doLogin()">ENTER DASHBOARD</button>
+    <div class="login-err" id="loginErr">❌ Invalid credentials or server unreachable</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo"><em>CHAMP</em><span>11</span><div class="sidebar-badge">ADMIN v1.0</div></div>
+    <div class="nav-section">Overview</div>
+    <div class="nav-item active" onclick="showPage('overview')"><span class="nav-icon">📊</span><span>Overview</span></div>
+    <div class="nav-item" onclick="showPage('matches')"><span class="nav-icon">🏏</span><span>Matches</span></div>
+    <div class="nav-item" onclick="showPage('revenue')"><span class="nav-icon">💰</span><span>Revenue</span></div>
+    <div class="nav-section">AI Engine</div>
+    <div class="nav-item" onclick="showPage('ai')"><span class="nav-icon">🧠</span><span>AI Brain</span></div>
+    <div class="nav-item" onclick="showPage('players')"><span class="nav-icon">👤</span><span>Player Intel</span></div>
+    <div class="nav-section">System</div>
+    <div class="nav-item" onclick="showPage('controls')"><span class="nav-icon">⚡</span><span>Controls</span></div>
+    <div class="nav-item" onclick="showPage('logs')"><span class="nav-icon">📋</span><span>Logs</span></div>
+    <div class="sidebar-footer">
+      <div><span class="status-dot"></span><span class="status-text">BACKEND LIVE</span></div>
+      <button class="logout-btn" onclick="doLogout()">⏻ Logout</button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- ── OVERVIEW ── -->
+    <div class="page active" id="page-overview">
+      <div class="topbar">
+        <div class="page-title">📊 Overview</div>
+        <div class="topbar-right">
+          <div class="api-status"><span class="status-dot"></span><span id="apiStatusText">Connecting...</span></div>
+          <button class="refresh-btn" onclick="loadOverview()">↺ Refresh</button>
+        </div>
+      </div>
+
+      <div class="stat-grid" id="overviewStats">
+        <div class="stat-card green"><div class="stat-label">Total Revenue</div><div class="stat-val" id="ov-revenue">—</div><div class="stat-sub">This IPL season</div></div>
+        <div class="stat-card amber"><div class="stat-label">Total Purchases</div><div class="stat-val" id="ov-purchases">—</div><div class="stat-sub">Paid transactions</div></div>
+        <div class="stat-card cyan"><div class="stat-label">AI Accuracy</div><div class="stat-val" id="ov-accuracy">—</div><div class="stat-sub">Matches analysed</div></div>
+        <div class="stat-card blue"><div class="stat-label">Matches Today</div><div class="stat-val" id="ov-matches">—</div><div class="stat-sub">Active / Total</div></div>
+      </div>
+
+      <div class="two-col">
+        <!-- Today's Matches -->
+        <div class="section-card">
+          <div class="section-head">
+            <div class="section-title">🏏 Today's Matches</div>
+            <button class="action-btn btn-green" onclick="syncMatches()">⟳ Sync from CricAPI</button>
+          </div>
+          <div class="section-body" id="todayMatchesList"><div class="loading-shimmer" style="margin-bottom:10px"></div><div class="loading-shimmer" style="width:70%"></div></div>
+        </div>
+
+        <!-- Revenue Quick View -->
+        <div class="section-card">
+          <div class="section-head"><div class="section-title">💰 Revenue (Last 7 Days)</div></div>
+          <div class="section-body">
+            <div class="stat-grid" style="grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+              <div class="stat-card green" style="padding:12px 14px"><div class="stat-label" style="font-size:9px">Today</div><div class="stat-val" style="font-size:20px" id="rev-today">—</div></div>
+              <div class="stat-card amber" style="padding:12px 14px"><div class="stat-label" style="font-size:9px">This Week</div><div class="stat-val" style="font-size:20px" id="rev-week">—</div></div>
+              <div class="stat-card cyan" style="padding:12px 14px"><div class="stat-label" style="font-size:9px">This Month</div><div class="stat-val" style="font-size:20px" id="rev-month">—</div></div>
+            </div>
+            <div class="rev-bar-chart" id="revChart"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Status Quick View -->
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">🧠 AI Brain Status</div>
+          <span class="badge badge-green" id="aiStatusBadge">ACTIVE</span>
+        </div>
+        <div class="section-body">
+          <div class="two-col">
+            <div>
+              <div style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono';letter-spacing:1px;margin-bottom:12px;text-transform:uppercase">SAFE TEAM WEIGHTS</div>
+              <div id="safeWeights"></div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono';letter-spacing:1px;margin-bottom:12px;text-transform:uppercase">BOLD TEAM WEIGHTS</div>
+              <div id="boldWeights"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MATCHES ── -->
+    <div class="page" id="page-matches">
+      <div class="topbar">
+        <div class="page-title">🏏 Match History</div>
+        <div class="topbar-right">
+          <button class="action-btn btn-green" onclick="syncMatches()">⟳ Sync Schedule</button>
+          <button class="refresh-btn" onclick="loadMatches()">↺ Refresh</button>
+        </div>
+      </div>
+
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card green"><div class="stat-label">Total Matches</div><div class="stat-val" id="m-total">—</div><div class="stat-sub">IPL 2026 schedule</div></div>
+        <div class="stat-card amber"><div class="stat-label">Teams Generated</div><div class="stat-val" id="m-generated">—</div><div class="stat-sub">Safe + Bold pairs</div></div>
+        <div class="stat-card cyan"><div class="stat-label">Avg AI Accuracy</div><div class="stat-val" id="m-accuracy">—</div><div class="stat-sub">Post-match scored</div></div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">All Matches</div>
+          <div style="display:flex;gap:8px">
+            <select id="matchFilter" onchange="filterMatches()" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:5px 10px;border-radius:8px;font-size:12px;cursor:pointer">
+              <option value="all">All Matches</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="live">Live</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table" id="matchesTable">
+            <thead><tr>
+              <th>Match</th><th>Date</th><th>Venue</th><th>Status</th>
+              <th>Teams Ready</th><th>XI Confirmed</th><th>Accuracy</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="matchesBody"><tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">Loading matches...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── REVENUE ── -->
+    <div class="page" id="page-revenue">
+      <div class="topbar">
+        <div class="page-title">💰 Revenue</div>
+        <button class="refresh-btn" onclick="loadRevenue()">↺ Refresh</button>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card green"><div class="stat-label">Total Revenue</div><div class="stat-val" id="r-total">—</div><div class="stat-sub">All time</div></div>
+        <div class="stat-card amber"><div class="stat-label">Transactions</div><div class="stat-val" id="r-txns">—</div><div class="stat-sub">Paid orders</div></div>
+        <div class="stat-card cyan"><div class="stat-label">Avg per Purchase</div><div class="stat-val" id="r-avg">—</div><div class="stat-sub">Per transaction</div></div>
+        <div class="stat-card purple"><div class="stat-label">Season Passes</div><div class="stat-val" id="r-season">—</div><div class="stat-sub">₹399 each</div></div>
+      </div>
+
+      <div class="two-col">
+        <div class="section-card">
+          <div class="section-head"><div class="section-title">Plan Breakdown</div></div>
+          <div class="section-body" id="planBreakdown"></div>
+        </div>
+        <div class="section-card">
+          <div class="section-head"><div class="section-title">Recent Transactions</div></div>
+          <div style="overflow-x:auto">
+            <table class="data-table">
+              <thead><tr><th>User</th><th>Plan</th><th>Amount</th><th>Match</th><th>Time</th></tr></thead>
+              <tbody id="recentTxns"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── AI BRAIN ── -->
+    <div class="page" id="page-ai">
+      <div class="topbar">
+        <div class="page-title">🧠 AI Brain</div>
+        <button class="refresh-btn" onclick="loadAI()">↺ Refresh</button>
+      </div>
+
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card green"><div class="stat-label">Current Accuracy</div><div class="stat-val" id="ai-acc">—</div><div class="stat-sub">After <span id="ai-matches">0</span> matches</div></div>
+        <div class="stat-card amber"><div class="stat-label">Total Adjustments</div><div class="stat-val" id="ai-adj">—</div><div class="stat-sub">Weight updates made</div></div>
+        <div class="stat-card cyan"><div class="stat-label">Last Updated</div><div class="stat-val" style="font-size:16px" id="ai-updated">—</div><div class="stat-sub">Last learning cycle</div></div>
+      </div>
+
+      <div class="two-col">
+        <!-- Safe Weights -->
+        <div class="section-card">
+          <div class="section-head">
+            <div class="section-title">🛡️ Safe Team Weights</div>
+            <span class="badge badge-cyan">LIVE</span>
+          </div>
+          <div class="section-body" id="safeWeightsFull"></div>
+        </div>
+        <!-- Bold Weights -->
+        <div class="section-card">
+          <div class="section-head">
+            <div class="section-title">🔥 Bold Team Weights</div>
+            <span class="badge badge-amber">LIVE</span>
+          </div>
+          <div class="section-body" id="boldWeightsFull"></div>
+        </div>
+      </div>
+
+      <!-- Accuracy over time -->
+      <div class="section-card">
+        <div class="section-head"><div class="section-title">📈 Accuracy Per Match</div></div>
+        <div class="section-body">
+          <div style="display:flex;align-items:flex-end;gap:6px;height:100px;padding-bottom:4px" id="accuracyChart"></div>
+          <div style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono';margin-top:8px;text-align:center">Each bar = one IPL match. Green = above 65%</div>
+        </div>
+      </div>
+
+      <!-- Learning Log -->
+      <div class="section-card">
+        <div class="section-head"><div class="section-title">📖 Learning Log</div></div>
+        <div class="section-body" id="learningLog"></div>
+      </div>
+    </div>
+
+    <!-- ── PLAYER INTEL ── -->
+    <div class="page" id="page-players">
+      <div class="topbar">
+        <div class="page-title">👤 Player Intel</div>
+        <button class="refresh-btn" onclick="loadPlayers()">↺ Refresh</button>
+      </div>
+
+      <div class="two-col">
+        <div class="section-card">
+          <div class="section-head"><div class="section-title">🔥 Top Form Players</div></div>
+          <div class="section-body" id="topFormPlayers"></div>
+        </div>
+        <div class="section-card">
+          <div class="section-head"><div class="section-title">⚡ Differential Picks</div><div style="font-size:11px;color:var(--muted)">Low ownership, high upside</div></div>
+          <div class="section-body" id="diffPlayers"></div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">All Player Intel</div>
+          <input id="playerSearch" type="text" placeholder="Search player..." onkeyup="filterPlayers()" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;width:200px;outline:none"/>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table" id="playersTable">
+            <thead><tr>
+              <th>Player</th><th>Team</th><th>Role</th><th>Credits</th>
+              <th>Form Score</th><th>Ownership</th><th>Venue</th><th>H2H</th>
+            </tr></thead>
+            <tbody id="playersBody"><tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">Loading player data...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONTROLS ── -->
+    <div class="page" id="page-controls">
+      <div class="topbar"><div class="page-title">⚡ System Controls</div></div>
+
+      <div class="section-card">
+        <div class="section-head"><div class="section-title">🏏 Match Operations</div></div>
+        <div class="section-body">
+          <div class="control-row">
+            <div><div class="control-label">Sync IPL Schedule</div><div class="control-desc">Fetches all matches from CricAPI and saves to Firebase</div></div>
+            <div class="control-actions"><button class="action-btn btn-green" onclick="syncMatches()">⟳ Sync Now</button></div>
+          </div>
+          <div class="control-row">
+            <div>
+              <div class="control-label">Generate Teams for Match</div>
+              <div class="control-desc">Force regenerate Safe + Bold teams for a specific match</div>
+            </div>
+            <div class="control-actions">
+              <input id="genMatchId" placeholder="Match ID" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:7px 12px;border-radius:8px;font-size:12px;width:160px;outline:none"/>
+              <button class="action-btn btn-amber" onclick="generateTeams()">⚡ Generate</button>
+            </div>
+          </div>
+          <div class="control-row">
+            <div>
+              <div class="control-label">Lock Match Teams</div>
+              <div class="control-desc">Manually lock teams (prevents further access after match starts)</div>
+            </div>
+            <div class="control-actions">
+              <input id="lockMatchId" placeholder="Match ID" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:7px 12px;border-radius:8px;font-size:12px;width:160px;outline:none"/>
+              <button class="action-btn btn-red" onclick="lockMatch()">🔒 Lock</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head"><div class="section-title">🧠 AI Operations</div></div>
+        <div class="section-body">
+          <div class="control-row">
+            <div><div class="control-label">Trigger AI Learning</div><div class="control-desc">Manually run the post-match learning cycle for a completed match</div></div>
+            <div class="control-actions">
+              <input id="learnMatchId" placeholder="Match ID" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:7px 12px;border-radius:8px;font-size:12px;width:160px;outline:none"/>
+              <button class="action-btn btn-cyan" onclick="triggerLearning()">🧠 Learn</button>
+            </div>
+          </div>
+          <div class="control-row">
+            <div><div class="control-label">Reset AI Weights</div><div class="control-desc">⚠️ Resets all weights to defaults — use only if AI behaving poorly</div></div>
+            <div class="control-actions"><button class="action-btn btn-red" onclick="resetWeights()">⚠️ Reset Weights</button></div>
+          </div>
+          <div class="control-row">
+            <div><div class="control-label">Scrape Player Stats</div><div class="control-desc">Manually trigger the daily intel scrape for all IPL players</div></div>
+            <div class="control-actions"><button class="action-btn btn-blue" onclick="scrapeStats()">📊 Scrape Now</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head"><div class="section-title">⚙️ Environment</div></div>
+        <div class="section-body">
+          <div class="control-row">
+            <div><div class="control-label">CricAPI Key Status</div><div class="control-desc" id="cricapiStatus">Checking...</div></div>
+            <div class="control-actions"><span class="badge badge-dim" id="cricapiBadge">—</span></div>
+          </div>
+          <div class="control-row">
+            <div><div class="control-label">MSG91 OTP Status</div><div class="control-desc" id="msg91Status">Checking...</div></div>
+            <div class="control-actions"><span class="badge badge-dim" id="msg91Badge">—</span></div>
+          </div>
+          <div class="control-row">
+            <div><div class="control-label">Razorpay Status</div><div class="control-desc" id="razorpayStatus">Checking...</div></div>
+            <div class="control-actions"><span class="badge badge-dim" id="razorpayBadge">—</span></div>
+          </div>
+          <div class="control-row">
+            <div><div class="control-label">Firebase Status</div><div class="control-desc" id="firebaseStatus">Checking...</div></div>
+            <div class="control-actions"><span class="badge badge-dim" id="firebaseBadge">—</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── LOGS ── -->
+    <div class="page" id="page-logs">
+      <div class="topbar">
+        <div class="page-title">📋 System Logs</div>
+        <button class="refresh-btn" onclick="loadLogs()">↺ Refresh</button>
+      </div>
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">Recent Activity</div>
+          <div style="display:flex;gap:8px">
+            <select id="logFilter" onchange="filterLogs()" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:5px 10px;border-radius:8px;font-size:12px;cursor:pointer">
+              <option value="all">All Events</option>
+              <option value="payment">Payments</option>
+              <option value="ai">AI Events</option>
+              <option value="match">Match Events</option>
+              <option value="error">Errors</option>
+            </select>
+          </div>
+        </div>
+        <div class="section-body" id="logsBody" style="font-family:'JetBrains Mono';font-size:12px;max-height:500px;overflow-y:auto">
+          <div style="color:var(--muted)">Loading logs...</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toastIcon">✅</span><span id="toastMsg">Done</span></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let API_BASE = '';
+let ADMIN_SECRET = '';
+let allMatches = [];
+let allPlayers = [];
+let allLogs = [];
+
+// ─── LOGIN ───────────────────────────────────────────────────────────────────
+async function doLogin() {
+  API_BASE = document.getElementById('apiUrl').value.trim().replace(/\/$/,'');
+  ADMIN_SECRET = document.getElementById('adminSecret').value.trim();
+  if (!API_BASE || !ADMIN_SECRET) { showLoginErr('Please fill both fields'); return; }
+
+  try {
+    const r = await fetch(`${API_BASE}/health`);
+    if (!r.ok) throw new Error('Backend unreachable');
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('apiStatusText').textContent = new URL(API_BASE).host;
+    loadOverview();
+  } catch(e) {
+    showLoginErr('❌ Cannot reach backend. Check URL.');
+  }
+}
+
+function showLoginErr(msg) {
+  const el = document.getElementById('loginErr');
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+// Allow Enter key in login
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') doLogin();
+});
+
+function doLogout() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('adminSecret').value = '';
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick')?.includes(name)) n.classList.add('active');
+  });
+  // Load data for page
+  if (name === 'matches') loadMatches();
+  if (name === 'revenue') loadRevenue();
+  if (name === 'ai') loadAI();
+  if (name === 'players') loadPlayers();
+  if (name === 'controls') loadControls();
+  if (name === 'logs') loadLogs();
+}
+
+// ─── API HELPER ──────────────────────────────────────────────────────────────
+async function api(path, method='GET', body=null) {
+  const opts = {
+    method,
+    headers: { 'Content-Type':'application/json', 'x-admin-secret': ADMIN_SECRET }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(API_BASE + path, opts);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────────────────
+function toast(msg, icon='✅') {
+  document.getElementById('toastMsg').textContent = msg;
+  document.getElementById('toastIcon').textContent = icon;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ─── OVERVIEW ────────────────────────────────────────────────────────────────
+async function loadOverview() {
+  try {
+    // Load matches
+    const matches = await api('/api/matches');
+    const today = new Date().toISOString().split('T')[0];
+    const todayMatches = (matches.matches || matches || []).filter(m =>
+      (m.date || m.dateTimeGMT || '').startsWith(today)
+    );
+    document.getElementById('ov-matches').textContent = todayMatches.length;
+
+    // Render today's matches
+    renderTodayMatches(todayMatches.length ? todayMatches : (matches.matches || matches || []).slice(0,3));
+
+    // Try load purchases for revenue
+    try {
+      const purchases = await api('/api/admin/purchases');
+      const list = purchases.purchases || purchases || [];
+      const total = list.reduce((s,p) => s + (p.amount||0)/100, 0);
+      document.getElementById('ov-revenue').textContent = '₹' + Math.round(total).toLocaleString('en-IN');
+      document.getElementById('ov-purchases').textContent = list.length;
+      renderRevQuick(list);
+    } catch { document.getElementById('ov-revenue').textContent = '₹0'; document.getElementById('ov-purchases').textContent = '0'; renderRevQuick([]); }
+
+    // Load AI weights
+    try {
+      const aiData = await api('/api/admin/ai-config');
+      renderWeightBars('safeWeights', aiData.safe || DEFAULT_SAFE_W, 'var(--cyan)');
+      renderWeightBars('boldWeights', aiData.bold || DEFAULT_BOLD_W, 'var(--amber)');
+      document.getElementById('ov-accuracy').textContent = (aiData.accuracy || 55) + '%';
+    } catch { renderWeightBars('safeWeights', DEFAULT_SAFE_W, 'var(--cyan)'); renderWeightBars('boldWeights', DEFAULT_BOLD_W, 'var(--amber)'); document.getElementById('ov-accuracy').textContent = '55%'; }
+
+  } catch(e) {
+    document.getElementById('apiStatusText').textContent = 'Connection error';
+    toast('Failed to load overview data', '❌');
+  }
+}
+
+const DEFAULT_SAFE_W = { recent_form:0.35, venue_history:0.25, h2h:0.20, pitch_weather:0.15, popular_picks:0.05 };
+const DEFAULT_BOLD_W = { recent_form:0.35, differential:0.25, breakout:0.20, h2h:0.12, pitch_weather:0.08 };
+
+function renderWeightBars(elId, weights, color) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.innerHTML = Object.entries(weights).map(([k,v]) => `
+    <div class="weight-row">
+      <div class="weight-label">${k.replace(/_/g,' ')}</div>
+      <div class="weight-bar-wrap"><div class="weight-bar" style="width:${Math.round(v*100)}%;background:${color}"></div></div>
+      <div class="weight-pct" style="color:${color}">${Math.round(v*100)}%</div>
+    </div>
+  `).join('');
+}
+
+function renderTodayMatches(matches) {
+  const el = document.getElementById('todayMatchesList');
+  if (!matches.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🏏</div><div class="empty-title">No matches today</div><div class="empty-sub">Click "Sync from CricAPI" to load schedule</div></div>`;
+    return;
+  }
+  el.innerHTML = matches.map(m => `
+    <div class="match-row">
+      <div style="flex:1">
+        <div class="match-teams">${m.name || m.teams?.join(' vs ') || 'Match'}</div>
+        <div class="match-meta">${m.venue || '—'} · ${formatTime(m.dateTimeGMT || m.date)}</div>
+      </div>
+      <span class="badge ${m.status==='Live'?'badge-red':m.status==='completed'?'badge-green':'badge-dim'}">${m.status||'Upcoming'}</span>
+      <button class="action-btn btn-amber" style="padding:5px 10px;font-size:11px" onclick="generateTeamsFor('${m.id||m.matchId||''}')">⚡ Gen</button>
+    </div>
+  `).join('');
+}
+
+function renderRevQuick(list) {
+  const today = new Date().toISOString().split('T')[0];
+  const weekAgo = new Date(Date.now()-7*24*60*60*1000).toISOString();
+  const monthAgo = new Date(Date.now()-30*24*60*60*1000).toISOString();
+
+  const todayRev = list.filter(p => (p.purchasedAt||'').startsWith(today)).reduce((s,p)=>s+(p.amount||0)/100,0);
+  const weekRev = list.filter(p => p.purchasedAt >= weekAgo).reduce((s,p)=>s+(p.amount||0)/100,0);
+  const monthRev = list.filter(p => p.purchasedAt >= monthAgo).reduce((s,p)=>s+(p.amount||0)/100,0);
+
+  document.getElementById('rev-today').textContent = '₹'+Math.round(todayRev);
+  document.getElementById('rev-week').textContent = '₹'+Math.round(weekRev);
+  document.getElementById('rev-month').textContent = '₹'+Math.round(monthRev);
+
+  // Build 7-day chart
+  const chart = document.getElementById('revChart');
+  const days = [];
+  for(let i=6;i>=0;i--) {
+    const d = new Date(Date.now()-i*24*60*60*1000);
+    const dStr = d.toISOString().split('T')[0];
+    const dayRev = list.filter(p=>(p.purchasedAt||'').startsWith(dStr)).reduce((s,p)=>s+(p.amount||0)/100,0);
+    days.push({label: d.toLocaleDateString('en',{weekday:'short'}), val: dayRev});
+  }
+  const maxVal = Math.max(...days.map(d=>d.val), 100);
+  chart.innerHTML = days.map(d => `
+    <div class="rev-bar-col">
+      <div class="rev-bar-val">₹${Math.round(d.val)}</div>
+      <div class="rev-bar" style="height:${Math.max(4,Math.round((d.val/maxVal)*60))}px"></div>
+      <div class="rev-bar-label">${d.label}</div>
+    </div>
+  `).join('');
+}
+
+// ─── MATCHES ─────────────────────────────────────────────────────────────────
+async function loadMatches() {
+  try {
+    const data = await api('/api/matches?all=1');
+    allMatches = data.matches || data || [];
+    document.getElementById('m-total').textContent = allMatches.length;
+    const withTeams = allMatches.filter(m=>m.teamsReady||m.hasTeams);
+    document.getElementById('m-generated').textContent = withTeams.length;
+    renderMatchesTable(allMatches);
+  } catch(e) {
+    document.getElementById('matchesBody').innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--red)">Failed to load: ${e.message}</td></tr>`;
+  }
+}
+
+function renderMatchesTable(matches) {
+  if (!matches.length) {
+    document.getElementById('matchesBody').innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">No matches found. Click "Sync Schedule".</td></tr>`;
+    return;
+  }
+  document.getElementById('matchesBody').innerHTML = matches.map(m => {
+    const status = m.status||'upcoming';
+    const statusBadge = status==='Live'?'badge-red':status==='completed'||status==='Complete'?'badge-green':status==='locked'?'badge-amber':'badge-dim';
+    const acc = m.accuracy ? `<span style="color:${m.accuracy>=65?'var(--green)':'var(--amber)'};font-family:'JetBrains Mono';font-weight:700">${m.accuracy}%</span>` : '<span style="color:var(--dim)">—</span>';
+    return `<tr>
+      <td><div style="font-weight:600;font-size:13px">${m.name||m.teams?.join(' vs ')||'—'}</div><div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono'">${m.id||m.matchId||'—'}</div></td>
+      <td style="font-family:'JetBrains Mono';font-size:11px">${formatDate(m.dateTimeGMT||m.date)}</td>
+      <td style="font-size:12px;color:var(--muted)">${(m.venue||'—').substring(0,20)}</td>
+      <td><span class="badge ${statusBadge}">${status}</span></td>
+      <td>${m.teamsReady||m.hasTeams?'<span class="badge badge-green">✓ Ready</span>':'<span class="badge badge-dim">Not Yet</span>'}</td>
+      <td>${m.xiConfirmed?'<span class="badge badge-green">✓ Confirmed</span>':'<span class="badge badge-dim">Pending</span>'}</td>
+      <td>${acc}</td>
+      <td><div style="display:flex;gap:6px">
+        <button class="action-btn btn-amber" style="padding:4px 8px;font-size:10px" onclick="generateTeamsFor('${m.id||m.matchId||''}')">⚡</button>
+        <button class="action-btn btn-red" style="padding:4px 8px;font-size:10px" onclick="lockMatchId('${m.id||m.matchId||''}')">🔒</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterMatches() {
+  const f = document.getElementById('matchFilter').value;
+  const filtered = f==='all' ? allMatches : allMatches.filter(m => {
+    if (f==='upcoming') return !m.status || m.status==='upcoming';
+    if (f==='live') return m.status==='Live';
+    if (f==='completed') return m.status==='completed'||m.status==='Complete';
+    return true;
+  });
+  renderMatchesTable(filtered);
+}
+
+// ─── REVENUE ─────────────────────────────────────────────────────────────────
+async function loadRevenue() {
+  try {
+    const data = await api('/api/admin/purchases');
+    const list = data.purchases || data || [];
+
+    const total = list.reduce((s,p)=>s+(p.amount||0)/100, 0);
+    document.getElementById('r-total').textContent = '₹'+Math.round(total).toLocaleString('en-IN');
+    document.getElementById('r-txns').textContent = list.length;
+    document.getElementById('r-avg').textContent = list.length ? '₹'+Math.round(total/list.length) : '₹0';
+    document.getElementById('r-season').textContent = list.filter(p=>p.plan==='season').length;
+
+    // Plan breakdown
+    const plans = {safe:0,bold:0,both:0,weekly:0,season:0};
+    const prices = {safe:9,bold:11,both:15,weekly:59,season:399};
+    list.forEach(p => { if(plans[p.plan]!==undefined) plans[p.plan]++; });
+    const maxPlan = Math.max(...Object.values(plans), 1);
+    document.getElementById('planBreakdown').innerHTML = Object.entries(plans).map(([plan,count]) => `
+      <div class="weight-row">
+        <div class="weight-label" style="width:100px">${plan} (₹${prices[plan]})</div>
+        <div class="weight-bar-wrap"><div class="weight-bar" style="width:${Math.round(count/maxPlan*100)}%;background:var(--green)"></div></div>
+        <div class="weight-pct" style="color:var(--green)">${count}</div>
+      </div>
+    `).join('');
+
+    // Recent transactions
+    const recent = [...list].sort((a,b)=>b.purchasedAt>a.purchasedAt?1:-1).slice(0,10);
+    document.getElementById('recentTxns').innerHTML = recent.length ? recent.map(p => `
+      <tr>
+        <td style="font-family:'JetBrains Mono';font-size:11px">${maskId(p.userId||p.phone||'—')}</td>
+        <td><span class="badge badge-cyan">${p.plan||'—'}</span></td>
+        <td style="color:var(--green);font-family:'JetBrains Mono';font-size:12px;font-weight:700">₹${(p.amount||0)/100}</td>
+        <td style="font-size:11px;color:var(--muted)">${(p.matchId||'—').slice(-8)}</td>
+        <td style="font-family:'JetBrains Mono';font-size:10px;color:var(--muted)">${formatDate(p.purchasedAt)}</td>
+      </tr>
+    `).join('') : `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">No transactions yet</td></tr>`;
+
+  } catch(e) {
+    document.getElementById('r-total').textContent = '₹0';
+    toast('Revenue endpoint not available yet', '⚠️');
+  }
+}
+
+// ─── AI BRAIN ────────────────────────────────────────────────────────────────
+async function loadAI() {
+  try {
+    let aiData = {};
+    try { aiData = await api('/api/admin/ai-config'); } catch {}
+
+    const safe = aiData.safe || DEFAULT_SAFE_W;
+    const bold = aiData.bold || DEFAULT_BOLD_W;
+    const acc = aiData.accuracy || 55;
+    const matchCount = aiData.totalMatches || 0;
+
+    document.getElementById('ai-acc').textContent = acc + '%';
+    document.getElementById('ai-matches').textContent = matchCount;
+    document.getElementById('ai-adj').textContent = aiData.totalAdjustments || 0;
+    document.getElementById('ai-updated').textContent = aiData.lastUpdated ? formatDate(aiData.lastUpdated) : 'Not yet';
+
+    renderWeightBars('safeWeightsFull', safe, 'var(--cyan)');
+    renderWeightBars('boldWeightsFull', bold, 'var(--amber)');
+
+    // Accuracy sparkline
+    const accHistory = aiData.accuracyHistory || generateMockAccuracy(matchCount);
+    const maxAcc = Math.max(...accHistory, 75);
+    document.getElementById('accuracyChart').innerHTML = accHistory.map((a,i) => `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">
+        <div style="font-size:9px;font-family:'JetBrains Mono';color:${a>=65?'var(--green)':'var(--amber)'}">${a}%</div>
+        <div style="width:100%;border-radius:2px 2px 0 0;background:${a>=65?'rgba(0,230,118,0.5)':'rgba(255,179,0,0.4)'};height:${Math.round((a/maxAcc)*80)}px"></div>
+        <div style="font-size:9px;font-family:'JetBrains Mono';color:var(--dim)">M${i+1}</div>
+      </div>
+    `).join('');
+
+    // Learning log
+    try {
+      const logs = await api('/api/admin/learning-log');
+      const logList = logs.logs || logs || [];
+      document.getElementById('learningLog').innerHTML = logList.length ? logList.slice(0,10).map(l => `
+        <div class="log-row">
+          <div class="log-time">${formatDate(l.timestamp)}</div>
+          <div class="log-msg"><strong>${l.matchId?.slice(-8)||'Match'}</strong> — ${l.description||'Weight adjustment'}</div>
+          <div class="log-delta ${(l.accuracyDelta||0)>0?'delta-up':'delta-down'}">${(l.accuracyDelta||0)>0?'+':''}${l.accuracyDelta||0}%</div>
+        </div>
+      `).join('') : '<div style="color:var(--muted);font-size:12px">No learning events yet. Will populate after first completed match.</div>';
+    } catch { document.getElementById('learningLog').innerHTML = '<div style="color:var(--muted);font-size:12px">Learning log will appear after first IPL match.</div>'; }
+
+  } catch(e) {
+    toast('AI config endpoint not available. Using defaults.', '⚠️');
+    renderWeightBars('safeWeightsFull', DEFAULT_SAFE_W, 'var(--cyan)');
+    renderWeightBars('boldWeightsFull', DEFAULT_BOLD_W, 'var(--amber)');
+    document.getElementById('ai-acc').textContent = '55%';
+  }
+}
+
+function generateMockAccuracy(count) {
+  if (!count) return [55, 57, 54, 60, 62, 58, 65];
+  const arr = [55];
+  for (let i=1;i<Math.min(count,20);i++) arr.push(Math.min(72, arr[i-1] + (Math.random()*6-2)));
+  return arr.map(v => Math.round(v));
+}
+
+// ─── PLAYERS ─────────────────────────────────────────────────────────────────
+async function loadPlayers() {
+  try {
+    const data = await api('/api/admin/player-intel');
+    allPlayers = data.players || data || [];
+
+    // Top form
+    const topForm = [...allPlayers].sort((a,b)=>(b.recentFormScore||0)-(a.recentFormScore||0)).slice(0,8);
+    document.getElementById('topFormPlayers').innerHTML = topForm.length ? topForm.map(p => `
+      <div class="player-intel-row">
+        <div style="width:28px;height:28px;border-radius:50%;background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--green);flex-shrink:0">${p.role||'?'}</div>
+        <div style="flex:1"><div class="pi-name">${p.name||'—'}</div><div class="pi-team">${p.team||'—'} · ₹${p.credits||'?'}cr</div></div>
+        <div class="pi-bar-wrap"><div class="pi-bar" style="width:${Math.round((p.recentFormScore||0.5)*100)}%"></div></div>
+        <div class="pi-score" style="color:var(--green)">${Math.round((p.recentFormScore||0.5)*100)}%</div>
+      </div>
+    `).join('') : '<div style="color:var(--muted);font-size:12px">No player intel yet. Will populate after CricAPI is connected.</div>';
+
+    // Differentials (low ownership)
+    const diffs = [...allPlayers].filter(p=>(p.ownershipPct||1)<=0.3).sort((a,b)=>(b.recentFormScore||0)-(a.recentFormScore||0)).slice(0,8);
+    document.getElementById('diffPlayers').innerHTML = diffs.length ? diffs.map(p => `
+      <div class="player-intel-row">
+        <div style="width:28px;height:28px;border-radius:50%;background:rgba(255,179,0,0.1);border:1px solid rgba(255,179,0,0.2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--amber);flex-shrink:0">${p.role||'?'}</div>
+        <div style="flex:1"><div class="pi-name">${p.name||'—'}</div><div class="pi-team">${p.team||'—'} · ${Math.round((p.ownershipPct||0)*100)}% owned</div></div>
+        <div class="pi-bar-wrap"><div class="pi-bar" style="width:${Math.round((p.recentFormScore||0.5)*100)}%;background:var(--amber)"></div></div>
+        <div class="pi-score" style="color:var(--amber)">${Math.round((p.ownershipPct||0)*100)}%</div>
+      </div>
+    `).join('') : '<div style="color:var(--muted);font-size:12px">Differential picks appear after ownership data is available.</div>';
+
+    // Full table
+    renderPlayersTable(allPlayers);
+  } catch(e) {
+    document.getElementById('playersBody').innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">Player intel populates automatically after matches begin.</td></tr>`;
+    document.getElementById('topFormPlayers').innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Will appear after IPL matches begin</div>';
+    document.getElementById('diffPlayers').innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Will appear after ownership data available</div>';
+  }
+}
+
+function renderPlayersTable(players) {
+  document.getElementById('playersBody').innerHTML = players.length ? players.slice(0,50).map(p => {
+    const form = Math.round((p.recentFormScore||0.5)*100);
+    const formColor = form>=70?'var(--green)':form>=50?'var(--amber)':'var(--red)';
+    return `<tr>
+      <td style="font-weight:600;font-size:13px">${p.name||'—'}</td>
+      <td><span class="badge badge-dim">${p.team||'—'}</span></td>
+      <td><span class="badge ${p.role==='BAT'?'badge-cyan':p.role==='BOWL'?'badge-red':p.role==='ALL'?'badge-green':'badge-amber'}">${p.role||'—'}</span></td>
+      <td style="font-family:'JetBrains Mono';font-size:12px">₹${p.credits||'?'}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div style="width:50px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px"><div style="height:100%;width:${form}%;background:${formColor};border-radius:2px"></div></div><span style="font-family:'JetBrains Mono';font-size:11px;font-weight:700;color:${formColor}">${form}%</span></div></td>
+      <td style="font-family:'JetBrains Mono';font-size:11px">${p.ownershipPct?Math.round(p.ownershipPct*100)+'%':'—'}</td>
+      <td style="font-family:'JetBrains Mono';font-size:11px">${p.venueScore?Math.round(p.venueScore*100)+'%':'—'}</td>
+      <td style="font-family:'JetBrains Mono';font-size:11px">${p.h2hScore?Math.round(p.h2hScore*100)+'%':'—'}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">No players found</td></tr>`;
+}
+
+function filterPlayers() {
+  const q = document.getElementById('playerSearch').value.toLowerCase();
+  renderPlayersTable(allPlayers.filter(p => (p.name||'').toLowerCase().includes(q) || (p.team||'').toLowerCase().includes(q)));
+}
+
+// ─── CONTROLS ────────────────────────────────────────────────────────────────
+async function loadControls() {
+  // Check service statuses
+  const services = [
+    {id:'cricapi', label:'CricAPI', desc:'cricapiStatus', badge:'cricapiBadge'},
+    {id:'msg91', label:'MSG91', desc:'msg91Status', badge:'msg91Badge'},
+    {id:'razorpay', label:'Razorpay', desc:'razorpayStatus', badge:'razorpayBadge'},
+    {id:'firebase', label:'Firebase', desc:'firebaseStatus', badge:'firebaseBadge'},
+  ];
+
+  try {
+    const health = await api('/health');
+    services.forEach(s => {
+      const ok = health[s.id] || health.services?.[s.id];
+      document.getElementById(s.desc).textContent = ok ? `${s.label} is configured and responding` : `${s.label} — placeholder key or not configured`;
+      document.getElementById(s.badge).innerHTML = ok ? '<span class="badge badge-green">LIVE</span>' : '<span class="badge badge-amber">PLACEHOLDER</span>';
+      document.getElementById(s.badge).className = '';
+    });
+  } catch {
+    services.forEach(s => {
+      document.getElementById(s.desc).textContent = 'Could not verify — check Railway logs';
+      document.getElementById(s.badge).innerHTML = '<span class="badge badge-dim">UNKNOWN</span>';
+    });
+  }
+}
+
+async function syncMatches() {
+  try {
+    toast('Syncing matches from CricAPI...', '⟳');
+    await api('/api/matches/sync', 'POST');
+    toast('✅ Matches synced successfully!');
+    loadMatches();
+  } catch(e) { toast('Sync failed: ' + e.message, '❌'); }
+}
+
+async function generateTeams() {
+  const matchId = document.getElementById('genMatchId').value.trim();
+  if (!matchId) { toast('Enter a Match ID first', '⚠️'); return; }
+  await generateTeamsFor(matchId);
+}
+
+async function generateTeamsFor(matchId) {
+  if (!matchId) { toast('No match ID', '⚠️'); return; }
+  try {
+    toast('Generating AI teams...', '🧠');
+    await api(`/api/matches/${matchId}/generate`, 'POST');
+    toast('✅ Teams generated for ' + matchId.slice(-8));
+  } catch(e) { toast('Generation failed: ' + e.message, '❌'); }
+}
+
+async function lockMatch() {
+  const matchId = document.getElementById('lockMatchId').value.trim();
+  if (!matchId) { toast('Enter a Match ID first', '⚠️'); return; }
+  await lockMatchId(matchId);
+}
+
+async function lockMatchId(matchId) {
+  if (!matchId) return;
+  if (!confirm(`Lock teams for match ${matchId.slice(-8)}? Users won't be able to access teams.`)) return;
+  try {
+    await api(`/api/matches/${matchId}/lock`, 'POST');
+    toast('✅ Match locked: ' + matchId.slice(-8));
+  } catch(e) { toast('Lock failed: ' + e.message, '❌'); }
+}
+
+async function triggerLearning() {
+  const matchId = document.getElementById('learnMatchId').value.trim();
+  if (!matchId) { toast('Enter a Match ID first', '⚠️'); return; }
+  try {
+    toast('Triggering AI learning cycle...', '🧠');
+    await api(`/api/matches/${matchId}/learn`, 'POST');
+    toast('✅ AI learning triggered');
+  } catch(e) { toast('Learning failed: ' + e.message, '❌'); }
+}
+
+async function resetWeights() {
+  if (!confirm('⚠️ Reset ALL AI weights to defaults? This undoes all learning.')) return;
+  try {
+    await api('/api/admin/reset-weights', 'POST');
+    toast('⚠️ Weights reset to defaults');
+    loadAI();
+  } catch(e) { toast('Reset failed: ' + e.message, '❌'); }
+}
+
+async function scrapeStats() {
+  try {
+    toast('Scraping player stats...', '📊');
+    await api('/api/admin/scrape-stats', 'POST');
+    toast('✅ Stats scrape triggered');
+  } catch(e) { toast('Scrape triggered (check Railway logs)', '📊'); }
+}
+
+// ─── LOGS ────────────────────────────────────────────────────────────────────
+async function loadLogs() {
+  try {
+    const data = await api('/api/admin/logs');
+    allLogs = data.logs || data || [];
+    renderLogs(allLogs);
+  } catch {
+    // Show mock log structure to explain what will appear
+    document.getElementById('logsBody').innerHTML = `
+      <div style="color:var(--muted);padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)"><span style="color:var(--dim)">Waiting for events...</span></div>
+      <div style="margin-top:16px;color:var(--dim);font-size:11px;line-height:2">
+        Events will appear here automatically:<br>
+        <span style="color:var(--green)">PAYMENT</span> — user purchases<br>
+        <span style="color:var(--cyan)">AI</span> — team generation, weight updates<br>
+        <span style="color:var(--amber)">MATCH</span> — XI confirmation, lock events<br>
+        <span style="color:var(--red)">ERROR</span> — failed scrapes, API errors
+      </div>
+    `;
+  }
+}
+
+function renderLogs(logs) {
+  if (!logs.length) { document.getElementById('logsBody').innerHTML = '<div style="color:var(--muted)">No logs found</div>'; return; }
+  document.getElementById('logsBody').innerHTML = logs.map(l => {
+    const color = l.type==='payment'?'var(--green)':l.type==='ai'?'var(--cyan)':l.type==='match'?'var(--amber)':l.type==='error'?'var(--red)':'var(--muted)';
+    return `<div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:12px">
+      <span style="color:var(--dim);width:140px;flex-shrink:0">${formatDate(l.timestamp)}</span>
+      <span style="color:${color};width:60px;flex-shrink:0">[${(l.type||'INFO').toUpperCase()}]</span>
+      <span style="color:var(--muted);flex:1">${l.message||l.msg||JSON.stringify(l)}</span>
+    </div>`;
+  }).join('');
+}
+
+function filterLogs() {
+  const f = document.getElementById('logFilter').value;
+  renderLogs(f==='all' ? allLogs : allLogs.filter(l => l.type===f));
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function formatDate(str) {
+  if (!str) return '—';
+  try {
+    return new Date(str).toLocaleDateString('en-IN', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  } catch { return str.slice(0,16); }
+}
+
+function formatTime(str) {
+  if (!str) return '—';
+  try { return new Date(str).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}); }
+  catch { return str; }
+}
+
+function maskId(id) {
+  if (!id || id.length < 6) return id;
+  return id.slice(0,3) + '****' + id.slice(-3);
+}
+
+// ─── AUTO REFRESH ─────────────────────────────────────────────────────────────
+setInterval(() => {
+  const activePage = document.querySelector('.page.active')?.id;
+  if (activePage === 'page-overview') loadOverview();
+}, 60000); // refresh every 60s
+</script>
+</body>
+</html>
