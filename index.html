@@ -813,9 +813,38 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 }
 .copy-team-btn:hover{background:rgba(184,255,0,0.14)}
 
-/* ── ANTI-PIRACY ── */
-/* Warning banner — always visible, shows on every screenshot */
-.piracy-warning{
+/* ── BLUR SHIELD ── */
+#blurShield{
+  position:fixed;inset:0;z-index:9999;
+  background:rgba(2,5,8,0.97);
+  backdrop-filter:blur(20px);
+  display:none;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:16px;text-align:center;padding:32px;
+}
+#blurShield.active{display:flex}
+.shield-icon{font-size:52px}
+.shield-title{font-family:'Bebas Neue';font-size:30px;letter-spacing:3px;color:var(--gold)}
+.shield-sub{font-family:'Barlow Condensed';font-size:14px;color:rgba(255,255,255,0.4);max-width:280px;line-height:1.6}
+.shield-btn{
+  background:linear-gradient(135deg,var(--lime),#7ac030);
+  color:#000;border:none;padding:14px 32px;border-radius:30px;
+  font-family:'Rajdhani';font-size:16px;font-weight:700;
+  cursor:pointer;margin-top:8px;letter-spacing:1px;
+}
+
+/* ── CANVAS WRAP ── */
+.canvas-wrap{
+  position:relative;border-radius:12px;overflow:hidden;
+  border:1px solid rgba(168,224,74,0.12);
+  margin-bottom:14px;background:#040e08;
+}
+.canvas-wrap canvas{display:block;width:100%;height:auto}
+/* Block right-click/drag on canvas */
+.canvas-wrap::after{
+  content:'';position:absolute;inset:0;
+  background:transparent;z-index:2;
+}
   background:rgba(255,179,0,0.08);
   border:1px solid rgba(255,179,0,0.2);
   border-radius:8px;padding:8px 12px;
@@ -1153,117 +1182,60 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   </div>
 </div>
 
+<!-- BLUR SHIELD — activates on app switch / screenshot attempt -->
+<div id="blurShield">
+  <div class="shield-icon">🔒</div>
+  <div class="shield-title">CONTENT PROTECTED</div>
+  <div class="shield-sub">Your AI teams are secured. Tap below to continue viewing.</div>
+  <button class="shield-btn" onclick="dismissShield()">Tap to Continue →</button>
+</div>
+
 <!-- TEAMS MODAL -->
 <div class="modal-overlay" id="teamsModal" onclick="closeModal('teamsModal')">
   <div class="modal teams-modal" onclick="event.stopPropagation()">
 
-    <!-- Fixed header — never scrolls -->
+    <!-- Fixed header -->
     <div class="modal-top" style="padding:14px 16px 12px">
       <button class="modal-close" onclick="closeModal('teamsModal')" style="float:right;margin-top:-2px">×</button>
       <div class="modal-match" id="teamsModalMatch" style="font-size:20px;letter-spacing:2px">MI vs CSK · AI Teams</div>
-      <div class="modal-venue">Playing XI Confirmed ✅</div>
+      <div class="modal-venue" id="teamsModalVenue">Playing XI Confirmed ✅</div>
     </div>
 
-    <!-- Fixed tabs — never scroll -->
+    <!-- Security notice with buyer ID -->
+    <div id="teamsSecNotice" style="
+      background:rgba(255,179,0,0.07);border-bottom:1px solid rgba(255,179,0,0.12);
+      padding:8px 16px;font-family:'Barlow Condensed';font-size:11px;font-weight:700;
+      color:rgba(255,179,0,0.6);letter-spacing:0.5px;line-height:1.5;
+      display:flex;align-items:center;gap:8px;flex-shrink:0;
+    ">
+      <span>🔐</span>
+      <span id="secNoticeText">Teams are personalized to your session · Sharing violates our Terms · Account ban applies</span>
+    </div>
+
+    <!-- Fixed tabs -->
     <div class="teams-tabs">
       <div class="teams-tab active" id="tabSafe" onclick="switchTab('safe')">🛡️ SAFE TEAM</div>
       <div class="teams-tab" id="tabBold" onclick="switchTab('bold')">🔥 BOLD TEAM</div>
     </div>
-    <!-- Shown only when both teams unlocked -->
-    <div class="both-unlocked-banner" id="bothBanner">⚡ CHAMP BUNDLE — BOTH TEAMS UNLOCKED · SWIPE TABS TO SWITCH</div>
+    <div class="both-unlocked-banner" id="bothBanner">⚡ CHAMP BUNDLE — BOTH TEAMS UNLOCKED · TAP TABS TO SWITCH</div>
 
-    <!-- SAFE TEAM — scrollable panel -->
+    <!-- SAFE TEAM panel -->
     <div class="teams-panel active" id="panelSafe">
-      <!-- Anti-piracy warning — visible on every screenshot -->
-      <div class="piracy-warning">
-        ⚠️ Sharing this team may invalidate your results. Each team is uniquely generated for your device.
+      <!-- Canvas renders here — players drawn as image, not HTML text -->
+      <div class="canvas-wrap">
+        <canvas id="safeCanvas"></canvas>
       </div>
-      <div class="team-header">
-        <div class="team-label safe">SAFE TEAM</div>
-        <div class="team-conf">AI Confidence: 65%</div>
-      </div>
-      <div class="cap-row">
-        <div class="cap-card" style="border-color:rgba(255,204,0,0.3)">
-          <div class="cap-badge" style="color:var(--gold)">★ CAPTAIN (2×)</div>
-          <div class="cap-name">Suryakumar Yadav</div>
-          <div class="cap-team">MI · BAT · 10.0 cr</div>
-        </div>
-        <div class="cap-card" style="border-color:rgba(184,255,0,0.2)">
-          <div class="cap-badge" style="color:var(--lime)">★ VC (1.5×)</div>
-          <div class="cap-name">Ruturaj Gaikwad</div>
-          <div class="cap-team">CSK · BAT · 9.5 cr</div>
-        </div>
-      </div>
-      <!-- Tap-to-reveal controls -->
-      <div class="unlock-all-bar" onclick="unlockAllPlayers('safe')">
-        <span>👁️ TAP TO REVEAL ALL 11 PLAYERS</span>
-        <span class="unlock-count" id="safeUnlockCount">0/11</span>
-      </div>
-      <div class="relock-bar" id="safeRelockBar">
-        <div class="relock-fill" id="safeRelockFill" style="width:100%"></div>
-      </div>
-      <div class="players-grid" id="safePlayersGrid">
-        <div class="player-row"><span class="p-num">1</span><span class="p-name">MS Dhoni</span><span class="p-role role-wk">WK</span><span class="p-credits">10.0</span></div>
-        <div class="player-row"><span class="p-num">2</span><span class="p-name">Rohit Sharma</span><span class="p-role role-bat">BAT</span><span class="p-credits">10.5</span></div>
-        <div class="player-row"><span class="p-num">3</span><span class="p-name">Suryakumar Yadav ©</span><span class="p-role role-bat">BAT</span><span class="p-credits">10.0</span></div>
-        <!-- Mid watermark — embedded between players, shows on screenshot -->
-        <div class="mid-watermark" id="safeWatermarkMid">CHAMP11.IN · UNIQUE TO THIS DEVICE</div>
-        <div class="player-row"><span class="p-num">4</span><span class="p-name">Ruturaj Gaikwad vc</span><span class="p-role role-bat">BAT</span><span class="p-credits">9.5</span></div>
-        <div class="player-row"><span class="p-num">5</span><span class="p-name">Devon Conway</span><span class="p-role role-bat">BAT</span><span class="p-credits">9.0</span></div>
-        <div class="player-row"><span class="p-num">6</span><span class="p-name">Hardik Pandya</span><span class="p-role role-all">ALL</span><span class="p-credits">10.0</span></div>
-        <div class="player-row"><span class="p-num">7</span><span class="p-name">Ravindra Jadeja</span><span class="p-role role-all">ALL</span><span class="p-credits">9.5</span></div>
-        <div class="player-row"><span class="p-num">8</span><span class="p-name">Jasprit Bumrah</span><span class="p-role role-bowl">BOWL</span><span class="p-credits">10.5</span></div>
-        <div class="player-row"><span class="p-num">9</span><span class="p-name">Deepak Chahar</span><span class="p-role role-bowl">BOWL</span><span class="p-credits">8.5</span></div>
-        <div class="player-row"><span class="p-num">10</span><span class="p-name">Trent Boult</span><span class="p-role role-bowl">BOWL</span><span class="p-credits">9.0</span></div>
-        <div class="player-row"><span class="p-num">11</span><span class="p-name">Matheesha Pathirana</span><span class="p-role role-bowl">BOWL</span><span class="p-credits">8.0</span></div>
-      </div>
-      <button class="copy-team-btn" onclick="copyTeam('safe')">📋 COPY SAFE TEAM NAMES</button>
-      <div class="teams-watermark" id="safeWatermark">CHAMP11.IN · UNIQUE TO THIS DEVICE · DO NOT SHARE</div>
+      <button class="copy-team-btn" onclick="copyTeamCanvas('safe')">📋 COPY SAFE TEAM TO DREAM11</button>
+      <div style="text-align:center;margin-top:8px;font-family:'Barlow Condensed';font-size:10px;color:rgba(255,255,255,0.1);letter-spacing:2px" id="safeWatermark">CHAMP11.IN</div>
     </div>
 
-    <!-- BOLD TEAM — scrollable panel -->
+    <!-- BOLD TEAM panel -->
     <div class="teams-panel" id="panelBold">
-      <div class="team-header">
-        <div class="team-label bold">BOLD TEAM</div>
-        <div class="team-conf">AI Confidence: 52%</div>
+      <div class="canvas-wrap">
+        <canvas id="boldCanvas"></canvas>
       </div>
-      <div class="cap-row">
-        <div class="cap-card" style="border-color:rgba(255,107,0,0.3)">
-          <div class="cap-badge" style="color:var(--orange)">★ CAPTAIN (2×)</div>
-          <div class="cap-name">Jasprit Bumrah</div>
-          <div class="cap-team">MI · BOWL · 10.5 cr</div>
-        </div>
-        <div class="cap-card" style="border-color:rgba(255,107,0,0.15)">
-          <div class="cap-badge" style="color:rgba(255,107,0,0.7)">★ VC (1.5×)</div>
-          <div class="cap-name">Shivam Dube</div>
-          <div class="cap-team">CSK · ALL · 8.5 cr</div>
-        </div>
-      </div>
-      <!-- Tap-to-reveal controls -->
-      <div class="unlock-all-bar" onclick="unlockAllPlayers('bold')" style="border-color:rgba(255,107,0,0.2);color:rgba(255,107,0,0.7)">
-        <span>👁️ TAP TO REVEAL ALL 11 PLAYERS</span>
-        <span class="unlock-count" id="boldUnlockCount">0/11</span>
-      </div>
-      <div class="relock-bar" id="boldRelockBar">
-        <div class="relock-fill" id="boldRelockFill" style="width:100%;background:var(--orange)"></div>
-      </div>
-      <div class="players-grid" id="boldPlayersGrid">
-        <div class="player-row"><span class="p-num">1</span><span class="p-name">Ishan Kishan</span><span class="p-role role-wk">WK</span><span class="p-credits">9.0</span></div>
-        <div class="player-row"><span class="p-num">2</span><span class="p-name">Rohit Sharma</span><span class="p-role role-bat">BAT</span><span class="p-credits">10.5</span></div>
-        <div class="player-row"><span class="p-num">3</span><span class="p-name">Tim David</span><span class="p-role role-bat">BAT</span><span class="p-credits">8.5</span><span class="p-diff-tag">DIFF</span></div>
-        <!-- Mid watermark -->
-        <div class="mid-watermark" id="boldWatermarkMid">CHAMP11.IN · UNIQUE TO THIS DEVICE</div>
-        <div class="player-row diff"><span class="p-num">4</span><span class="p-name">Ruturaj Gaikwad</span><span class="p-role role-bat">BAT</span><span class="p-credits">9.5</span></div>
-        <div class="player-row diff"><span class="p-num">5</span><span class="p-name">Shivam Dube vc</span><span class="p-role role-all">ALL</span><span class="p-credits">8.5</span><span class="p-diff-tag">DIFF</span></div>
-        <div class="player-row"><span class="p-num">6</span><span class="p-name">Hardik Pandya</span><span class="p-role role-all">ALL</span><span class="p-credits">10.0</span></div>
-        <div class="player-row diff"><span class="p-num">7</span><span class="p-name">Moeen Ali</span><span class="p-role role-all">ALL</span><span class="p-credits">9.0</span><span class="p-diff-tag">DIFF</span></div>
-        <div class="player-row"><span class="p-num">8</span><span class="p-name">Jasprit Bumrah ©</span><span class="p-role role-bowl">BOWL</span><span class="p-credits">10.5</span></div>
-        <div class="player-row diff"><span class="p-num">9</span><span class="p-name">Piyush Chawla</span><span class="p-role role-bowl">BOWL</span><span class="p-credits">7.5</span><span class="p-diff-tag">DIFF</span></div>
-        <div class="player-row"><span class="p-num">10</span><span class="p-name">Matheesha Pathirana</span><span class="p-role role-bowl">BOWL</span><span class="p-credits">8.0</span></div>
-        <div class="player-row diff"><span class="p-num">11</span><span class="p-name">Tushar Deshpande</span><span class="p-role role-bowl">BOWL</span><span class="p-credits">8.0</span><span class="p-diff-tag">DIFF</span></div>
-      </div>
-      <button class="copy-team-btn" onclick="copyTeam('bold')" style="border-color:rgba(255,107,0,0.2);color:var(--orange)">📋 COPY BOLD TEAM NAMES</button>
-      <div class="teams-watermark" id="boldWatermark">CHAMP11.IN · UNIQUE TO THIS DEVICE · DO NOT SHARE</div>
+      <button class="copy-team-btn" onclick="copyTeamCanvas('bold')" style="border-color:rgba(255,107,0,0.2);color:var(--orange)">📋 COPY BOLD TEAM TO DREAM11</button>
+      <div style="text-align:center;margin-top:8px;font-family:'Barlow Condensed';font-size:10px;color:rgba(255,255,255,0.1);letter-spacing:2px" id="boldWatermark">CHAMP11.IN</div>
     </div>
 
   </div>
@@ -1336,30 +1308,422 @@ function switchTab(which) {
   if (which === 'bold') bold.scrollTop = 0;
 }
 
-function copyTeam(which) {
-  const panel = document.getElementById(which === 'safe' ? 'panelSafe' : 'panelBold');
-  // Strip invisible watermark chars from names before copying
-  const names = Array.from(panel.querySelectorAll('.p-name')).map(el =>
-    el.textContent.replace(/[\u200B\u200C\u200D\uFEFF]/g,'').replace(' ©','').replace(' vc','').trim()
-  );
-  const capCards = panel.querySelectorAll('.cap-name');
-  const wm = panel.getAttribute('data-wm') || 'CHAMP11.IN';
-  const wmLine = wm.split('\n').join(' · ');
-
-  const text = `🏏 CHAMP11 · ${currentMatch}\n` +
-    `C: ${capCards[0]?.textContent || '—'} | VC: ${capCards[1]?.textContent || '—'}\n\n` +
-    names.map((n,i) => `${i+1}. ${n}`).join('\n') +
-    `\n\n📲 Get your team: champ11.in\n${wmLine}`;
-
-  navigator.clipboard.writeText(text).then(() => {
-    showToast('✅ Team copied! Paste in Dream11/My11Circle.');
-  }).catch(() => {
-    // Fallback for browsers that block clipboard
-    showToast('📋 Select & copy manually');
-  });
+function copyTeamCanvas(which) {
+  const team = which === 'safe' ? currentSafeTeam : currentBoldTeam;
+  if (!team || !team.players) { showToast('⚠️ No team data yet'); return; }
+  const captain = team.players.find(p => p.isCaptain)?.name || '';
+  const vc      = team.players.find(p => p.isVC)?.name || '';
+  const names   = team.players.map((p,i) => {
+    const tag = p.isCaptain ? ' [C]' : p.isVC ? ' [VC]' : '';
+    return `${i+1}. ${p.name}${tag}`;
+  }).join('\n');
+  const text = `🏏 CHAMP11 ${which.toUpperCase()} TEAM\n${currentMatch}\n\nC: ${captain} | VC: ${vc}\n\n${names}\n\n📲 champ11.in`;
+  navigator.clipboard.writeText(text)
+    .then(() => showToast('✅ Team copied! Paste in Dream11.'))
+    .catch(()  => showToast('📋 Team ready — enter manually in Dream11.'));
 }
 
-async function doPayment() {
+// ─── CANVAS TEAM RENDERER ────────────────────────────────────────────────────
+const ROLE_COLORS = {
+  BAT:  { bg:'rgba(41,201,240,0.18)',  text:'#29c9f0', label:'BAT'  },
+  BOWL: { bg:'rgba(240,98,41,0.18)',   text:'#f06229', label:'BOWL' },
+  ALL:  { bg:'rgba(168,224,74,0.18)',  text:'#a8e04a', label:'ALL'  },
+  WK:   { bg:'rgba(240,180,41,0.18)',  text:'#f0b429', label:'WK'   },
+};
+const TEAM_COLORS = {
+  MI:'#005DA0', CSK:'#F9CD05', RCB:'#C8102E', KKR:'#3A225D',
+  DC:'#0078BC', SRH:'#F7A721', RR:'#EA1A85',  GT:'#1C4E9F',
+  PBKS:'#ED1B24', LSG:'#A0C2E0',
+};
+
+let currentSafeTeam = null;
+let currentBoldTeam = null;
+let currentSession  = {};
+
+function renderTeamCanvas(canvasId, team, strategy) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !team) return;
+  const dpr    = Math.min(window.devicePixelRatio || 1, 2);
+  const W      = canvas.parentElement.clientWidth || 340;
+  const ROW_H  = 50;
+  const HEADER = 70;
+  const FOOTER = 56;
+  const H      = HEADER + (team.players.length * ROW_H) + FOOTER;
+
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const isSafe = strategy === 'safe';
+
+  // Background
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  if (isSafe) {
+    bgGrad.addColorStop(0, '#0a1810'); bgGrad.addColorStop(1, '#040e08');
+  } else {
+    bgGrad.addColorStop(0, '#180e06'); bgGrad.addColorStop(1, '#0c0604');
+  }
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1;
+  for (let y = HEADER; y < H - FOOTER; y += ROW_H) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // Header
+  const hGrad = ctx.createLinearGradient(0, 0, W, 0);
+  if (isSafe) { hGrad.addColorStop(0,'rgba(15,122,58,0.6)'); hGrad.addColorStop(1,'rgba(10,80,35,0.3)'); }
+  else        { hGrad.addColorStop(0,'rgba(200,60,10,0.6)'); hGrad.addColorStop(1,'rgba(120,30,5,0.3)'); }
+  ctx.fillStyle = hGrad; ctx.fillRect(0, 0, W, HEADER);
+  ctx.strokeStyle = isSafe ? 'rgba(168,224,74,0.3)' : 'rgba(240,98,41,0.3)';
+  ctx.beginPath(); ctx.moveTo(0, HEADER); ctx.lineTo(W, HEADER); ctx.stroke();
+
+  // Logo
+  ctx.font = 'bold 20px "Bebas Neue", Arial'; ctx.fillStyle = '#fff';
+  ctx.fillText('CHAMP', 14, 32);
+  ctx.fillStyle = '#f0b429'; ctx.fillText('11', 68, 32);
+
+  // Strategy label
+  ctx.font = 'bold 11px "Barlow Condensed", Arial';
+  ctx.fillStyle = isSafe ? '#a8e04a' : '#f06229';
+  ctx.fillText(isSafe ? '🛡 SAFE TEAM' : '⚡ BOLD TEAM', 14, 52);
+
+  // Match + session info right
+  ctx.textAlign = 'right';
+  ctx.font = 'bold 12px "Barlow Condensed", Arial';
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.fillText(currentSession.match || currentMatch, W - 14, 28);
+  ctx.font = '10px "Barlow Condensed", Arial';
+  ctx.fillStyle = 'rgba(255,255,255,0.28)';
+  ctx.fillText(currentSession.maskedId || '', W - 14, 44);
+  ctx.fillText(new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short'}), W - 14, 58);
+  ctx.textAlign = 'left';
+
+  // Player rows
+  team.players.forEach((p, i) => {
+    const y    = HEADER + (i * ROW_H);
+    const midY = y + ROW_H / 2;
+
+    // Row bg
+    if (i % 2 === 0) { ctx.fillStyle='rgba(255,255,255,0.018)'; ctx.fillRect(0,y,W,ROW_H); }
+    if (p.isCaptain) { ctx.fillStyle='rgba(240,180,41,0.12)'; ctx.fillRect(0,y,W,ROW_H); }
+    if (p.isVC)      { ctx.fillStyle='rgba(168,224,74,0.10)'; ctx.fillRect(0,y,W,ROW_H); }
+
+    // Team color bar
+    const tc = TEAM_COLORS[p.team] || '#888';
+    ctx.fillStyle = tc + 'cc'; ctx.fillRect(0, y+8, 3, ROW_H-16);
+
+    // Captain/VC badge
+    if (p.isCaptain || p.isVC) {
+      const bText = p.isCaptain ? 'C' : 'VC';
+      const bCol  = p.isCaptain ? '#f0b429' : '#a8e04a';
+      const bW    = p.isCaptain ? 20 : 26;
+      ctx.fillStyle = bCol;
+      ctx.beginPath(); ctx.roundRect(10, midY-11, bW, 22, 4); ctx.fill();
+      ctx.font='bold 11px "Barlow Condensed",Arial'; ctx.fillStyle='#000';
+      ctx.textAlign='center'; ctx.fillText(bText, 10+bW/2, midY+4); ctx.textAlign='left';
+    }
+
+    // Name
+    const nameX = (p.isCaptain || p.isVC) ? 44 : 14;
+    ctx.font='bold 13px "Barlow Condensed",Arial'; ctx.fillStyle='#fff';
+    ctx.fillText(p.name, nameX, midY-2);
+    ctx.font='10px "Barlow Condensed",Arial'; ctx.fillStyle=tc+'cc';
+    ctx.fillText(p.team, nameX, midY+11);
+
+    // Role pill
+    const rc = ROLE_COLORS[p.role] || ROLE_COLORS.BAT;
+    const roleW=40, roleH=18, roleX=W-80;
+    ctx.fillStyle=rc.bg; ctx.beginPath(); ctx.roundRect(roleX,midY-roleH/2,roleW,roleH,4); ctx.fill();
+    ctx.font='bold 9px "Barlow Condensed",Arial'; ctx.fillStyle=rc.text;
+    ctx.textAlign='center'; ctx.fillText(rc.label, roleX+roleW/2, midY+3); ctx.textAlign='left';
+
+    // Credits
+    ctx.font='bold 13px "Bebas Neue",Arial'; ctx.fillStyle='rgba(255,255,255,0.35)';
+    ctx.textAlign='right'; ctx.fillText(p.credits, W-14, midY+5); ctx.textAlign='left';
+  });
+
+  // Footer
+  const footY = HEADER + (team.players.length * ROW_H);
+  ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,footY,W,FOOTER);
+  ctx.strokeStyle='rgba(255,255,255,0.06)';
+  ctx.beginPath(); ctx.moveTo(0,footY); ctx.lineTo(W,footY); ctx.stroke();
+
+  const creditOk = team.totalCredits <= 100;
+  ctx.font='bold 11px "Barlow Condensed",Arial';
+  ctx.fillStyle = creditOk ? 'rgba(168,224,74,0.7)' : 'rgba(224,48,48,0.9)';
+  ctx.fillText(`CREDITS: ${team.totalCredits}/100  ${creditOk?'✓ VALID':'✗ OVER'}`, 14, footY+20);
+  ctx.fillStyle='rgba(255,255,255,0.25)';
+  ctx.fillText('PLAYERS: 11  ·  MAX 7 FROM ONE TEAM', 14, footY+38);
+  ctx.font='9px "Barlow Condensed",Arial'; ctx.fillStyle='rgba(255,255,255,0.15)';
+  ctx.textAlign='right'; ctx.fillText(currentSession.txnId || '', W-14, footY+38); ctx.textAlign='left';
+
+  // ── DIAGONAL WATERMARK burned into pixels ──
+  ctx.save();
+  ctx.globalAlpha = 0.045;
+  ctx.fillStyle   = isSafe ? '#a8e04a' : '#f06229';
+  ctx.font        = 'bold 10px Arial';
+  const wmText    = `CHAMP11 · ${currentSession.maskedId || 'GUEST'} · ${currentSession.txnId || ''} · champ11.in`;
+  for (let row=-2; row < Math.ceil(H/48)+2; row++) {
+    for (let col=-1; col < Math.ceil(W/220)+2; col++) {
+      ctx.save();
+      ctx.translate(col*220 + (row%2===0?0:110), row*48);
+      ctx.rotate(-0.28);
+      ctx.fillText(wmText, 0, 0);
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+
+  // Border
+  ctx.strokeStyle = isSafe ? 'rgba(168,224,74,0.15)' : 'rgba(240,98,41,0.18)';
+  ctx.lineWidth=1; ctx.strokeRect(0.5,0.5,W-1,H-1);
+
+  // Block canvas drag/right-click
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+  canvas.addEventListener('dragstart',   e => e.preventDefault());
+}
+
+function renderBothCanvases() {
+  if (currentSafeTeam) renderTeamCanvas('safeCanvas', currentSafeTeam, 'safe');
+  if (currentBoldTeam) renderTeamCanvas('boldCanvas', currentBoldTeam, 'bold');
+}
+
+// Re-render on resize
+window.addEventListener('resize', () => {
+  if (document.getElementById('teamsModal')?.classList.contains('open')) {
+    setTimeout(renderBothCanvases, 100);
+  }
+});
+
+// ─── BLUR SHIELD (screenshot / app-switch detection) ──────────────────────────
+let blurCount = 0;
+
+function activateShield() {
+  if (document.getElementById('teamsModal')?.classList.contains('open')) {
+    document.getElementById('blurShield').classList.add('active');
+  }
+}
+function dismissShield() {
+  document.getElementById('blurShield').classList.remove('active');
+  blurCount++;
+  if (blurCount >= 1) {
+    showToast(`⚠️ Screenshot detected. Your ID (${currentSession.maskedId||'GUEST'}) is watermarked on this team.`);
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { activateShield(); }
+  else {
+    setTimeout(() => {
+      document.getElementById('blurShield').classList.remove('active');
+      if (blurCount > 0) {
+        showToast(`⚠️ Your ID (${currentSession.maskedId||'GUEST'}) is visible on any screenshot.`);
+      }
+      blurCount++;
+    }, 600);
+  }
+});
+window.addEventListener('blur', activateShield);
+
+// ─── COPY / RIGHT-CLICK PREVENTION ───────────────────────────────────────────
+document.addEventListener('contextmenu', e => {
+  if (e.target.closest('#teamsModal')) { e.preventDefault(); return false; }
+});
+document.addEventListener('copy', e => {
+  if (document.getElementById('teamsModal')?.classList.contains('open')) e.preventDefault();
+});
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('teamsModal')?.classList.contains('open')) return;
+  if ((e.ctrlKey || e.metaKey) && ['c','s','p','u','a'].includes(e.key.toLowerCase())) {
+    e.preventDefault(); showToast('⚠️ Use the Copy button below.');
+  }
+});
+
+// Print block
+window.addEventListener('beforeprint', e => {
+  document.getElementById('teamsModal').style.visibility='hidden';
+  showToast('🚫 Printing disabled.');
+});
+window.addEventListener('afterprint', () => {
+  document.getElementById('teamsModal').style.visibility='visible';
+});
+
+// DevTools detection
+(function(){ let d=false;
+  setInterval(()=>{
+    const w=window.outerWidth-window.innerWidth>160, h=window.outerHeight-window.innerHeight>160;
+    if((w||h)&&!d){ d=true;
+      document.querySelectorAll('.canvas-wrap').forEach(c=>c.style.filter='blur(10px)');
+      showToast('⚠️ Close DevTools to view team');
+    } else if(!w&&!h&&d){ d=false;
+      document.querySelectorAll('.canvas-wrap').forEach(c=>c.style.filter='');
+    }
+  },1000);
+})();
+
+// ─── SHOW TEAMS AFTER PAYMENT ─────────────────────────────────────────────────
+function showTeamsAfterPayment(teams, paymentId) {
+  closeModal('payModal');
+
+  // Build session identity for watermark
+  const masked = paymentId ? paymentId.slice(-6).toUpperCase() : 'GUEST';
+  const phone4 = currentUserPhone ? '••••'+currentUserPhone.slice(-4) : '';
+  currentSession = {
+    match:    currentMatch,
+    maskedId: masked + (phone4 ? ' · '+phone4 : ''),
+    txnId:    paymentId || '',
+  };
+
+  // Set teams — use backend data or fallback to demo
+  if (teams?.safe?.players) currentSafeTeam = teams.safe;
+  if (teams?.bold?.players) currentBoldTeam = teams.bold;
+  if (!currentSafeTeam) currentSafeTeam = DEMO_SAFE_TEAM;
+  if (!currentBoldTeam) currentBoldTeam = DEMO_BOLD_TEAM;
+
+  // Update header
+  document.getElementById('teamsModalMatch').textContent = currentMatch + ' · AI Teams';
+  document.getElementById('secNoticeText').textContent =
+    `Teams personalized to ${currentSession.maskedId} · Sharing violates Terms · Account ban applies`;
+
+  // Tab visibility based on plan
+  const banner = document.getElementById('bothBanner');
+  if (currentPlan === 'safe') {
+    document.getElementById('tabSafe').style.display = '';
+    document.getElementById('tabBold').style.display = 'none';
+    banner.classList.remove('show'); switchTab('safe');
+  } else if (currentPlan === 'bold') {
+    document.getElementById('tabSafe').style.display = 'none';
+    document.getElementById('tabBold').style.display = '';
+    banner.classList.remove('show'); switchTab('bold');
+  } else {
+    document.getElementById('tabSafe').style.display = '';
+    document.getElementById('tabBold').style.display = '';
+    document.getElementById('tabSafe').innerHTML = '🛡️ SAFE ✅';
+    document.getElementById('tabBold').innerHTML = '🔥 BOLD ✅';
+    banner.classList.add('show'); switchTab('safe');
+  }
+
+  document.getElementById('teamsModal').classList.add('open');
+
+  // Render canvases after modal is visible (needs layout)
+  setTimeout(renderBothCanvases, 120);
+
+  // Save to localStorage for refresh recovery
+  if (paymentId) {
+    savePurchaseToLocal(paymentId, currentMatch, currentPlan,
+      JSON.stringify(currentSafeTeam), JSON.stringify(currentBoldTeam));
+  }
+}
+
+// ─── DEMO TEAMS (shown before real CricAPI data) ─────────────────────────────
+const DEMO_SAFE_TEAM = {
+  players: [
+    {name:'MS Dhoni',          team:'CSK', role:'WK',  credits:9,    isCaptain:false, isVC:false},
+    {name:'Rohit Sharma',      team:'MI',  role:'BAT', credits:10.5, isCaptain:false, isVC:false},
+    {name:'Suryakumar Yadav',  team:'MI',  role:'BAT', credits:10,   isCaptain:true,  isVC:false},
+    {name:'Ruturaj Gaikwad',   team:'CSK', role:'BAT', credits:9.5,  isCaptain:false, isVC:true },
+    {name:'Devon Conway',      team:'CSK', role:'BAT', credits:9,    isCaptain:false, isVC:false},
+    {name:'Hardik Pandya',     team:'MI',  role:'ALL', credits:10,   isCaptain:false, isVC:false},
+    {name:'Ravindra Jadeja',   team:'CSK', role:'ALL', credits:9.5,  isCaptain:false, isVC:false},
+    {name:'Jasprit Bumrah',    team:'MI',  role:'BOWL',credits:10.5, isCaptain:false, isVC:false},
+    {name:'Deepak Chahar',     team:'CSK', role:'BOWL',credits:8.5,  isCaptain:false, isVC:false},
+    {name:'Trent Boult',       team:'MI',  role:'BOWL',credits:9,    isCaptain:false, isVC:false},
+    {name:'M. Pathirana',      team:'CSK', role:'BOWL',credits:8,    isCaptain:false, isVC:false},
+  ], totalCredits: 99.5
+};
+const DEMO_BOLD_TEAM = {
+  players: [
+    {name:'Ishan Kishan',      team:'MI',  role:'WK',  credits:9,    isCaptain:false, isVC:false},
+    {name:'Rohit Sharma',      team:'MI',  role:'BAT', credits:10.5, isCaptain:false, isVC:false},
+    {name:'Tim David',         team:'MI',  role:'BAT', credits:8.5,  isCaptain:false, isVC:false},
+    {name:'Ruturaj Gaikwad',   team:'CSK', role:'BAT', credits:9.5,  isCaptain:false, isVC:false},
+    {name:'Shivam Dube',       team:'CSK', role:'ALL', credits:8.5,  isCaptain:false, isVC:true },
+    {name:'Hardik Pandya',     team:'MI',  role:'ALL', credits:10,   isCaptain:false, isVC:false},
+    {name:'Moeen Ali',         team:'CSK', role:'ALL', credits:9,    isCaptain:false, isVC:false},
+    {name:'Jasprit Bumrah',    team:'MI',  role:'BOWL',credits:10.5, isCaptain:true,  isVC:false},
+    {name:'Piyush Chawla',     team:'MI',  role:'BOWL',credits:7.5,  isCaptain:false, isVC:false},
+    {name:'M. Pathirana',      team:'CSK', role:'BOWL',credits:8,    isCaptain:false, isVC:false},
+    {name:'Tushar Deshpande',  team:'CSK', role:'BOWL',credits:8,    isCaptain:false, isVC:false},
+  ], totalCredits: 98.5
+};
+
+// ─── SESSION PERSISTENCE ─────────────────────────────────────────────────────
+function savePurchaseToLocal(paymentId, match, plan, safeJSON, boldJSON) {
+  try {
+    const key  = 'c11_' + paymentId;
+    const data = { paymentId, match, plan, safeJSON, boldJSON,
+                   savedAt: Date.now(), expiresAt: Date.now() + 12*60*60*1000 };
+    localStorage.setItem(key, JSON.stringify(data));
+    localStorage.setItem('c11_latest', key);
+  } catch(e) {}
+}
+
+function getLatestPurchase() {
+  try {
+    const key = localStorage.getItem('c11_latest');
+    if (!key) return null;
+    const data = JSON.parse(localStorage.getItem(key));
+    if (!data || Date.now() > data.expiresAt) {
+      localStorage.removeItem(key); localStorage.removeItem('c11_latest'); return null;
+    }
+    return data;
+  } catch(e) { return null; }
+}
+
+function restorePurchaseOnLoad() {
+  const data = getLatestPurchase();
+  if (!data) return;
+  const mins = Math.round((Date.now()-data.savedAt)/60000);
+  const timeLabel = mins < 60 ? `${mins} min ago` : `${Math.round(mins/60)} hr ago`;
+  showRestoreBanner(data, timeLabel);
+}
+
+function showRestoreBanner(data, timeLabel) {
+  let banner = document.getElementById('restoreBanner');
+  if (!banner) { banner = document.createElement('div'); banner.id='restoreBanner'; document.body.appendChild(banner); }
+  const planLabel = data.plan==='both'?'Safe + Bold':data.plan==='safe'?'Safe Team':'Bold Team';
+  banner.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:300;background:linear-gradient(135deg,#0d1520,#0a1a10);border-top:2px solid rgba(0,230,118,0.4);padding:14px 20px;display:flex;align-items:center;gap:12px;font-family:Barlow Condensed,sans-serif;animation:slideUp .3s ease';
+  banner.innerHTML=`<div style="flex:1"><div style="font-size:13px;font-weight:700;letter-spacing:1px;color:rgba(0,230,118,0.9)">🔓 YOU HAVE AN UNLOCKED TEAM</div><div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px">${data.match} · ${planLabel} · ${timeLabel}</div></div><button onclick="restoreTeamView('${data.paymentId}')" style="background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);color:rgba(0,230,118,0.9);padding:8px 16px;border-radius:8px;cursor:pointer;font-family:Bebas Neue;font-size:14px;letter-spacing:2px;white-space:nowrap">VIEW TEAM</button><button onclick="this.parentElement.remove()" style="background:none;border:none;color:rgba(255,255,255,0.2);cursor:pointer;font-size:20px;padding:0 4px">×</button>`;
+}
+
+function restoreTeamView(paymentId) {
+  const key = 'c11_' + paymentId;
+  try {
+    const data = JSON.parse(localStorage.getItem(key));
+    if (!data) { showToast('⚠️ Session expired'); return; }
+    currentMatch = data.match;
+    currentPlan  = data.plan;
+    currentMatchId = data.match;
+    try { currentSafeTeam = JSON.parse(data.safeJSON); } catch(e) { currentSafeTeam = DEMO_SAFE_TEAM; }
+    try { currentBoldTeam = JSON.parse(data.boldJSON);  } catch(e) { currentBoldTeam = DEMO_BOLD_TEAM; }
+    showTeamsAfterPayment(null, paymentId);
+    document.getElementById('restoreBanner')?.remove();
+  } catch(e) { showToast('⚠️ Could not restore. Contact support@champ11.in'); }
+}
+
+window.addEventListener('load', () => setTimeout(restorePurchaseOnLoad, 1500));
+
+// Match expiry scheduler
+function scheduleTeamExpiry(matchStartISO) {
+  if (!matchStartISO) return;
+  const delay = new Date(matchStartISO).getTime() - Date.now() - 10*60*1000;
+  if (delay > 0 && delay < 86400000) {
+    setTimeout(() => {
+      closeModal('teamsModal');
+      showToast('🔒 Match starting — teams locked!');
+      const key = localStorage.getItem('c11_latest');
+      if (key) { localStorage.removeItem(key); localStorage.removeItem('c11_latest'); }
+    }, delay);
+  }
+}
+
+
   const prices = { safe: 9, bold: 11, both: 15, weekly: 59, season: 399 };
   const price = prices[currentPlan] || 15;
   const btn = document.querySelector('.modal-pay-btn');
@@ -1467,406 +1831,8 @@ async function doPayment() {
   }
 }
 
-function showTeamsAfterPayment(teams, paymentId) {
-  closeModal('payModal');
-  document.getElementById('teamsModalMatch').textContent = currentMatch + ' · AI Teams';
-  const banner = document.getElementById('bothBanner');
-
-  if (currentPlan === 'safe') {
-    document.getElementById('tabSafe').style.display = '';
-    document.getElementById('tabBold').style.display = 'none';
-    banner.classList.remove('show');
-    switchTab('safe');
-  } else if (currentPlan === 'bold') {
-    document.getElementById('tabSafe').style.display = 'none';
-    document.getElementById('tabBold').style.display = '';
-    banner.classList.remove('show');
-    switchTab('bold');
-  } else {
-    document.getElementById('tabSafe').style.display = '';
-    document.getElementById('tabBold').style.display = '';
-    document.getElementById('tabSafe').innerHTML = '🛡️ SAFE ✅';
-    document.getElementById('tabBold').innerHTML = '🔥 BOLD ✅';
-    banner.classList.add('show');
-    switchTab('safe');
-  }
-
-  document.getElementById('teamsModal').classList.add('open');
-  if (teams) loadTeamsIntoModal(teams);
-
-  // Lock all players — user must tap to reveal
-  setTimeout(initLockPlayers, 100);
-
-  // Inject forensic watermark with buyer's payment ID
-  injectForensicWatermark(paymentId, currentUserPhone);
-
-  // Save to localStorage for refresh recovery
-  if (paymentId) {
-    setTimeout(() => {
-      const safeHTML = document.getElementById('panelSafe')?.innerHTML || '';
-      const boldHTML = document.getElementById('panelBold')?.innerHTML  || '';
-      savePurchaseToLocal(paymentId, currentMatch, currentPlan, safeHTML, boldHTML);
-    }, 300); // small delay to let DOM render first
-  }
-}
-
-function loadTeamsIntoModal(teams) {
-  // Populate safe team if available
-  if (teams.safe && teams.safe.players) {
-    const safeEl = document.querySelector('#safeTeam .team-players');
-    if (safeEl) {
-      safeEl.innerHTML = teams.safe.players.map(p =>
-        `<div class="player-card">${p.isCaptain ? '© ' : p.isViceCaptain ? '(vc) ' : ''}${p.name} <span>${p.role}</span></div>`
-      ).join('');
-    }
-  }
-  // Populate bold team if available
-  if (teams.bold && teams.bold.players) {
-    const boldEl = document.querySelector('#boldTeam .team-players');
-    if (boldEl) {
-      boldEl.innerHTML = teams.bold.players.map(p =>
-        `<div class="player-card">${p.isCaptain ? '© ' : p.isViceCaptain ? '(vc) ' : ''}${p.name} <span>${p.role}</span></div>`
-      ).join('');
-    }
-  }
-}
-
 let currentMatchId = '';
 let currentUserPhone = '';
-
-// ─── ANTI-PIRACY SYSTEM ───────────────────────────────────────────────────────
-
-// 1. Disable right-click on team panels
-document.addEventListener('contextmenu', e => {
-  if (e.target.closest('#panelSafe, #panelBold, #teamsModal')) {
-    e.preventDefault();
-    showToast('⚠️ Right-click disabled on team view');
-    return false;
-  }
-});
-
-// 2. Disable keyboard shortcuts for copying/saving on team modal
-document.addEventListener('keydown', e => {
-  if (!document.getElementById('teamsModal')?.classList.contains('open')) return;
-  // Block Ctrl+C, Ctrl+S, Ctrl+P, Ctrl+U, F12, PrintScreen
-  const blocked = (e.ctrlKey && ['c','s','p','u','a'].includes(e.key.toLowerCase()))
-    || e.key === 'F12'
-    || e.key === 'PrintScreen';
-  if (blocked) {
-    e.preventDefault();
-    showToast('⚠️ Copying disabled. Use the Copy button below.');
-  }
-});
-
-// 3. DevTools detection — blur teams if DevTools opened
-(function detectDevTools() {
-  let devOpen = false;
-  const threshold = 160;
-  setInterval(() => {
-    const widthDiff  = window.outerWidth  - window.innerWidth  > threshold;
-    const heightDiff = window.outerHeight - window.innerHeight > threshold;
-    if ((widthDiff || heightDiff) && !devOpen) {
-      devOpen = true;
-      const panels = document.querySelectorAll('.teams-panel');
-      panels.forEach(p => p.style.filter = 'blur(8px)');
-      showToast('⚠️ Close DevTools to view team');
-    } else if (!widthDiff && !heightDiff && devOpen) {
-      devOpen = false;
-      const panels = document.querySelectorAll('.teams-panel');
-      panels.forEach(p => p.style.filter = '');
-    }
-  }, 1000);
-})();
-
-// 4. Inject unique forensic watermark into team panels
-// Each purchase gets a unique watermark with masked payment ID
-// If team screenshot is shared, we can trace which buyer leaked it
-function injectForensicWatermark(paymentId, phone) {
-  const masked = paymentId
-    ? paymentId.slice(-6).toUpperCase()
-    : Math.random().toString(36).slice(-6).toUpperCase();
-  const phoneTag = phone ? phone.slice(-4) : '????';
-  const wm = `CHAMP11.IN\n${masked}\n••••${phoneTag}`;
-
-  // Invisible diagonal watermark (CSS pseudo-element)
-  document.getElementById('panelSafe')?.setAttribute('data-wm', wm);
-  document.getElementById('panelBold')?.setAttribute('data-wm', wm);
-
-  // Stamp buyer ID into the VISIBLE mid-list watermarks
-  // This appears clearly in any screenshot
-  const midText = `CHAMP11.IN · ${masked} · ••••${phoneTag}`;
-  const safeMid = document.getElementById('safeWatermarkMid');
-  const boldMid = document.getElementById('boldWatermarkMid');
-  if (safeMid) safeMid.textContent = midText;
-  if (boldMid) boldMid.textContent = midText;
-
-  // Also stamp bottom watermarks
-  const safeBot = document.getElementById('safeWatermark');
-  const boldBot = document.getElementById('boldWatermark');
-  if (safeBot) safeBot.textContent = `CHAMP11.IN · ${masked} · DO NOT SHARE`;
-  if (boldBot) boldBot.textContent = `CHAMP11.IN · ${masked} · DO NOT SHARE`;
-
-  // Inject invisible steganographic watermark into player name text
-  injectInvisibleWatermark(masked);
-}
-
-function injectInvisibleWatermark(code) {
-  // Encodes buyer ID as invisible zero-width characters in player names
-  // ZWS = zero-width space, ZWNJ = zero-width non-joiner
-  const ZWS  = '\u200B'; // bit 0
-  const ZWNJ = '\u200C'; // bit 1
-  const binary = code.split('').map(c =>
-    c.charCodeAt(0).toString(2).padStart(8,'0')
-  ).join('');
-
-  document.querySelectorAll('.p-name').forEach((el, idx) => {
-    const bit = binary[idx % binary.length];
-    // Insert invisible char after first letter
-    const text = el.textContent;
-    if (text.length > 1) {
-      el.textContent = text[0] + (bit === '1' ? ZWNJ : ZWS) + text.slice(1);
-    }
-  });
-}
-
-// 5. Auto-expire team view 10 minutes before match starts
-// (in production this checks match lock time from backend)
-function scheduleTeamExpiry(matchStartISO) {
-  if (!matchStartISO) return;
-  const lockTime = new Date(matchStartISO).getTime() - (10 * 60 * 1000); // 10 min before
-  const now = Date.now();
-  const delay = lockTime - now;
-  if (delay > 0 && delay < 24 * 60 * 60 * 1000) {
-    setTimeout(() => {
-      const modal = document.getElementById('teamsModal');
-      if (modal?.classList.contains('open')) {
-        closeModal('teamsModal');
-        showToast('🔒 Team locked — match starting soon!');
-      }
-      // Clear from localStorage too
-      const key = localStorage.getItem('c11_latest_purchase');
-      if (key) localStorage.removeItem(key);
-      localStorage.removeItem('c11_latest_purchase');
-    }, delay);
-  }
-}
-
-// ─── TAP-TO-REVEAL SYSTEM ────────────────────────────────────────────────────
-const RELOCK_SECONDS = 30; // auto-relock after 30 seconds
-let relockTimers = { safe: null, bold: null };
-let relockIntervals = { safe: null, bold: null };
-
-function initLockPlayers() {
-  // Lock all player rows in both panels on modal open
-  ['safe','bold'].forEach(which => {
-    const grid = document.getElementById(which + 'PlayersGrid') ||
-                 document.querySelector('#panel' + which.charAt(0).toUpperCase() + which.slice(1) + ' .players-grid');
-    if (!grid) return;
-    grid.querySelectorAll('.player-row').forEach(row => {
-      row.classList.add('locked');
-      row.onclick = (e) => { e.stopPropagation(); revealPlayer(row, which); };
-    });
-    updateUnlockCount(which);
-  });
-}
-
-function revealPlayer(row, which) {
-  if (!row.classList.contains('locked')) return;
-  row.classList.remove('locked');
-  row.onclick = null;
-  updateUnlockCount(which);
-  resetRelockTimer(which);
-}
-
-function unlockAllPlayers(which) {
-  const grid = document.getElementById(which + 'PlayersGrid') ||
-               document.querySelector('#panel' + which.charAt(0).toUpperCase() + which.slice(1) + ' .players-grid');
-  if (!grid) return;
-  grid.querySelectorAll('.player-row.locked').forEach(row => {
-    row.classList.remove('locked');
-    row.onclick = null;
-  });
-  updateUnlockCount(which);
-  resetRelockTimer(which);
-}
-
-function updateUnlockCount(which) {
-  const panel = document.getElementById('panel' + which.charAt(0).toUpperCase() + which.slice(1));
-  if (!panel) return;
-  const total   = panel.querySelectorAll('.player-row').length;
-  const unlocked = panel.querySelectorAll('.player-row:not(.locked)').length;
-  const countEl = document.getElementById(which + 'UnlockCount');
-  if (countEl) {
-    countEl.textContent = unlocked + '/' + total;
-    // Change button text when all revealed
-    const bar = countEl.parentElement;
-    if (unlocked === total) {
-      bar.querySelector('span:first-child').textContent = '🔓 ALL PLAYERS REVEALED';
-    } else {
-      bar.querySelector('span:first-child').textContent = '👁️ TAP TO REVEAL ALL ' + total + ' PLAYERS';
-    }
-  }
-}
-
-function resetRelockTimer(which) {
-  // Clear existing timers
-  if (relockTimers[which])    clearTimeout(relockTimers[which]);
-  if (relockIntervals[which]) clearInterval(relockIntervals[which]);
-
-  // Show relock countdown bar
-  const bar  = document.getElementById(which + 'RelockBar');
-  const fill = document.getElementById(which + 'RelockFill');
-  if (!bar || !fill) return;
-
-  bar.classList.add('active');
-  fill.style.transition = 'none';
-  fill.style.width = '100%';
-
-  // Animate bar draining over RELOCK_SECONDS
-  requestAnimationFrame(() => {
-    fill.style.transition = `width ${RELOCK_SECONDS}s linear`;
-    fill.style.width = '0%';
-  });
-
-  // Auto-relock after RELOCK_SECONDS
-  relockTimers[which] = setTimeout(() => {
-    lockAllPlayers(which);
-    bar.classList.remove('active');
-    showToast('🔒 Players hidden. Tap to reveal again.');
-  }, RELOCK_SECONDS * 1000);
-}
-
-function lockAllPlayers(which) {
-  const panel = document.getElementById('panel' + which.charAt(0).toUpperCase() + which.slice(1));
-  if (!panel) return;
-  panel.querySelectorAll('.player-row').forEach(row => {
-    row.classList.add('locked');
-    row.onclick = (e) => { e.stopPropagation(); revealPlayer(row, which); };
-  });
-  updateUnlockCount(which);
-}
-
-// Call initLockPlayers every time teams modal opens
-const _origShowTeams = showTeamsAfterPayment;
-
-
-// Saves purchased teams to localStorage so they survive page refresh
-
-function savePurchaseToLocal(paymentId, match, plan, safeTeamHTML, boldTeamHTML) {
-  const key = 'c11_purchase_' + paymentId;
-  const data = {
-    paymentId, match, plan,
-    safeTeamHTML: safeTeamHTML || '',
-    boldTeamHTML:  boldTeamHTML  || '',
-    savedAt: Date.now(),
-    expiresAt: Date.now() + (12 * 60 * 60 * 1000) // 12 hours
-  };
-  try {
-    localStorage.setItem(key, JSON.stringify(data));
-    // Also save "latest" pointer for easy recovery
-    localStorage.setItem('c11_latest_purchase', key);
-  } catch(e) { console.log('localStorage save failed', e); }
-}
-
-function getLatestPurchase() {
-  try {
-    const key = localStorage.getItem('c11_latest_purchase');
-    if (!key) return null;
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const data = JSON.parse(raw);
-    // Expired?
-    if (Date.now() > data.expiresAt) {
-      localStorage.removeItem(key);
-      localStorage.removeItem('c11_latest_purchase');
-      return null;
-    }
-    return data;
-  } catch(e) { return null; }
-}
-
-function restorePurchaseOnLoad() {
-  const data = getLatestPurchase();
-  if (!data) return;
-
-  // Time since purchase
-  const minutesAgo = Math.round((Date.now() - data.savedAt) / 60000);
-  const timeLabel = minutesAgo < 60
-    ? `${minutesAgo} min ago`
-    : `${Math.round(minutesAgo/60)} hrs ago`;
-
-  // Show a "restore" toast banner
-  showRestoreBanner(data, timeLabel);
-}
-
-function showRestoreBanner(data, timeLabel) {
-  // Create banner if not exists
-  let banner = document.getElementById('restoreBanner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'restoreBanner';
-    banner.style.cssText = `
-      position:fixed;bottom:0;left:0;right:0;z-index:300;
-      background:linear-gradient(135deg,#0d1520,#0a1a10);
-      border-top:2px solid rgba(0,230,118,0.4);
-      padding:14px 20px;display:flex;align-items:center;gap:12px;
-      font-family:'Barlow Condensed',sans-serif;
-      animation:slideUp .3s ease;
-    `;
-    document.body.appendChild(banner);
-  }
-
-  const planLabel = data.plan === 'both' ? 'Safe + Bold Teams' :
-                    data.plan === 'safe' ? 'Safe Team' : 'Bold Team';
-
-  banner.innerHTML = `
-    <div style="flex:1;min-width:0">
-      <div style="font-size:13px;font-weight:700;letter-spacing:1px;color:rgba(0,230,118,0.9)">
-        🔓 YOU HAVE AN UNLOCKED TEAM
-      </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px">
-        ${data.match} · ${planLabel} · paid ${timeLabel}
-      </div>
-    </div>
-    <button onclick="restoreTeamView('${data.paymentId}')"
-      style="background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);
-             color:rgba(0,230,118,0.9);padding:8px 16px;border-radius:8px;cursor:pointer;
-             font-family:'Bebas Neue';font-size:14px;letter-spacing:2px;white-space:nowrap">
-      VIEW TEAM
-    </button>
-    <button onclick="document.getElementById('restoreBanner').remove()"
-      style="background:none;border:none;color:rgba(255,255,255,0.2);cursor:pointer;
-             font-size:20px;padding:0 4px;flex-shrink:0">×</button>
-  `;
-}
-
-function restoreTeamView(paymentId) {
-  const key = 'c11_purchase_' + paymentId;
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) { showToast('⚠️ Session expired. Contact support@champ11.in'); return; }
-    const data = JSON.parse(raw);
-
-    // Restore state
-    currentMatch = data.match;
-    currentPlan  = data.plan;
-
-    // Restore HTML into panels directly
-    if (data.safeTeamHTML) document.getElementById('panelSafe').innerHTML = data.safeTeamHTML;
-    if (data.boldTeamHTML)  document.getElementById('panelBold').innerHTML = data.boldTeamHTML;
-
-    showTeamsAfterPayment(null); // show modal with restored content
-    document.getElementById('restoreBanner')?.remove();
-    setTimeout(initLockPlayers, 150);
-  } catch(e) {
-    showToast('⚠️ Could not restore team. Contact support@champ11.in');
-  }
-}
-
-// Call on page load
-window.addEventListener('load', () => {
-  setTimeout(restorePurchaseOnLoad, 1500); // slight delay after page ready
-});
 </script>
 
 <!-- ═══════════════════════════════════════════════
