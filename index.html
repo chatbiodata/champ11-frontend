@@ -871,11 +871,13 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   transform:rotate(-30deg);white-space:pre-line;
   z-index:10;line-height:2.5;
 }
-/* Screenshot deterrent — blur on print */
+/* Screenshot deterrent — blur on print/PDF */
 @media print{
-  body{filter:blur(20px)!important}
-  .teams-panel{display:none!important}
+  body{filter:blur(20px)!important;visibility:hidden}
+  .canvas-wrap{display:none!important}
 }
+/* Canvas blur transition for shield */
+.canvas-wrap{transition:filter 0.1s ease}
 /* Disable text selection on player names */
 .players-grid,.cap-row{
   -webkit-user-select:none;
@@ -1518,33 +1520,60 @@ window.addEventListener('resize', () => {
 
 // ─── BLUR SHIELD (screenshot / app-switch detection) ──────────────────────────
 let blurCount = 0;
+let shieldActive = false;
 
 function activateShield() {
-  if (document.getElementById('teamsModal')?.classList.contains('open')) {
-    document.getElementById('blurShield').classList.add('active');
-  }
-}
-function dismissShield() {
-  document.getElementById('blurShield').classList.remove('active');
-  blurCount++;
-  if (blurCount >= 1) {
-    showToast(`⚠️ Screenshot detected. Your ID (${currentSession.maskedId||'GUEST'}) is watermarked on this team.`);
-  }
+  if (!document.getElementById('teamsModal')?.classList.contains('open')) return;
+  if (shieldActive) return;
+  shieldActive = true;
+  // Full screen black overlay
+  document.getElementById('blurShield').classList.add('active');
+  // Also blur the canvas wraps as backup
+  document.querySelectorAll('.canvas-wrap').forEach(c => {
+    c.style.filter = 'blur(12px)';
+    c.style.transition = 'filter 0.1s';
+  });
 }
 
+function deactivateShield() {
+  shieldActive = false;
+  document.getElementById('blurShield').classList.remove('active');
+  // Restore canvas
+  document.querySelectorAll('.canvas-wrap').forEach(c => {
+    c.style.filter = '';
+  });
+}
+
+function dismissShield() {
+  deactivateShield();
+  blurCount++;
+  showToast(`⚠️ Screenshot detected. ID (${currentSession.maskedId||'GUEST'}) is watermarked on this team.`);
+}
+
+// visibilitychange = most reliable cross-platform detection
+// Fires when: screenshot on Android, app switch, tab switch
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { activateShield(); }
-  else {
+  if (document.hidden) {
+    activateShield();
+  } else {
+    // Keep shield up for 800ms after returning — screenshot already taken
     setTimeout(() => {
-      document.getElementById('blurShield').classList.remove('active');
+      deactivateShield();
       if (blurCount > 0) {
         showToast(`⚠️ Your ID (${currentSession.maskedId||'GUEST'}) is visible on any screenshot.`);
       }
       blurCount++;
-    }, 600);
+    }, 800);
   }
 });
+
+// window blur = fires when user switches to another app/window
 window.addEventListener('blur', activateShield);
+
+// window focus = user came back
+window.addEventListener('focus', () => {
+  setTimeout(deactivateShield, 800);
+});
 
 // ─── COPY / RIGHT-CLICK PREVENTION ───────────────────────────────────────────
 document.addEventListener('contextmenu', e => {
