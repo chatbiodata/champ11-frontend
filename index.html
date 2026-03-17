@@ -1248,6 +1248,8 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 const API_BASE = 'https://champ11-backend-production.up.railway.app';
 let currentPlan = 'both';
 let currentMatch = '';
+let currentMatchId = '';
+let currentUserPhone = '';
 
 function openPayModal(match, venue, plan) {
   currentMatch = match;
@@ -1843,9 +1845,6 @@ function scheduleTeamExpiry(matchStartISO) {
     showToast('❌ ' + (e.message || 'Could not connect. Try again.'));
   }
 }
-
-let currentMatchId = '';
-let currentUserPhone = '';
 </script>
 
 <!-- ═══════════════════════════════════════════════
