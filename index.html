@@ -1143,7 +1143,7 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   <div style="font-family:'Bebas Neue';font-size:22px;letter-spacing:4px;margin-bottom:8px"><span style="color:var(--lime)">CHAMP</span><span style="color:var(--gold)">11</span>.IN</div>
   AI-Powered IPL Fantasy Cricket Coach · Not affiliated with Dream11<br>
   ⚠️ For entertainment purposes. Cricket is unpredictable. Play responsibly.<br>
-  © 2026 Champ11.in · support@champ11.in
+  © 2026 Champ11.in · <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="74070104041b060034171c15190445455a1d1a">[email&#160;protected]</a>
 </footer>
 
 <!-- PAYMENT MODAL -->
@@ -1244,7 +1244,7 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 const API_BASE = 'https://champ11-backend-production.up.railway.app';
 let currentPlan = 'both';
 let currentMatch = '';
@@ -1262,25 +1262,38 @@ function openPayModal(match, venue, plan) {
 
 function selectPlan(p) {
   currentPlan = p;
-  ['safe','bold','both'].forEach(id => {
-    document.getElementById('plan'+id.charAt(0).toUpperCase()+id.slice(1)).classList.remove('selected');
-  });
-  document.getElementById('plan'+p.charAt(0).toUpperCase()+p.slice(1)).classList.add('selected');
 
-  // Upsell nudge: show when safe or bold selected, hide when both
+  // Only toggle safe/bold/both tabs — weekly and season don't have tabs
+  ['safe','bold','both'].forEach(id => {
+    const el = document.getElementById('plan'+id.charAt(0).toUpperCase()+id.slice(1));
+    if (el) el.classList.remove('selected');
+  });
+
+  // For weekly/season, default the visual to "both" tab selected
+  const tabId = ['safe','bold','both'].includes(p) ? p : 'both';
+  const tabEl = document.getElementById('plan'+tabId.charAt(0).toUpperCase()+tabId.slice(1));
+  if (tabEl) tabEl.classList.add('selected');
+
+  // Upsell nudge + button label
   const upsell = document.getElementById('upsellBar');
-  const btn = document.querySelector('.modal-pay-btn');
-  if(p === 'safe') {
+  const btn    = document.querySelector('.modal-pay-btn');
+  if (p === 'safe') {
     upsell.classList.add('show');
     upsell.querySelector('.upsell-text').innerHTML = 'Also get the <strong>Bold team for just ₹6 more!</strong> Champ Bundle = Safe + Bold for ₹15. Double your chances.';
-    btn.textContent = 'PAY ₹9 WITH RAZORPAY';
-  } else if(p === 'bold') {
+    if (btn) btn.textContent = 'PAY ₹9 WITH RAZORPAY';
+  } else if (p === 'bold') {
     upsell.classList.add('show');
     upsell.querySelector('.upsell-text').innerHTML = 'Also get the <strong>Safe team for just ₹4 more!</strong> Champ Bundle = Safe + Bold for ₹15. Double your chances.';
-    btn.textContent = 'PAY ₹11 WITH RAZORPAY';
+    if (btn) btn.textContent = 'PAY ₹11 WITH RAZORPAY';
+  } else if (p === 'weekly') {
+    upsell.classList.remove('show');
+    if (btn) btn.textContent = 'PAY ₹59 WITH RAZORPAY';
+  } else if (p === 'season') {
+    upsell.classList.remove('show');
+    if (btn) btn.textContent = 'PAY ₹399 WITH RAZORPAY';
   } else {
     upsell.classList.remove('show');
-    btn.textContent = 'PAY ₹15 WITH RAZORPAY';
+    if (btn) btn.textContent = 'PAY ₹15 WITH RAZORPAY';
   }
 }
 
@@ -1874,9 +1887,3 @@ let currentUserPhone = '';
     <dt>Can beginners use Champ11 for Dream11?</dt>
     <dd>Absolutely. Champ11 is designed for all Dream11 players. Just pick your match, choose Safe or Bold, pay ₹9-15, and copy the team to Dream11 or My11Circle instantly.</dd>
     <dt>How is Champ11 different from free Dream11 prediction sites?</dt>
-    <dd>Free sites give generic tips. Champ11 uses live AI that self-learns after every match, giving personalized Safe and Bold teams with specific captain picks — not recycled content.</dd>
-  </dl>
-</section>
-
-</body>
-</html>
