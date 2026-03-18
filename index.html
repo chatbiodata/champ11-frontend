@@ -1238,6 +1238,11 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
       <div class="price-sub">Single match · Safe + Bold</div>
       <button class="price-cta">Get Both Teams</button>
     </div>
+    <div style="text-align:center;margin-bottom:10px">
+      <button onclick="showPassLogin()" style="background:none;border:1px solid rgba(0,212,255,0.3);color:rgba(0,212,255,0.8);padding:7px 18px;border-radius:20px;font-family:'Barlow Condensed';font-size:13px;letter-spacing:1px;cursor:pointer">
+        🔑 Already have a pass? Login
+      </button>
+    </div>
     <div class="price-card" onclick="openPayModal('Weekly Pass','All Matches','weekly')">
       <div class="price-label">Weekly Pass</div>
       <div class="price-amount">₹59</div>
@@ -1293,9 +1298,43 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
         <div class="upsell-text">Add the other team for just <strong>₹6 more!</strong> Champ Bundle = Safe + Bold for ₹15. Double your chances of winning.</div>
         <div class="upsell-cta">UPGRADE →</div>
       </div>
-      <input type="tel" class="modal-input" placeholder="Mobile number (optional)" maxlength="10" id="phoneInput"/>
+      <!-- Phone — ONLY for weekly/season pass -->
+      <div id="phoneSection" style="display:none">
+        <div style="font-size:11px;color:rgba(0,212,255,0.7);font-family:'Barlow Condensed';letter-spacing:.5px;margin-bottom:6px;text-transform:uppercase">
+          📱 Mobile number — to access your pass on any device
+        </div>
+        <div style="position:relative">
+          <input type="tel" class="modal-input" placeholder="10-digit mobile number" maxlength="10" id="phoneInput"
+            oninput="validatePhoneInput(this)" style="padding-right:36px"/>
+          <span id="phoneCheck" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:16px"></span>
+        </div>
+        <div id="phoneError" style="font-size:11px;color:#ff5252;margin-top:4px;display:none;font-family:'Barlow Condensed'">
+          ⚠️ Enter valid 10-digit number starting with 6-9
+        </div>
+      </div>
       <button class="modal-pay-btn" onclick="doPayment()">PAY WITH RAZORPAY</button>
       <div class="modal-note">🔒 Secured by Razorpay · UPI · Cards · Net Banking</div>
+    </div>
+  </div>
+</div>
+
+<!-- PASS LOGIN MODAL -->
+<div class="modal-overlay" id="passLoginModal" onclick="closeModal('passLoginModal')" style="z-index:1001">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:360px;padding:28px 24px;border-radius:20px">
+    <button class="modal-close" onclick="closeModal('passLoginModal')" style="float:right">×</button>
+    <div style="font-family:'Syne';font-size:20px;font-weight:800;letter-spacing:2px;margin-bottom:4px">🔑 ACCESS YOUR PASS</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.4);font-family:'Barlow Condensed';margin-bottom:20px">
+      Enter the mobile number used during purchase
+    </div>
+    <input type="tel" maxlength="10" id="loginPhoneInput" placeholder="10-digit mobile number"
+      oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+      style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:#fff;padding:13px 16px;border-radius:12px;font-size:16px;outline:none;font-family:'Barlow Condensed';letter-spacing:1px;margin-bottom:8px"/>
+    <div id="loginError" style="font-size:11px;color:#ff5252;display:none;margin-bottom:8px;font-family:'Barlow Condensed'">⚠️ Enter valid 10-digit mobile number</div>
+    <button onclick="loginWithPhone()" style="width:100%;background:linear-gradient(135deg,#00bcd4,#0097a7);border:none;color:#000;padding:14px;border-radius:12px;font-family:'Bebas Neue';font-size:18px;letter-spacing:3px;cursor:pointer;margin-bottom:10px">
+      ACCESS MY TEAMS →
+    </button>
+    <div style="font-size:10px;color:rgba(255,255,255,0.25);text-align:center;font-family:'Barlow Condensed'">
+      Weekly pass: 7 days · Season pass: all 84 IPL 2026 matches
     </div>
   </div>
 </div>
@@ -1369,15 +1408,36 @@ let currentMatch = '';
 let currentMatchId = '';
 let currentUserPhone = '';
 
+function validatePhoneInput(input) {
+  const val = input.value.replace(/[^0-9]/g, '');
+  input.value = val;
+  const check = document.getElementById('phoneCheck');
+  const err   = document.getElementById('phoneError');
+  if (!val) { check.textContent = ''; err.style.display = 'none'; }
+  else if (val.length === 10 && /^[6-9]/.test(val)) {
+    check.textContent = '✅'; err.style.display = 'none'; currentUserPhone = val;
+  } else {
+    check.textContent = '❌'; err.style.display = 'block'; currentUserPhone = '';
+  }
+}
+
 function openPayModal(match, venue, plan) {
-  currentMatch = match;
-  currentMatchId = match;  // use match name as ID until real IDs come from CricAPI
+  currentMatch   = match;
+  currentMatchId = match;
   document.getElementById('modalMatch').textContent = match;
   document.getElementById('modalVenue').textContent = venue ? '📍 ' + venue : '📍 Select match above';
-  // Reset upsell first
   document.getElementById('upsellBar').classList.remove('show');
   selectPlan(plan || 'both');
+  // Phone shown ONLY for weekly/season — daily match users need no phone
+  const needsPhone = plan === 'weekly' || plan === 'season';
+  document.getElementById('phoneSection').style.display = needsPhone ? 'block' : 'none';
+  if (!needsPhone) {
+    document.getElementById('phoneInput').value = '';
+    document.getElementById('phoneCheck').textContent = '';
+    document.getElementById('phoneError').style.display = 'none';
+  }
   document.getElementById('payModal').classList.add('open');
+  if (needsPhone) setTimeout(() => document.getElementById('phoneInput').focus(), 300);
 }
 
 function selectPlan(p) {
@@ -1843,8 +1903,8 @@ const DEMO_BOLD_TEAM = {
 function savePurchaseToLocal(paymentId, match, plan, safeJSON, boldJSON) {
   try {
     const key  = 'c11_' + paymentId;
-    const data = { paymentId, match, plan, safeJSON, boldJSON,
-                   savedAt: Date.now(), expiresAt: Date.now() + 12*60*60*1000 };
+    const data = { paymentId, match, matchId: currentMatchId || match, plan, safeJSON, boldJSON,
+                   savedAt: Date.now(), expiresAt: Date.now() + 24*60*60*1000 }; // 24hrs — covers midnight buy → 7:30 PM match
     localStorage.setItem(key, JSON.stringify(data));
     localStorage.setItem('c11_latest', key);
   } catch(e) {}
@@ -1878,22 +1938,110 @@ function showRestoreBanner(data, timeLabel) {
   banner.innerHTML=`<div style="flex:1"><div style="font-size:13px;font-weight:700;letter-spacing:1px;color:rgba(0,230,118,0.9)">🔓 YOU HAVE AN UNLOCKED TEAM</div><div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px">${data.match} · ${planLabel} · ${timeLabel}</div></div><button onclick="restoreTeamView('${data.paymentId}')" style="background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);color:rgba(0,230,118,0.9);padding:8px 16px;border-radius:8px;cursor:pointer;font-family:Bebas Neue;font-size:14px;letter-spacing:2px;white-space:nowrap">VIEW TEAM</button><button onclick="this.parentElement.remove()" style="background:none;border:none;color:rgba(255,255,255,0.2);cursor:pointer;font-size:20px;padding:0 4px">×</button>`;
 }
 
-function restoreTeamView(paymentId) {
-  const key = 'c11_' + paymentId;
+async function restoreTeamView(paymentId) {
+  const key  = 'c11_' + paymentId;
+  const data = JSON.parse(localStorage.getItem(key) || 'null');
+  if (!data) { showToast('⚠️ Session expired. Contact support.'); return; }
+  currentMatch   = data.match;
+  currentPlan    = data.plan;
+  currentMatchId = data.matchId || data.match;
+  document.getElementById('restoreBanner')?.remove();
+  // Always fetch LATEST team — may be updated after toss at 7:04 PM
+  showToast('⏳ Loading latest team...');
   try {
-    const data = JSON.parse(localStorage.getItem(key));
-    if (!data) { showToast('⚠️ Session expired'); return; }
-    currentMatch = data.match;
-    currentPlan  = data.plan;
-    currentMatchId = data.match;
-    try { currentSafeTeam = JSON.parse(data.safeJSON); } catch(e) { currentSafeTeam = DEMO_SAFE_TEAM; }
-    try { currentBoldTeam = JSON.parse(data.boldJSON);  } catch(e) { currentBoldTeam = DEMO_BOLD_TEAM; }
+    const res = await fetch(
+      `${API_BASE}/api/payment/team-access?paymentId=${paymentId}&matchId=${encodeURIComponent(currentMatchId)}`
+    );
+    if (res.ok) {
+      const fresh = await res.json();
+      if (fresh.safe || fresh.teams) {
+        const t = fresh.teams || fresh;
+        currentSafeTeam = t.safe || null;
+        currentBoldTeam = t.bold || null;
+        data.safeJSON    = JSON.stringify(currentSafeTeam);
+        data.boldJSON    = JSON.stringify(currentBoldTeam);
+        localStorage.setItem(key, JSON.stringify(data));
+        showTeamsAfterPayment({ safe: currentSafeTeam, bold: currentBoldTeam }, paymentId);
+        if (fresh.xiConfirmed)
+          setTimeout(() => showToast('✅ Playing XI confirmed! Team updated after toss.'), 1000);
+        else
+          setTimeout(() => showToast('⏳ Pre-toss team — updates after 7:00 PM toss.'), 1000);
+        return;
+      }
+    }
+  } catch(e) { console.log('[Restore] Using cached:', e.message); }
+  // Fallback to cached
+  try {
+    currentSafeTeam = data.safeJSON ? JSON.parse(data.safeJSON) : DEMO_SAFE_TEAM;
+    currentBoldTeam = data.boldJSON ? JSON.parse(data.boldJSON) : DEMO_BOLD_TEAM;
     showTeamsAfterPayment(null, paymentId);
-    document.getElementById('restoreBanner')?.remove();
   } catch(e) { showToast('⚠️ Could not restore. Contact support@champ11.in'); }
 }
 
 window.addEventListener('load', () => setTimeout(restorePurchaseOnLoad, 1500));
+
+// ── PASS LOGIN — for weekly/season pass holders ──────────────────
+function showPassLogin() {
+  document.getElementById('passLoginModal').classList.add('open');
+  setTimeout(() => document.getElementById('loginPhoneInput').focus(), 300);
+}
+
+async function loginWithPhone() {
+  const phone = document.getElementById('loginPhoneInput').value.replace(/[^0-9]/g, '');
+  const err   = document.getElementById('loginError');
+  if (!phone || phone.length !== 10 || !/^[6-9]/.test(phone)) {
+    err.style.display = 'block'; return;
+  }
+  err.style.display = 'none';
+  const btn = document.querySelector('#passLoginModal button[onclick="loginWithPhone()"]');
+  if (btn) { btn.textContent = '⏳ Checking...'; btn.disabled = true; }
+  try {
+    const res  = await fetch(`${API_BASE}/api/auth/pass-status?phone=${phone}`);
+    const data = await res.json();
+    if (!res.ok || !data.hasPass) {
+      if (btn) { btn.textContent = 'ACCESS MY TEAMS →'; btn.disabled = false; }
+      err.textContent = data.message || 'No active pass found. Buy a pass below.';
+      err.style.display = 'block';
+      return;
+    }
+    currentUserPhone = phone;
+    localStorage.setItem('c11_pass_phone',  phone);
+    localStorage.setItem('c11_pass_type',   data.passType);
+    localStorage.setItem('c11_pass_expiry', data.expiresAt || '');
+    closeModal('passLoginModal');
+    const label  = data.passType === 'season' ? '🏆 Season Pass' : '📅 Weekly Pass';
+    const expiry = data.expiresAt ? new Date(data.expiresAt).toLocaleDateString('en-IN') : 'All 84 matches';
+    showToast(`✅ ${label} active! Valid: ${expiry}`);
+    showPassBanner(phone, data.passType, data.expiresAt);
+  } catch(e) {
+    if (btn) { btn.textContent = 'ACCESS MY TEAMS →'; btn.disabled = false; }
+    err.textContent = 'Could not connect. Try again.';
+    err.style.display = 'block';
+  }
+}
+
+function showPassBanner(phone, passType, expiresAt) {
+  let banner = document.getElementById('passBanner');
+  if (!banner) { banner = document.createElement('div'); banner.id = 'passBanner'; document.body.appendChild(banner); }
+  const label  = passType === 'season' ? '🏆 Season Pass' : '📅 Weekly Pass';
+  const expiry = expiresAt ? new Date(expiresAt).toLocaleDateString('en-IN') : 'All 84 matches';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:500;background:linear-gradient(135deg,#0d2020,#0a1a20);border-bottom:2px solid rgba(0,212,255,0.4);padding:10px 20px;display:flex;align-items:center;gap:12px;font-family:Barlow Condensed,sans-serif';
+  banner.innerHTML = `<div style="flex:1"><span style="font-size:13px;font-weight:700;letter-spacing:1px;color:rgba(0,212,255,0.9)">${label} ACTIVE</span><span style="font-size:11px;color:rgba(255,255,255,0.4);margin-left:10px">📱 ••••${phone.slice(-4)} · ${expiry}</span></div><button onclick="document.getElementById('passBanner').remove();localStorage.removeItem('c11_pass_phone')" style="background:none;border:none;color:rgba(255,255,255,0.3);cursor:pointer;font-size:18px">×</button>`;
+}
+
+// Auto-restore pass on page load
+window.addEventListener('load', () => {
+  const savedPhone = localStorage.getItem('c11_pass_phone');
+  const passType   = localStorage.getItem('c11_pass_type');
+  const expiry     = localStorage.getItem('c11_pass_expiry');
+  if (savedPhone && passType) {
+    currentUserPhone = savedPhone;
+    fetch(`${API_BASE}/api/auth/pass-status?phone=${savedPhone}`)
+      .then(r => r.json())
+      .then(d => { if (d.hasPass) showPassBanner(savedPhone, passType, expiry); else localStorage.removeItem('c11_pass_phone'); })
+      .catch(() => {});
+  }
+});
 
 // Match expiry scheduler
 function scheduleTeamExpiry(matchStartISO) {
@@ -1913,6 +2061,19 @@ async function doPayment() {
   const prices = { safe: 9, bold: 11, both: 15, weekly: 59, season: 399 };
   const price = prices[currentPlan] || 15;
   const btn = document.querySelector('.modal-pay-btn');
+
+  // Phone required ONLY for weekly/season — not for ₹9/₹11/₹15 per match
+  const needsPhone = currentPlan === 'weekly' || currentPlan === 'season';
+  if (needsPhone) {
+    const ph = (document.getElementById('phoneInput')?.value || '').replace(/[^0-9]/g, '');
+    if (!ph || ph.length !== 10 || !/^[6-9]/.test(ph)) {
+      document.getElementById('phoneError').style.display = 'block';
+      document.getElementById('phoneInput').focus();
+      showToast('📱 Enter mobile number to activate your pass');
+      return;
+    }
+    currentUserPhone = ph;
+  }
 
   // Check Razorpay SDK loaded
   if (typeof Razorpay === 'undefined') {
@@ -1935,9 +2096,10 @@ async function doPayment() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        plan: currentPlan,
+        plan:    currentPlan,
         matchId: matchIdForPayment,
-        amount: price * 100  // in paise
+        amount:  price * 100,
+        phone:   needsPhone ? currentUserPhone : null,
       })
     });
 
