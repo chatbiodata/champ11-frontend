@@ -370,6 +370,91 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 }
 .nav-badge:hover{background:rgba(184,255,0,0.2)}
 
+/* ── BELL NOTIFICATION ── */
+.bell-btn{
+  position:relative;background:none;border:none;
+  cursor:pointer;padding:6px;border-radius:50%;
+  transition:.2s;display:flex;align-items:center;justify-content:center;
+}
+.bell-btn:hover{background:rgba(255,255,255,0.08)}
+.bell-icon{
+  font-size:22px;line-height:1;
+  transition:transform .3s;
+  filter:drop-shadow(0 0 6px rgba(184,255,0,0.4));
+}
+.bell-btn.subscribed .bell-icon{
+  filter:drop-shadow(0 0 8px rgba(184,255,0,0.9));
+}
+.bell-btn:not(.subscribed) .bell-icon{opacity:0.45}
+/* shake animation when notification arrives */
+@keyframes bellShake{
+  0%,100%{transform:rotate(0)}
+  15%{transform:rotate(15deg)}
+  30%{transform:rotate(-12deg)}
+  45%{transform:rotate(10deg)}
+  60%{transform:rotate(-8deg)}
+  75%{transform:rotate(5deg)}
+}
+.bell-shake{animation:bellShake .6s ease}
+/* red dot for unread */
+.bell-dot{
+  position:absolute;top:4px;right:4px;
+  width:9px;height:9px;border-radius:50%;
+  background:#ff4444;border:1.5px solid #0a0a0a;
+  display:none;
+}
+.bell-dot.show{display:block}
+/* toast notification popup */
+.notif-toast{
+  position:fixed;top:72px;right:16px;z-index:9999;
+  background:linear-gradient(135deg,#111 0%,#1a1a1a 100%);
+  border:1px solid rgba(184,255,0,0.4);
+  border-radius:14px;padding:14px 18px;
+  max-width:320px;width:calc(100vw - 32px);
+  display:flex;gap:12px;align-items:flex-start;
+  box-shadow:0 8px 32px rgba(0,0,0,0.6),0 0 20px rgba(184,255,0,0.1);
+  transform:translateX(360px);
+  transition:transform .4s cubic-bezier(.175,.885,.32,1.275);
+  pointer-events:none;
+}
+.notif-toast.show{transform:translateX(0);pointer-events:all}
+.notif-toast-icon{font-size:28px;line-height:1;flex-shrink:0}
+.notif-toast-body{}
+.notif-toast-title{font-family:'Barlow Condensed';font-size:14px;font-weight:700;
+  color:var(--lime);letter-spacing:.5px;margin-bottom:3px}
+.notif-toast-msg{font-size:12px;color:rgba(255,255,255,0.75);line-height:1.5}
+.notif-toast-time{font-size:10px;color:rgba(255,255,255,0.35);margin-top:4px;font-family:'Barlow Condensed'}
+.notif-toast-close{
+  position:absolute;top:10px;right:12px;
+  background:none;border:none;color:rgba(255,255,255,0.4);
+  cursor:pointer;font-size:16px;line-height:1;padding:2px;
+}
+.notif-toast-close:hover{color:#fff}
+/* permission prompt banner */
+.notif-banner{
+  display:none;position:fixed;bottom:80px;left:50%;
+  transform:translateX(-50%);z-index:9998;
+  background:linear-gradient(135deg,#111,#1c1c1c);
+  border:1px solid rgba(184,255,0,0.35);border-radius:16px;
+  padding:16px 20px;max-width:360px;width:calc(100vw - 32px);
+  box-shadow:0 8px 40px rgba(0,0,0,.7);text-align:center;
+}
+.notif-banner.show{display:block}
+.notif-banner-title{font-family:'Barlow Condensed';font-size:15px;font-weight:700;
+  color:var(--lime);margin-bottom:6px;letter-spacing:.5px}
+.notif-banner-msg{font-size:12px;color:rgba(255,255,255,0.7);line-height:1.6;margin-bottom:14px}
+.notif-banner-btns{display:flex;gap:10px;justify-content:center}
+.notif-allow-btn{
+  background:var(--lime);color:#000;border:none;
+  padding:8px 22px;border-radius:20px;font-family:'Barlow Condensed';
+  font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.5px;
+}
+.notif-deny-btn{
+  background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);
+  border:1px solid rgba(255,255,255,0.12);padding:8px 16px;
+  border-radius:20px;font-size:12px;cursor:pointer;
+}
+
 /* ── HERO CONTENT ── */
 .hero-content{
   position:relative;z-index:3;
@@ -937,8 +1022,37 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   <div class="logo"><em>CHAMP</em><span>11</span></div>
   <div class="nav-right">
     <div class="nav-badge">🏏 IPL 2026 LIVE</div>
+    <!-- BELL NOTIFICATION BUTTON -->
+    <button class="bell-btn" id="bellBtn" onclick="handleBellClick()" title="Get notified when Playing XI is announced">
+      <span class="bell-icon" id="bellIcon">🔔</span>
+      <span class="bell-dot" id="bellDot"></span>
+    </button>
   </div>
 </nav>
+
+<!-- NOTIFICATION TOAST -->
+<div class="notif-toast" id="notifToast">
+  <button class="notif-toast-close" onclick="closeToast()">✕</button>
+  <div class="notif-toast-icon" id="toastIcon">🏏</div>
+  <div class="notif-toast-body">
+    <div class="notif-toast-title" id="toastTitle">Playing XI Confirmed!</div>
+    <div class="notif-toast-msg" id="toastMsg">Your AI team is ready. 22 min to buy.</div>
+    <div class="notif-toast-time" id="toastTime"></div>
+  </div>
+</div>
+
+<!-- NOTIFICATION PERMISSION BANNER -->
+<div class="notif-banner" id="notifBanner">
+  <div class="notif-banner-title">🔔 Never Miss Playing XI</div>
+  <div class="notif-banner-msg">
+    Get instant alerts when Playing XI is announced at toss time.<br>
+    <strong style="color:var(--lime)">Your AI team updates in ~3 min after toss.</strong>
+  </div>
+  <div class="notif-banner-btns">
+    <button class="notif-allow-btn" onclick="requestNotifPermission()">Allow Notifications</button>
+    <button class="notif-deny-btn" onclick="dismissBanner()">Not Now</button>
+  </div>
+</div>
 
 <!-- STADIUM HERO -->
 <section class="stadium-hero">
@@ -1171,6 +1285,8 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
           <div class="plan-opt-price">₹15</div>
         </div>
       </div>
+      <!-- Pass info — shown for weekly/season plans -->
+      <div id="passInfo" style="display:none;margin-bottom:12px;"></div>
       <!-- Upsell nudge - shown when Safe or Bold selected -->
       <div class="upsell-bar" id="upsellBar" onclick="selectPlan('both')">
         <div class="upsell-icon">⚡</div>
@@ -1267,36 +1383,46 @@ function openPayModal(match, venue, plan) {
 function selectPlan(p) {
   currentPlan = p;
 
-  // Only toggle safe/bold/both tabs — weekly and season don't have tabs
+  const planRow   = document.getElementById('planRow');
+  const upsell    = document.getElementById('upsellBar');
+  const btn       = document.querySelector('.modal-pay-btn');
+  const passInfo  = document.getElementById('passInfo');
+
+  // Show/hide plan tabs based on plan type
+  const isPass = p === 'weekly' || p === 'season';
+
+  if (planRow) planRow.style.display = isPass ? 'none' : 'flex';
+  if (passInfo) passInfo.style.display = isPass ? 'block' : 'none';
+
+  // Deselect all tabs first
   ['safe','bold','both'].forEach(id => {
     const el = document.getElementById('plan'+id.charAt(0).toUpperCase()+id.slice(1));
     if (el) el.classList.remove('selected');
   });
 
-  // For weekly/season, default the visual to "both" tab selected
-  const tabId = ['safe','bold','both'].includes(p) ? p : 'both';
-  const tabEl = document.getElementById('plan'+tabId.charAt(0).toUpperCase()+tabId.slice(1));
-  if (tabEl) tabEl.classList.add('selected');
+  if (!isPass) {
+    // Select the right tab
+    const tabEl = document.getElementById('plan'+p.charAt(0).toUpperCase()+p.slice(1));
+    if (tabEl) tabEl.classList.add('selected');
+  }
 
-  // Upsell nudge + button label
-  const upsell = document.getElementById('upsellBar');
-  const btn    = document.querySelector('.modal-pay-btn');
+  // Update upsell + button
   if (p === 'safe') {
-    upsell.classList.add('show');
-    upsell.querySelector('.upsell-text').innerHTML = 'Also get the <strong>Bold team for just ₹6 more!</strong> Champ Bundle = Safe + Bold for ₹15. Double your chances.';
+    if (upsell) { upsell.classList.add('show'); upsell.querySelector('.upsell-text').innerHTML = 'Also get the <strong>Bold team for just ₹6 more!</strong> Champ Bundle = Safe + Bold for ₹15. Double your chances.'; }
     if (btn) btn.textContent = 'PAY ₹9 WITH RAZORPAY';
   } else if (p === 'bold') {
-    upsell.classList.add('show');
-    upsell.querySelector('.upsell-text').innerHTML = 'Also get the <strong>Safe team for just ₹4 more!</strong> Champ Bundle = Safe + Bold for ₹15. Double your chances.';
+    if (upsell) { upsell.classList.add('show'); upsell.querySelector('.upsell-text').innerHTML = 'Also get the <strong>Safe team for just ₹4 more!</strong> Champ Bundle = Safe + Bold for ₹15. Double your chances.'; }
     if (btn) btn.textContent = 'PAY ₹11 WITH RAZORPAY';
   } else if (p === 'weekly') {
-    upsell.classList.remove('show');
+    if (upsell) upsell.classList.remove('show');
+    if (passInfo) passInfo.innerHTML = '<div class="pass-info-box">🗓️ <strong>Weekly Pass</strong><br>9 matches · Any team combination<br><span style="color:#00e676;font-size:1.1em;font-weight:700;">₹59 total</span> — saves ₹76 vs buying per match</div>';
     if (btn) btn.textContent = 'PAY ₹59 WITH RAZORPAY';
   } else if (p === 'season') {
-    upsell.classList.remove('show');
+    if (upsell) upsell.classList.remove('show');
+    if (passInfo) passInfo.innerHTML = '<div class="pass-info-box">🏆 <strong>Season Pass</strong><br>All 84 IPL 2026 matches · Both teams every match<br><span style="color:#00e676;font-size:1.1em;font-weight:700;">₹399 total</span> — best value, saves ₹861</div>';
     if (btn) btn.textContent = 'PAY ₹399 WITH RAZORPAY';
   } else {
-    upsell.classList.remove('show');
+    if (upsell) upsell.classList.remove('show');
     if (btn) btn.textContent = 'PAY ₹15 WITH RAZORPAY';
   }
 }
@@ -1334,7 +1460,23 @@ function copyTeamCanvas(which) {
     const tag = p.isCaptain ? ' [C]' : p.isVC ? ' [VC]' : '';
     return `${i+1}. ${p.name}${tag}`;
   }).join('\n');
-  const text = `🏏 CHAMP11 ${which.toUpperCase()} TEAM\n${currentMatch}\n\nC: ${captain} | VC: ${vc}\n\n${names}\n\n📲 champ11.in`;
+
+  // Embed full traceable watermark in copied text
+  // If this text is shared anywhere, the buyer ID travels with it
+  const buyerId  = currentSession.maskedId || 'GUEST';
+  const txnShort = currentSession.txnId ? currentSession.txnId.slice(-8).toUpperCase() : '--------';
+  const wm       = `[ID:${txnShort}]`;  // short but unique
+
+  const text =
+    `🏏 CHAMP11 ${which.toUpperCase()} TEAM ${wm}\n` +
+    `${currentMatch}\n\n` +
+    `C: ${captain} | VC: ${vc}\n\n` +
+    `${names}\n\n` +
+    `📲 Get your own team: champ11.in\n` +
+    `━━━━━━━━━━━━━━━━━\n` +
+    `⚠️ This team is personalized to ${buyerId}.\n` +
+    `Sharing violates Terms of Service.`;
+
   navigator.clipboard.writeText(text)
     .then(() => showToast('✅ Team copied! Paste in Dream11.'))
     .catch(()  => showToast('📋 Team ready — enter manually in Dream11.'));
@@ -1784,12 +1926,17 @@ async function doPayment() {
 
   try {
     // Step 1: Create Razorpay order on backend
+    // For passes, use fixed matchId — not tied to a specific match
+    const matchIdForPayment = (currentPlan === 'weekly') ? 'weekly-pass-ipl2026'
+      : (currentPlan === 'season') ? 'season-pass-ipl2026'
+      : (currentMatchId || currentMatch || 'unknown-match');
+
     const res = await fetch(`${API_BASE}/api/payment/create-order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         plan: currentPlan,
-        matchId: currentMatchId || currentMatch,
+        matchId: matchIdForPayment,
         amount: price * 100  // in paise
       })
     });
@@ -1873,6 +2020,202 @@ async function doPayment() {
     btn.textContent = `PAY ₹${price} WITH RAZORPAY`;
     showToast('❌ ' + (e.message || 'Could not connect. Try again.'));
   }
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// BELL NOTIFICATION SYSTEM — Champ11
+// Timeline:
+//   7:00 PM  Toss + Playing XI announced
+//   7:05 PM  Cron fetches XI → AI regenerates teams
+//   7:08 PM  Teams saved to Firebase → notification fires
+//   7:08 PM  🔔 Bell shakes + toast + native push
+//   7:30 PM  Match starts (22 min window to buy)
+// ═══════════════════════════════════════════════════════
+
+const BELL_KEY   = 'champ11_notif';
+const BANNER_KEY = 'champ11_notif_dismissed';
+
+// Init on load
+window.addEventListener('load', () => {
+  if (localStorage.getItem(BELL_KEY) === 'granted') {
+    setBellSubscribed(true);
+    registerServiceWorker(false);
+  } else if (!localStorage.getItem(BANNER_KEY)) {
+    setTimeout(showNotifBanner, 8000);
+  }
+  // Poll every 2 min for XI confirmation
+  setInterval(pollForXINotification, 2 * 60 * 1000);
+  // First poll after 30 sec
+  setTimeout(pollForXINotification, 30000);
+});
+
+function handleBellClick() {
+  if (localStorage.getItem(BELL_KEY) === 'granted') {
+    showInAppToast('🔔', 'Notifications Active',
+      'You'll be alerted at 3:05 PM & 7:05 PM IST when Playing XI is confirmed.',
+      'AI team ready ~3 min after toss');
+  } else {
+    showNotifBanner();
+  }
+}
+
+function showNotifBanner() {
+  document.getElementById('notifBanner').classList.add('show');
+}
+function dismissBanner() {
+  document.getElementById('notifBanner').classList.remove('show');
+  localStorage.setItem(BANNER_KEY, '1');
+}
+
+async function requestNotifPermission() {
+  dismissBanner();
+  if (!('Notification' in window)) {
+    showInAppToast('⚠️', 'Not Supported', 'Try Chrome or Firefox for notifications.', '');
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    localStorage.setItem(BELL_KEY, 'granted');
+    setBellSubscribed(true);
+    await registerServiceWorker(true);
+    showInAppToast('✅', 'Notifications On!',
+      'You'll get alerted the moment Playing XI drops. AI team ready ~3 min after toss.', '');
+  } else {
+    showInAppToast('❌', 'Permission Denied',
+      'Go to browser Settings → Site Settings → Notifications to enable.', '');
+  }
+}
+
+async function registerServiceWorker(loud) {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    await navigator.serviceWorker.register('/sw.js');
+    console.log('[SW] Registered');
+  } catch(e) {
+    console.log('[SW] Failed — using polling fallback');
+  }
+}
+
+// Polling fallback — checks Firebase every 2 min
+let _lastXIKey = localStorage.getItem('champ11_last_xi') || '';
+async function pollForXINotification() {
+  if (localStorage.getItem(BELL_KEY) !== 'granted') return;
+  try {
+    const res = await fetch(`${API_BASE}/api/matches/today-status`);
+    if (!res.ok) return;
+    const data = await res.json();
+    for (const m of (data.matches || [])) {
+      if (m.xiConfirmed && m.teamsGenerated) {
+        const key = `${m.id}_xi`;
+        if (_lastXIKey !== key) {
+          _lastXIKey = key;
+          localStorage.setItem('champ11_last_xi', key);
+          fireXINotification(m);
+          // Also check if we need to fire reminder (within 15 min window)
+          const minsNow = Math.round((new Date(m.dateTimeGMT) - new Date()) / 60000);
+          if (minsNow <= 15 && minsNow > 5) {
+            fireReminderNotification(m, minsNow);
+          }
+          break;
+        }
+      }
+    }
+  } catch(e) {}
+}
+
+function fireXINotification(match) {
+  // Shake bell + red dot
+  const btn = document.getElementById('bellBtn');
+  btn.classList.add('bell-shake');
+  setTimeout(() => btn.classList.remove('bell-shake'), 700);
+  document.getElementById('bellDot').classList.add('show');
+
+  const mins   = Math.max(5, Math.round((new Date(match.dateTimeGMT) - new Date()) / 60000));
+  const teams  = match.shortName || "Today's Match";
+  const toss   = match.tossWinner ? `${match.tossWinner} elected to ${match.tossChoice || 'bat/bowl'}.` : '';
+
+  // ── NOTIFICATION 1: XI Confirmed ─────────────────────────────
+  // Fires ~7:07 PM — dramatic announcement
+  // tossWinner + tossChoice come directly from CricAPI toss data
+  const tossLine = match.tossWinner
+    ? `${match.tossWinner} elected to ${match.tossChoice === 'bat' ? '🏏 BAT' : '🎯 BOWL'} first.`
+    : '';
+  const title1 = `🔥 ${teams} — Dhurandhar Playing 11 LIVE!`;
+  const msg1   = `Ladies & Gentlemen... Get Ready 🔥 Your AI-made Dhurandhar Playing 11 Team is READY! ${tossLine}`;
+  const sub1   = `⏱ ${mins} min to lock your Dream11 team — don't miss! 🏏`;
+
+  showInAppToast('🏏', title1, msg1, sub1);
+
+  // Native notification — same message for 3:30 PM and 7:30 PM matches
+  if (Notification.permission === 'granted') {
+    const n = new Notification(`🔥 ${teams} — Dhurandhar Playing 11 LIVE!`, {
+      body:             `Ladies & Gentlemen... Get Ready 🔥 AI Playing 11 READY! ${tossLine} ${mins} min to buy!`,
+      icon:             '/favicon.ico',
+      badge:            '/favicon.ico',
+      tag:              match.id + '_xi',
+      requireInteraction: true,
+      vibrate:          [300, 100, 300, 100, 300],
+    });
+    n.onclick = () => { window.focus(); closeInAppToast(); };
+  }
+
+  // Schedule Notification 2 — reminder 15 min before match
+  // (in case user dismisses the first toast)
+  const msToReminder = (mins - 15) * 60 * 1000;
+  if (msToReminder > 0) {
+    setTimeout(() => fireReminderNotification(match, 15), msToReminder);
+  }
+}
+
+// ── NOTIFICATION 2: 15-min reminder ──────────────────────────
+function fireReminderNotification(match, minsLeft) {
+  const teams = match.shortName || "Today's Match";
+  const title2 = `⏱ ${minsLeft} Min Left — ${teams}!`;
+  const msg2   = `Ladies & Gentlemen... Get Ready 🔥 FINAL CALL! AI Dhurandhar Playing 11 is ready — lock it in Dream11 before match starts!`;
+  const sub2   = `🔥 ${minsLeft} min left — buy NOW before it's too late! 🏏`;
+
+  // Shake bell again
+  const btn = document.getElementById('bellBtn');
+  btn.classList.add('bell-shake');
+  setTimeout(() => btn.classList.remove('bell-shake'), 700);
+  document.getElementById('bellDot').classList.add('show');
+
+  showInAppToast('⏱', title2, msg2, sub2);
+
+  // Native reminder notification
+  if (Notification.permission === 'granted') {
+    const n = new Notification(`⏱ ${minsLeft} Min Left — ${teams}!`, {
+      body:             `🔥 FINAL CALL! AI Dhurandhar Playing 11 is ready — lock it NOW before ${match.timeIST || 'match'} starts! Don't miss! 🏏`,
+      icon:             '/favicon.ico',
+      badge:            '/favicon.ico',
+      tag:              match.id + '_reminder',
+      requireInteraction: true,
+      vibrate:          [500, 200, 500],
+    });
+    n.onclick = () => { window.focus(); closeInAppToast(); };
+  }
+}
+
+// Toast
+function showInAppToast(icon, title, msg, sub) {
+  document.getElementById('toastIcon').textContent  = icon;
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastMsg').textContent   = msg;
+  document.getElementById('toastTime').textContent  = sub;
+  const t = document.getElementById('notifToast');
+  t.classList.add('show');
+  if (sub !== 'AI team ready ~3 min after toss') {
+    setTimeout(() => t.classList.remove('show'), 8000);
+  }
+}
+function closeInAppToast() {
+  document.getElementById('notifToast').classList.remove('show');
+  document.getElementById('bellDot').classList.remove('show');
+}
+function setBellSubscribed(on) {
+  document.getElementById('bellBtn').classList.toggle('subscribed', on);
 }
 </script>
 
