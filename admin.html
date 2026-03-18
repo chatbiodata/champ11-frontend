@@ -442,41 +442,151 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
     <!-- ── AI BRAIN ── -->
     <div class="page" id="page-ai">
       <div class="topbar">
-        <div class="page-title">🧠 AI Brain</div>
-        <button class="refresh-btn" onclick="loadAI()">↺ Refresh</button>
+        <div class="page-title">🧠 AI Brain & Training</div>
+        <div class="topbar-right">
+          <button class="refresh-btn" onclick="loadAI()">↺ Refresh</button>
+        </div>
       </div>
 
-      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
+      <!-- Stats row -->
+      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
         <div class="stat-card green"><div class="stat-label">Current Accuracy</div><div class="stat-val" id="ai-acc">—</div><div class="stat-sub">After <span id="ai-matches">0</span> matches</div></div>
         <div class="stat-card amber"><div class="stat-label">Total Adjustments</div><div class="stat-val" id="ai-adj">—</div><div class="stat-sub">Weight updates made</div></div>
-        <div class="stat-card cyan"><div class="stat-label">Last Updated</div><div class="stat-val" style="font-size:16px" id="ai-updated">—</div><div class="stat-sub">Last learning cycle</div></div>
+        <div class="stat-card cyan"><div class="stat-label">Target Accuracy</div><div class="stat-val">65%</div><div class="stat-sub">By match 25-30</div></div>
+        <div class="stat-card" style="border-color:rgba(120,80,255,.3)"><div class="stat-label">Last Updated</div><div class="stat-val" style="font-size:14px" id="ai-updated">—</div><div class="stat-sub">Last learning cycle</div></div>
       </div>
 
+      <!-- ═══ SECTION 1: LIVE WEIGHTS ═══ -->
       <div class="two-col">
-        <!-- Safe Weights -->
         <div class="section-card">
-          <div class="section-head">
-            <div class="section-title">🛡️ Safe Team Weights</div>
-            <span class="badge badge-cyan">LIVE</span>
-          </div>
+          <div class="section-head"><div class="section-title">🛡️ Safe Team Weights</div><span class="badge badge-cyan">LIVE</span></div>
           <div class="section-body" id="safeWeightsFull"></div>
         </div>
-        <!-- Bold Weights -->
         <div class="section-card">
-          <div class="section-head">
-            <div class="section-title">🔥 Bold Team Weights</div>
-            <span class="badge badge-amber">LIVE</span>
-          </div>
+          <div class="section-head"><div class="section-title">🔥 Bold Team Weights</div><span class="badge badge-amber">LIVE</span></div>
           <div class="section-body" id="boldWeightsFull"></div>
         </div>
       </div>
 
-      <!-- Accuracy over time -->
+      <!-- ═══ SECTION 2: MANUAL WEIGHT TUNING ═══ -->
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">🎛️ Manual Weight Tuning</div>
+          <span class="badge badge-green">Admin Training</span>
+        </div>
+        <div class="section-body">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.7">
+            Adjust weights when you notice the AI is picking wrong player types.<br>
+            <strong style="color:var(--amber)">Example:</strong> If AI keeps missing bowlers on Chepauk → increase <code>pitch_weather</code> weight for safe team.
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <!-- Safe weight sliders -->
+            <div>
+              <div style="font-family:'Syne';font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px">Safe Team</div>
+              <div id="safeSliders"></div>
+            </div>
+            <!-- Bold weight sliders -->
+            <div>
+              <div style="font-family:'Syne';font-size:12px;font-weight:700;color:var(--amber);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px">Bold Team</div>
+              <div id="boldSliders"></div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
+            <button class="action-btn btn-green" onclick="saveWeights()">💾 Save Weights</button>
+            <button class="action-btn btn-amber" onclick="resetWeights()">↺ Reset to Defaults</button>
+            <span id="weightSaveStatus" style="font-size:11px;color:var(--muted)"></span>
+          </div>
+
+          <div style="margin-top:12px;padding:10px;background:rgba(255,179,0,.05);border:1px solid rgba(255,179,0,.15);border-radius:8px;font-size:11px;color:var(--muted)">
+            <strong style="color:var(--amber)">Weight Guide:</strong>
+            recent_form (last 5 matches pts) · venue_history (player avg at this ground) ·
+            h2h (player vs this opponent) · pitch_weather (pitch type suitability) ·
+            popular_picks (Dream11 ownership%) · differential (low-owned players) ·
+            breakout (players in form surge)
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SECTION 3: PLAYER OVERRIDE ═══ -->
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">⚡ Player Form Override</div>
+          <span class="badge badge-cyan">Admin Training</span>
+        </div>
+        <div class="section-body">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7">
+            Use your cricket knowledge to boost or drop a player's form score.<br>
+            <strong style="color:var(--green)">Hot player:</strong> Just back from injury, in great practice form, venue specialist.<br>
+            <strong style="color:var(--red)">Cold player:</strong> Injured, dropped, poor practice, family issues, or just out of form.
+          </div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px">
+            <div>
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Player Name / ID</div>
+              <input id="overridePlayerId" placeholder="e.g. Virat Kohli or player ID" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;width:220px;outline:none"/>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Override Type</div>
+              <select id="overrideType" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;outline:none">
+                <option value="hot_strong">🔥🔥 Very Hot (+35% form boost)</option>
+                <option value="hot">🔥 Hot (+20% form boost)</option>
+                <option value="neutral">⚪ Reset to Normal</option>
+                <option value="cold">❄️ Cold (-20% form drop)</option>
+                <option value="cold_strong">❄️❄️ Very Cold / Injured (-40% form drop)</option>
+                <option value="must_pick">⭐ MUST PICK (force into team)</option>
+                <option value="avoid">🚫 AVOID (exclude from team)</option>
+              </select>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Reason (optional)</div>
+              <input id="overrideReason" placeholder="e.g. venue specialist, injured hamstring" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;width:220px;outline:none"/>
+            </div>
+            <button class="action-btn btn-green" onclick="applyPlayerOverride()">⚡ Apply Override</button>
+          </div>
+
+          <!-- Active overrides list -->
+          <div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Active Overrides</div>
+            <div id="activeOverrides">
+              <div style="color:var(--muted);font-size:12px">No overrides active — AI using default form scores</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SECTION 4: POST-MATCH FEEDBACK ═══ -->
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">📊 Post-Match Analysis & Feedback</div>
+          <span class="badge badge-amber">Improves accuracy</span>
+        </div>
+        <div class="section-body">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7">
+            After each match, review what AI got right/wrong and give feedback.<br>
+            This directly trains the AI weights for the next match.
+          </div>
+
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px">
+            <select id="feedbackMatchSel" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;outline:none;min-width:240px">
+              <option value="">Select completed match...</option>
+            </select>
+            <button class="action-btn btn-cyan" onclick="loadMatchFeedback()">📊 Load Analysis</button>
+          </div>
+
+          <div id="matchFeedbackPanel">
+            <div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Select a completed match to see AI analysis</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SECTION 5: ACCURACY CHART ═══ -->
       <div class="section-card">
         <div class="section-head"><div class="section-title">📈 Accuracy Per Match</div></div>
         <div class="section-body">
           <div style="display:flex;align-items:flex-end;gap:6px;height:100px;padding-bottom:4px" id="accuracyChart"></div>
-          <div style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono';margin-top:8px;text-align:center">Each bar = one IPL match. Green = above 65%</div>
+          <div style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono';margin-top:8px;text-align:center">Each bar = one IPL match · Green ≥65% · Amber 45–65% · Red &lt;45%</div>
         </div>
       </div>
 
@@ -1152,7 +1262,7 @@ function showPage(name) {
   // Load data for page
   if (name === 'matches') loadMatches();
   if (name === 'revenue') loadRevenue();
-  if (name === 'ai') loadAI();
+  if (name === 'ai') { loadAI(); loadActiveOverrides(); populateFeedbackMatches(); }
   if (name === 'players') loadPlayers();
   if (name === 'controls') loadControls();
   if (name === 'logs') loadLogs();
@@ -1382,6 +1492,255 @@ async function loadRevenue() {
 }
 
 // ─── AI BRAIN ────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+// AI TRAINING FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
+
+// ── WEIGHT SLIDERS ───────────────────────────────────────────────
+const SAFE_KEYS = ['recent_form','venue_history','h2h','pitch_weather','popular_picks'];
+const BOLD_KEYS = ['recent_form','differential','breakout','h2h','pitch_weather'];
+const KEY_LABELS = {
+  recent_form:'Recent Form', venue_history:'Venue History', h2h:'Head to Head',
+  pitch_weather:'Pitch/Weather', popular_picks:'Popular Picks',
+  differential:'Differential', breakout:'Breakout Score',
+};
+let currentSafeW = {}, currentBoldW = {};
+
+function renderWeightSliders(containerId, weights, keys, color) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = keys.map(k => {
+    const val = Math.round((weights[k] || 0) * 100);
+    return `
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:11px;color:var(--muted)">${KEY_LABELS[k] || k}</span>
+          <span style="font-size:12px;font-weight:700;color:${color};font-family:'JetBrains Mono'" id="slval_${containerId}_${k}">${val}%</span>
+        </div>
+        <input type="range" min="2" max="60" value="${val}"
+          style="width:100%;accent-color:${color};cursor:pointer"
+          oninput="updateSlider('${containerId}','${k}',this.value,'${color}')"
+          id="sl_${containerId}_${k}"/>
+      </div>`;
+  }).join('');
+}
+
+function updateSlider(containerId, key, val, color) {
+  document.getElementById(`slval_${containerId}_${key}`).textContent = val + '%';
+  // Recalculate total and warn if not ~100
+  const keys   = containerId === 'safeSliders' ? SAFE_KEYS : BOLD_KEYS;
+  const total  = keys.reduce((s, k) => {
+    const el = document.getElementById(`sl_${containerId}_${k}`);
+    return s + (el ? parseInt(el.value) : 0);
+  }, 0);
+  const status = document.getElementById('weightSaveStatus');
+  if (Math.abs(total - 100) > 5) {
+    status.textContent = `⚠️ Total = ${total}% (should be ~100%)`;
+    status.style.color = 'var(--amber)';
+  } else {
+    status.textContent = `Total = ${total}% ✅`;
+    status.style.color = 'var(--green)';
+  }
+}
+
+async function saveWeights() {
+  // Read values from sliders
+  const safe = {}, bold = {};
+  SAFE_KEYS.forEach(k => {
+    const el = document.getElementById(`sl_safeSliders_${k}`);
+    if (el) safe[k] = parseFloat((parseInt(el.value)/100).toFixed(3));
+  });
+  BOLD_KEYS.forEach(k => {
+    const el = document.getElementById(`sl_boldSliders_${k}`);
+    if (el) bold[k] = parseFloat((parseInt(el.value)/100).toFixed(3));
+  });
+
+  // Normalise to sum = 1
+  const sTotal = Object.values(safe).reduce((a,b)=>a+b,0);
+  const bTotal = Object.values(bold).reduce((a,b)=>a+b,0);
+  if (sTotal > 0) SAFE_KEYS.forEach(k => safe[k] = parseFloat((safe[k]/sTotal).toFixed(3)));
+  if (bTotal > 0) BOLD_KEYS.forEach(k => bold[k] = parseFloat((bold[k]/bTotal).toFixed(3)));
+
+  try {
+    toast('Saving weights...', '💾');
+    await api('/api/admin/save-weights', 'POST', { safe, bold });
+    toast('✅ Weights saved! AI will use these for next team generation.');
+    document.getElementById('weightSaveStatus').textContent = '✅ Saved at ' + new Date().toLocaleTimeString();
+    loadAI();
+  } catch(e) {
+    toast('Save failed: ' + e.message, '❌');
+  }
+}
+
+// ── PLAYER OVERRIDE ──────────────────────────────────────────────
+const OVERRIDE_MULTIPLIERS = {
+  hot_strong: 1.35, hot: 1.20, neutral: 1.0,
+  cold: 0.80, cold_strong: 0.60,
+  must_pick: 99,  // force pick
+  avoid: 0,       // force exclude
+};
+
+async function applyPlayerOverride() {
+  const playerId = document.getElementById('overridePlayerId').value.trim();
+  const type     = document.getElementById('overrideType').value;
+  const reason   = document.getElementById('overrideReason').value.trim();
+
+  if (!playerId) { toast('Enter player name or ID', '⚠️'); return; }
+
+  try {
+    toast(`Applying ${type} override for ${playerId}...`, '⚡');
+    await api('/api/admin/player-override', 'POST', {
+      playerId,
+      overrideType:       type,
+      multiplier:         OVERRIDE_MULTIPLIERS[type],
+      reason:             reason || 'Admin override',
+      appliedAt:          new Date().toISOString(),
+    });
+    toast(`✅ Override applied! ${playerId} marked as ${type}`);
+    document.getElementById('overridePlayerId').value = '';
+    document.getElementById('overrideReason').value   = '';
+    loadActiveOverrides();
+  } catch(e) {
+    toast('Override failed: ' + e.message, '❌');
+  }
+}
+
+async function loadActiveOverrides() {
+  try {
+    const data = await api('/api/admin/player-overrides');
+    const overrides = data.overrides || [];
+    const el = document.getElementById('activeOverrides');
+    if (!overrides.length) {
+      el.innerHTML = '<div style="color:var(--muted);font-size:12px">No overrides active</div>';
+      return;
+    }
+    const typeColors = { hot_strong:'var(--red)', hot:'var(--amber)', neutral:'var(--muted)',
+      cold:'var(--cyan)', cold_strong:'var(--blue)', must_pick:'var(--green)', avoid:'var(--red)' };
+    const typeEmojis = { hot_strong:'🔥🔥', hot:'🔥', neutral:'⚪', cold:'❄️', cold_strong:'❄️❄️', must_pick:'⭐', avoid:'🚫' };
+
+    el.innerHTML = overrides.map(o => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--card2);border-radius:8px;margin-bottom:6px">
+        <div>
+          <span style="font-size:13px;font-weight:600">${o.playerId}</span>
+          <span style="font-size:11px;color:${typeColors[o.overrideType]||'var(--muted)'};margin-left:8px">${typeEmojis[o.overrideType]||''} ${o.overrideType}</span>
+          ${o.reason ? `<span style="font-size:10px;color:var(--muted);margin-left:8px">${o.reason}</span>` : ''}
+        </div>
+        <button onclick="removeOverride('${o.id}')" style="background:none;border:1px solid rgba(255,80,80,.3);color:var(--red);padding:3px 8px;border-radius:6px;font-size:10px;cursor:pointer">Remove</button>
+      </div>`).join('');
+  } catch(e) { /* no overrides yet */ }
+}
+
+async function removeOverride(overrideId) {
+  try {
+    await api('/api/admin/player-override/' + overrideId, 'DELETE');
+    toast('✅ Override removed');
+    loadActiveOverrides();
+  } catch(e) { toast('Remove failed', '❌'); }
+}
+
+// ── POST-MATCH FEEDBACK ──────────────────────────────────────────
+async function populateFeedbackMatches() {
+  try {
+    const data    = await api('/api/matches');
+    const matches = (data.matches || data || []).filter(m => m.status === 'completed');
+    const sel     = document.getElementById('feedbackMatchSel');
+    matches.slice(0, 20).forEach(m => {
+      const opt = document.createElement('option');
+      opt.value       = m.id;
+      opt.textContent = `${m.shortName || m.name} — ${(m.date||'').substring(0,10)}`;
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+}
+
+async function loadMatchFeedback() {
+  const matchId = document.getElementById('feedbackMatchSel').value;
+  if (!matchId) { toast('Select a match first', '⚠️'); return; }
+
+  const panel = document.getElementById('matchFeedbackPanel');
+  panel.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px">Loading analysis...</div>';
+
+  try {
+    // Load AI log for this match
+    const [logData, teamData] = await Promise.all([
+      api('/api/admin/learning-log').catch(() => ({ logs: [] })),
+      api('/api/teams/' + matchId + '?userId=admin').catch(() => null),
+    ]);
+
+    const matchLog = (logData.logs || []).find(l => l.matchId === matchId);
+
+    if (!matchLog) {
+      panel.innerHTML = `
+        <div style="color:var(--muted);font-size:12px;padding:16px;text-align:center">
+          No post-match analysis yet for this match.<br>
+          Analysis appears after the AI learning cron runs (11:45 PM IST for evening matches).
+        </div>`;
+      return;
+    }
+
+    const safeAcc  = matchLog.safeAccuracy || 0;
+    const boldAcc  = matchLog.boldAccuracy || 0;
+    const topScorers = matchLog.topScorers || [];
+    const accColor   = safeAcc >= 65 ? 'var(--green)' : safeAcc >= 45 ? 'var(--amber)' : 'var(--red)';
+
+    panel.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div style="text-align:center;padding:16px;background:var(--card2);border-radius:10px">
+          <div style="font-size:28px;font-weight:800;color:${accColor};font-family:'Syne'">${safeAcc}%</div>
+          <div style="font-size:11px;color:var(--muted)">Safe Team Accuracy</div>
+          <div style="font-size:11px;color:var(--muted)">${matchLog.safeHits || 0}/11 players correct</div>
+        </div>
+        <div style="text-align:center;padding:16px;background:var(--card2);border-radius:10px">
+          <div style="font-size:28px;font-weight:800;color:var(--amber);font-family:'Syne'">${boldAcc}%</div>
+          <div style="font-size:11px;color:var(--muted)">Bold Team Accuracy</div>
+          <div style="font-size:11px;color:var(--muted)">${matchLog.boldHits || 0}/11 players correct</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Top Scorers (Actual)</div>
+        ${topScorers.map((p,i) => `
+          <div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+            <span style="font-size:11px;color:var(--muted);width:20px">#${i+1}</span>
+            <span style="flex:1;font-size:12px">${p.name}</span>
+            <span style="font-size:12px;font-weight:700;color:var(--green);font-family:'JetBrains Mono'">${p.pts} pts</span>
+          </div>`).join('')}
+      </div>
+
+      <div style="padding:12px;background:rgba(255,179,0,.05);border:1px solid rgba(255,179,0,.2);border-radius:8px">
+        <div style="font-size:12px;font-weight:600;color:var(--amber);margin-bottom:8px">🎯 Training Suggestions</div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.8" id="trainingSuggestions">
+          ${generateSuggestions(safeAcc, boldAcc, matchLog)}
+        </div>
+        <button class="action-btn btn-amber" style="margin-top:10px;font-size:11px" onclick="applyFeedbackWeights('${matchId}')">
+          🧠 Auto-Apply Suggestions to Weights
+        </button>
+      </div>`;
+  } catch(e) {
+    panel.innerHTML = `<div style="color:var(--red);padding:16px">Error: ${e.message}</div>`;
+  }
+}
+
+function generateSuggestions(safeAcc, boldAcc, log) {
+  const lines = [];
+  if (safeAcc < 45)  lines.push('• Accuracy very low → increase <strong>recent_form</strong> weight for safe team');
+  if (safeAcc >= 65) lines.push('• ✅ Safe team performing well — weights are working');
+  if (boldAcc < safeAcc) lines.push('• Bold underperforming safe → increase <strong>differential</strong> weight, pick more low-owned players');
+  if (boldAcc > safeAcc) lines.push('• ✅ Bold outperformed safe — differential picks paying off');
+  if ((log.safeHits || 0) < 4) lines.push('• Missed many top scorers → increase <strong>recent_form</strong> and decrease <strong>popular_picks</strong>');
+  if (lines.length === 0) lines.push('• Accuracy in normal range. Continue monitoring next 3 matches before adjusting.');
+  return lines.join('<br>');
+}
+
+async function applyFeedbackWeights(matchId) {
+  try {
+    toast('Applying AI suggestions...', '🧠');
+    await api('/api/admin/trigger-learning/' + matchId, 'POST', { matchTime: '19:30', forceAdjust: true });
+    toast('✅ AI weights auto-adjusted based on match feedback');
+    loadAI();
+  } catch(e) { toast('Failed: ' + e.message, '❌'); }
+}
+
 async function loadAI() {
   try {
     let aiData = {};
