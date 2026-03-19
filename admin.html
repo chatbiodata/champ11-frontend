@@ -1069,10 +1069,25 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
       <div class="topbar">
         <div class="page-title">👥 Team Viewer</div>
         <div class="topbar-right">
-          <select id="teamMatchFilter" onchange="loadTeamForMatch()" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:7px 14px;border-radius:8px;font-size:12px;cursor:pointer;min-width:280px">
+          <select id="teamMatchFilter" onchange="loadTeamForMatch()" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:7px 14px;border-radius:8px;font-size:12px;cursor:pointer;min-width:300px">
             <option value="">— Select a match —</option>
           </select>
           <button class="refresh-btn" onclick="loadTeamViewer()">↺ Refresh</button>
+        </div>
+      </div>
+
+      <!-- Match status banner -->
+      <div id="teamMatchBanner" style="display:none;margin-bottom:12px;padding:12px 16px;border-radius:10px;font-family:'Barlow Condensed';font-size:13px;letter-spacing:.5px"></div>
+
+      <!-- Team meta row -->
+      <div class="stat-grid" id="teamMetaCard" style="display:none;grid-template-columns:repeat(5,1fr)">
+        <div class="stat-card cyan"  style="padding:12px"><div class="stat-label">Match Status</div><div class="stat-val" style="font-size:14px" id="teamMatchStatus">—</div></div>
+        <div class="stat-card green" style="padding:12px"><div class="stat-label">XI Confirmed</div><div class="stat-val" style="font-size:14px" id="teamXIStatus">—</div></div>
+        <div class="stat-card amber" style="padding:12px"><div class="stat-label">Toss</div><div class="stat-val" style="font-size:11px;letter-spacing:0" id="teamTossInfo">—</div></div>
+        <div class="stat-card"       style="padding:12px;border-color:rgba(120,80,255,.3)"><div class="stat-label">Generated</div><div class="stat-val" style="font-size:12px" id="teamGenTime">—</div></div>
+        <div class="stat-card"       style="padding:12px">
+          <div class="stat-label">Actions</div>
+          <button class="action-btn btn-amber" style="margin-top:4px;font-size:10px;padding:4px 8px" id="regenBtn" onclick="regenCurrentTeam()">⚡ Regen</button>
         </div>
       </div>
 
@@ -1084,7 +1099,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
             <span class="badge badge-cyan" id="safeTeamBadge">—</span>
           </div>
           <div class="section-body" id="safeTeamPlayers">
-            <div class="empty-state"><div class="empty-icon">🛡️</div><div class="empty-title">Select a match above</div><div class="empty-sub">Teams are stored permanently — never expire</div></div>
+            <div class="empty-state"><div class="empty-icon">🛡️</div><div class="empty-title">Select a match above</div><div class="empty-sub">Admin sees ALL teams — no expiry restriction</div></div>
           </div>
         </div>
         <!-- Bold Team -->
@@ -1094,19 +1109,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
             <span class="badge badge-amber" id="boldTeamBadge">—</span>
           </div>
           <div class="section-body" id="boldTeamPlayers">
-            <div class="empty-state"><div class="empty-icon">🔥</div><div class="empty-title">Select a match above</div><div class="empty-sub">Differential picks for max upside</div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Team meta info -->
-      <div class="section-card" id="teamMetaCard" style="display:none">
-        <div class="section-head"><div class="section-title">📋 Team Info</div></div>
-        <div class="section-body">
-          <div class="three-col">
-            <div class="stat-card cyan" style="padding:14px"><div class="stat-label">Generated At</div><div class="stat-val" style="font-size:16px" id="teamGenTime">—</div></div>
-            <div class="stat-card amber" style="padding:14px"><div class="stat-label">XI Confirmed</div><div class="stat-val" style="font-size:16px" id="teamXIStatus">—</div></div>
-            <div class="stat-card green" style="padding:14px"><div class="stat-label">Players in Squad</div><div class="stat-val" style="font-size:16px" id="teamPlayerCount">—</div></div>
+            <div class="empty-state"><div class="empty-icon">🔥</div><div class="empty-title">Select a match above</div><div class="empty-sub">Differential picks — low ownership players</div></div>
           </div>
         </div>
       </div>
@@ -2203,13 +2206,27 @@ async function verifySync() {
 // ═══════════════════════════════════════════════════════════════
 // TEAM VIEWER — shows Safe + Bold teams for any match, forever
 // ═══════════════════════════════════════════════════════════════
+let currentTeamMatchId = '';
+
 async function loadTeamViewer() {
   try {
-    const data = await api('/api/matches');
-    const matches = (data.matches || data || []).sort((a,b) => b.date > a.date ? 1 : -1);
+    // Admin uses match_schedule — gets ALL 84 matches regardless of status
+    const data = await api('/api/admin/matches-list');
+    const matches = (data.matches || []).sort((a,b) => a.date > b.date ? 1 : -1);
     const sel = document.getElementById('teamMatchFilter');
     sel.innerHTML = '<option value="">— Select a match —</option>' +
-      matches.map(m => `<option value="${m.id||m.matchId}">${m.name||m.teams?.join(' vs ')||'Match'} · ${formatDate(m.dateTimeGMT||m.date)}</option>`).join('');
+      matches.map(m => {
+        const label = `${m.shortName || m.name} · ${(m.date||'').substring(0,10)} ${m.timeIST||''}`;
+        const statusTag = m.teamsGenerated ? '✅' : '⏳';
+        return `<option value="${m.id}">${statusTag} ${label}</option>`;
+      }).join('');
+    // Auto-select today's match if exists
+    const today = new Date().toISOString().split('T')[0];
+    const todayMatch = matches.find(m => (m.date||'').startsWith(today));
+    if (todayMatch) {
+      sel.value = todayMatch.id;
+      loadTeamForMatch();
+    }
   } catch(e) {
     toast('Failed to load matches: ' + e.message, '❌');
   }
@@ -2218,32 +2235,68 @@ async function loadTeamViewer() {
 async function loadTeamForMatch() {
   const matchId = document.getElementById('teamMatchFilter').value;
   if (!matchId) return;
+  currentTeamMatchId = matchId;
 
   document.getElementById('safeTeamPlayers').innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px">Loading...</div>';
   document.getElementById('boldTeamPlayers').innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px">Loading...</div>';
+  document.getElementById('teamMetaCard').style.display = 'none';
+  document.getElementById('teamMatchBanner').style.display = 'none';
 
   try {
-    // Try match_teams collection first
-    const data = await api(`/api/matches/${matchId}/teams`);
-    const safe = data.safe || data.safeTeam || {};
-    const bold = data.bold || data.boldTeam || {};
+    // Admin endpoint — no purchase check, no expiry, always returns full data
+    const data = await api(`/api/admin/team-view/${matchId}`);
+    const safe  = data.safe  || {};
+    const bold  = data.bold  || {};
+    const match = data.match || {};
 
+    // Status banner
+    const banner = document.getElementById('teamMatchBanner');
+    if (data.xiConfirmed) {
+      banner.style.cssText = 'display:block;background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.25);color:var(--green);margin-bottom:12px;padding:10px 16px;border-radius:10px;font-family:Barlow Condensed;font-size:13px;letter-spacing:.5px';
+      banner.textContent = `✅ Playing XI Confirmed — ${match.tossWinner || ''} elected to ${match.tossChoice === 'bat' ? '🏏 BAT' : '🎯 BOWL'} first`;
+    } else if (data.preToss) {
+      banner.style.cssText = 'display:block;background:rgba(255,179,0,.08);border:1px solid rgba(255,179,0,.25);color:var(--amber);margin-bottom:12px;padding:10px 16px;border-radius:10px;font-family:Barlow Condensed;font-size:13px;letter-spacing:.5px';
+      banner.textContent = `⏳ Pre-toss team — based on squad. Updates automatically at 7:04 PM after toss.`;
+    } else if (match.status === 'expired' || match.status === 'completed') {
+      banner.style.cssText = 'display:block;background:rgba(255,80,80,.08);border:1px solid rgba(255,80,80,.25);color:var(--red);margin-bottom:12px;padding:10px 16px;border-radius:10px;font-family:Barlow Condensed;font-size:13px;letter-spacing:.5px';
+      banner.textContent = `🔒 Match completed — teams locked for users but admin can always view`;
+    }
+
+    // Meta row
+    document.getElementById('teamMetaCard').style.display = 'grid';
+    document.getElementById('teamMatchStatus').textContent = match.status || '—';
+    document.getElementById('teamXIStatus').textContent    = data.xiConfirmed ? '✅ Yes' : '⏳ Pending';
+    document.getElementById('teamTossInfo').textContent    = match.tossWinner
+      ? `${match.tossWinner} ${match.tossChoice === 'bat' ? 'batting' : 'bowling'}`
+      : 'Awaiting toss';
+    document.getElementById('teamGenTime').textContent = data.generatedAt
+      ? new Date(data.generatedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})
+      : '—';
+
+    // Render players
     renderTeamList('safeTeamPlayers', safe.players || [], 'var(--cyan)');
     renderTeamList('boldTeamPlayers', bold.players || [], 'var(--amber)');
 
-    document.getElementById('safeTeamBadge').textContent = safe.players?.length ? `${safe.players.length} players` : 'No data';
-    document.getElementById('boldTeamBadge').textContent = bold.players?.length ? `${bold.players.length} players` : 'No data';
-
-    // Show meta card
-    document.getElementById('teamMetaCard').style.display = 'block';
-    document.getElementById('teamGenTime').textContent = data.generatedAt ? formatDate(data.generatedAt) : '—';
-    document.getElementById('teamXIStatus').textContent = data.xiConfirmed ? '✅ Yes' : '⏳ No';
-    document.getElementById('teamPlayerCount').textContent = data.playerCount || '—';
+    const sc = safe.players?.length || 0;
+    const bc = bold.players?.length || 0;
+    document.getElementById('safeTeamBadge').textContent = sc ? `${sc} players · C: ${safe.captain||'—'}` : 'Not generated';
+    document.getElementById('boldTeamBadge').textContent = bc ? `${bc} players · C: ${bold.captain||'—'}` : 'Not generated';
 
   } catch(e) {
-    document.getElementById('safeTeamPlayers').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Teams not generated yet</div><div class="empty-sub">Use Controls → Generate Teams to create them</div></div>`;
-    document.getElementById('boldTeamPlayers').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Teams not generated yet</div></div>`;
+    document.getElementById('safeTeamPlayers').innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Teams not generated yet</div><div class="empty-sub">Cron generates at 12:30 AM IST · or use Controls → Generate Teams</div></div>`;
+    document.getElementById('boldTeamPlayers').innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Teams not generated yet</div></div>`;
   }
+}
+
+async function regenCurrentTeam() {
+  if (!currentTeamMatchId) { toast('Select a match first', '⚠️'); return; }
+  if (!confirm(`Regenerate teams for this match? This will overwrite current teams.`)) return;
+  try {
+    toast('Regenerating teams...', '⚡');
+    await api(`/api/admin/generate-teams/${currentTeamMatchId}`, 'POST');
+    toast('✅ Teams regenerated!');
+    loadTeamForMatch(); // reload
+  } catch(e) { toast('Failed: ' + e.message, '❌'); }
 }
 
 function renderTeamList(elId, players, captainColor) {
