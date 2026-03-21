@@ -296,6 +296,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
     <div class="nav-item" onclick="showPage('venues')"><span class="nav-icon">🏟️</span><span>Venues</span></div>
     <div class="nav-section">AI Engine</div>
     <div class="nav-item" onclick="showPage('ai')"><span class="nav-icon">🧠</span><span>AI Brain</span></div>
+    <div class="nav-item" onclick="showPage('trainai')"><span class="nav-icon">🎯</span><span>Train AI</span></div>
     <div class="nav-item" onclick="showPage('players')"><span class="nav-icon">👤</span><span>Player Intel</span></div>
     <div class="nav-section">System</div>
     <div class="nav-item" onclick="showPage('controls')"><span class="nav-icon">⚡</span><span>Controls</span></div>
@@ -637,6 +638,150 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
       </div>
     </div>
 
+    <!-- ── TRAIN AI ── -->
+    <div class="page" id="page-trainai">
+      <div class="topbar">
+        <div class="page-title">🎯 Train AI from ESPN Stats</div>
+        <div class="topbar-right">
+          <button class="refresh-btn" onclick="clearTrainForm()">✕ Clear</button>
+        </div>
+      </div>
+
+      <!-- URL Input -->
+      <div class="section-card" style="border-color:rgba(0,212,255,0.25)">
+        <div class="section-head"><div class="section-title">📎 Paste ESPN Match Stats URL</div></div>
+        <div class="section-body">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.7">
+            Go to ESPNcricinfo → match page → Stats tab → copy URL and paste below.<br>
+            Example: <code style="font-size:11px">espncricinfo.com/series/ipl-2026-.../match-statistics</code>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <input id="espnUrlInput" type="text" placeholder="https://www.espncricinfo.com/series/ipl-2026-1510719/rcb-vs-srh.../match-statistics"
+              style="flex:1;background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:11px 14px;border-radius:10px;font-size:12px;font-family:'JetBrains Mono';outline:none"/>
+            <button class="action-btn btn-cyan" onclick="fetchAndAnalyzeESPN()" style="white-space:nowrap;padding:11px 18px">
+              🤖 Fetch + Analyze
+            </button>
+          </div>
+          <div id="fetchStatus" style="margin-top:10px;font-size:12px;color:var(--muted);font-family:'Barlow Condensed'"></div>
+        </div>
+      </div>
+
+      <!-- AI Analysis Result -->
+      <div class="section-card" id="aiAnalysisCard" style="display:none">
+        <div class="section-head">
+          <div class="section-title">🤖 AI Analysis</div>
+          <span class="badge badge-cyan" id="aiAnalysisBadge">Ready</span>
+        </div>
+        <div class="section-body">
+          <div id="aiAnalysisResult" style="font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap;font-family:'Barlow Condensed'"></div>
+        </div>
+      </div>
+
+      <!-- H2H Section -->
+      <div class="section-card" id="h2hCard" style="display:none">
+        <div class="section-head"><div class="section-title">⚔️ Head to Head</div></div>
+        <div class="section-body">
+          <div class="three-col" style="margin-bottom:14px">
+            <div class="stat-card green" style="padding:12px;text-align:center">
+              <div class="stat-val" id="h2hTeam1Wins">—</div>
+              <div class="stat-label" id="h2hTeam1Label">Team 1</div>
+            </div>
+            <div class="stat-card" style="padding:12px;text-align:center">
+              <div class="stat-val">Last 5</div>
+              <div class="stat-label">Matches</div>
+            </div>
+            <div class="stat-card amber" style="padding:12px;text-align:center">
+              <div class="stat-val" id="h2hTeam2Wins">—</div>
+              <div class="stat-label" id="h2hTeam2Label">Team 2</div>
+            </div>
+          </div>
+          <div id="h2hList" style="font-size:12px;font-family:'Barlow Condensed'"></div>
+          <div style="margin-top:12px">
+            <label style="font-size:12px;color:var(--muted)">Home team H2H boost %</label>
+            <input type="number" id="h2hBoost" value="5" min="0" max="20"
+              style="width:60px;background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:5px 8px;border-radius:6px;margin-left:8px;font-size:12px"/>
+            <span style="font-size:11px;color:var(--muted);margin-left:6px">applied to home team players</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Players to Watch -->
+      <div class="section-card" id="playersWatchCard" style="display:none">
+        <div class="section-head">
+          <div class="section-title">👁️ Players to Watch</div>
+          <span class="badge badge-dim">Edit before applying</span>
+        </div>
+        <div class="section-body">
+          <div class="two-col">
+            <div>
+              <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--cyan);margin-bottom:10px;font-family:'JetBrains Mono'">BATTERS</div>
+              <div id="watchBatters"></div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--amber);margin-bottom:10px;font-family:'JetBrains Mono'">BOWLERS</div>
+              <div id="watchBowlers"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Squad Section -->
+      <div class="section-card" id="squadCard" style="display:none">
+        <div class="section-head"><div class="section-title">👥 Full Squad</div><span class="badge badge-dim">Roles extracted by AI</span></div>
+        <div class="section-body">
+          <div class="two-col" id="squadList"></div>
+        </div>
+      </div>
+
+      <!-- Injury / Manual Overrides -->
+      <div class="section-card" id="injuryCard" style="display:none">
+        <div class="section-head"><div class="section-title">🏥 Injury & Override</div></div>
+        <div class="section-body">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
+            Players AI detected as injured or unavailable. Confirm to mark as AVOID.
+          </div>
+          <div id="injuryList"></div>
+          <div style="margin-top:14px">
+            <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--text)">Add manual player note:</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <input id="manualPlayer" placeholder="Player name" style="flex:1;min-width:160px;background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;outline:none"/>
+              <select id="manualOverride" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px;border-radius:8px;font-size:12px">
+                <option value="must_pick">Must Pick</option>
+                <option value="hot_strong">Hot Strong (+35%)</option>
+                <option value="hot">Hot (+20%)</option>
+                <option value="neutral">Neutral (reset)</option>
+                <option value="cold">Cold (-20%)</option>
+                <option value="avoid">Avoid (injured)</option>
+              </select>
+              <button class="action-btn btn-amber" onclick="addManualOverride()">+ Add</button>
+            </div>
+          </div>
+          <div id="manualOverrideList" style="margin-top:10px"></div>
+        </div>
+      </div>
+
+      <!-- Apply Button -->
+      <div class="section-card" id="applyCard" style="display:none;border-color:rgba(0,230,118,0.25)">
+        <div class="section-head"><div class="section-title">✅ Apply Training</div></div>
+        <div class="section-body">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7">
+            This will update <strong>player_intel</strong> in Firebase with the stats above.<br>
+            AI will use this data at next team generation (12:30 AM or when you manually generate).
+          </div>
+          <div id="trainingSummary" style="font-size:12px;font-family:'Barlow Condensed';color:var(--text);margin-bottom:14px;padding:12px;background:var(--card2);border-radius:8px;line-height:1.8"></div>
+          <div style="display:flex;gap:10px">
+            <button class="action-btn btn-green" style="padding:12px 24px;font-size:14px" onclick="applyTraining()">
+              🚀 Apply to AI Brain
+            </button>
+            <button class="action-btn btn-amber" onclick="regenerateTeamsNow()" style="padding:12px 24px;font-size:14px">
+              ⚡ Apply + Regen Teams Now
+            </button>
+          </div>
+          <div id="applyStatus" style="margin-top:10px;font-size:12px;font-family:'Barlow Condensed'"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── CONTROLS ── -->
     <div class="page" id="page-controls">
       <div class="topbar"><div class="page-title">⚡ System Controls</div></div>
@@ -654,8 +799,18 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
               <div class="control-desc">Force regenerate Safe + Bold teams for a specific match</div>
             </div>
             <div class="control-actions">
-              <input id="genMatchId" placeholder="Match ID" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:7px 12px;border-radius:8px;font-size:12px;width:160px;outline:none"/>
+              <input id="genMatchId" placeholder="Match ID e.g. ipl2026-match-01" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:7px 12px;border-radius:8px;font-size:12px;width:200px;outline:none"/>
               <button class="action-btn btn-amber" onclick="generateTeams()">⚡ Generate</button>
+            </div>
+          </div>
+          <div class="control-row" style="border-color:rgba(0,230,118,0.2)">
+            <div>
+              <div class="control-label">🚀 Generate ALL 20 Teams</div>
+              <div class="control-desc">Generates pre-toss Safe + Bold teams for all 20 IPL 2026 matches at once.<br>
+              <strong style="color:var(--amber)">Run AFTER Train AI for all matches</strong> — uses ESPN intel you loaded. Takes ~3 mins.</div>
+            </div>
+            <div class="control-actions">
+              <button class="action-btn btn-green" onclick="generateAllTeams()" id="genAllBtn" style="padding:10px 20px">🚀 Generate All 20</button>
             </div>
           </div>
           <div class="control-row">
@@ -1347,6 +1502,7 @@ function showPage(name) {
   if (name === 'logs') loadLogs();
   if (name === 'devtools') loadDevTools();
   if (name === 'teams')    loadTeamViewer();
+  if (name === 'trainai')  initTrainAI();
   if (name === 'compare')  loadMatchCompare();
   if (name === 'venues')   loadVenues();
   if (name === 'today')   loadToday();
@@ -1994,6 +2150,54 @@ async function generateTeams() {
   const matchId = document.getElementById('genMatchId').value.trim();
   if (!matchId) { toast('Enter a Match ID first', '⚠️'); return; }
   await generateTeamsFor(matchId);
+}
+
+async function generateAllTeams() {
+  if (!confirm('Generate teams for ALL 20 IPL 2026 matches?\nThis may take 2-3 minutes. Make sure you have run Train AI first.')) return;
+
+  const btn = document.getElementById('genAllBtn');
+  btn.textContent = '⏳ Generating...';
+  btn.disabled = true;
+
+  const matches = [];
+  for (let i = 1; i <= 20; i++) {
+    matches.push(`ipl2026-match-${String(i).padStart(2,'0')}`);
+  }
+
+  let success = 0, failed = 0;
+  const results = [];
+
+  for (const matchId of matches) {
+    try {
+      btn.textContent = `⏳ ${success + failed + 1}/20 — ${matchId}...`;
+      const r = await api(`/api/admin/generate-teams/${matchId}`, 'POST');
+      if (r.success || r.safe || r.matchId) {
+        success++;
+        results.push({ matchId, status: '✅' });
+      } else {
+        failed++;
+        results.push({ matchId, status: '⚠️', error: r.error || 'no data' });
+      }
+    } catch(e) {
+      failed++;
+      results.push({ matchId, status: '❌', error: e.message });
+    }
+    // Small delay to avoid hammering Firebase
+    await new Promise(r => setTimeout(r, 800));
+  }
+
+  btn.textContent = `✅ Done — ${success}/20 generated`;
+  btn.disabled = false;
+
+  // Show results summary
+  const summary = results.map(r => `${r.status} ${r.matchId}${r.error ? ' — ' + r.error : ''}`).join('\n');
+  toast(`✅ Generated ${success}/20 teams! ${failed > 0 ? failed + ' failed.' : ''}`, success === 20 ? '🏏' : '⚠️');
+  console.log('Generate All Results:\n' + summary);
+
+  // Reload team viewer if on that page
+  if (document.getElementById('page-teams')?.classList.contains('active')) {
+    loadTeamViewer();
+  }
 }
 
 async function generateTeamsFor(matchId) {
@@ -2782,6 +2986,301 @@ function showVenueDetail(venueName) {
 
   document.getElementById('venueDetail').scrollIntoView({ behavior: 'smooth' });
 }
+
+
+// ═══════════════════════════════════════════════════════
+// TRAIN AI — ESPN Stats → Firebase Player Intel
+// ═══════════════════════════════════════════════════════
+
+let trainData = { h2h: null, batters: [], bowlers: [], squad: {}, injuries: [], overrides: [], matchId: '', teams: {} };
+
+function initTrainAI() {}
+
+function clearTrainForm() {
+  document.getElementById('espnUrlInput').value = '';
+  document.getElementById('fetchStatus').textContent = '';
+  ['aiAnalysisCard','h2hCard','playersWatchCard','injuryCard','applyCard'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  trainData = { h2h: null, batters: [], bowlers: [], squad: {}, injuries: [], overrides: [], matchId: '', teams: {} };
+}
+
+async function fetchAndAnalyzeESPN() {
+  const url = (document.getElementById('espnUrlInput').value || '').trim();
+  if (!url || !url.includes('espncricinfo')) { toast('Paste a valid ESPNcricinfo URL', '⚠️'); return; }
+
+  const matchIdMatch = url.match(/(\d{7,8})(?:\/|$)/);
+  const matchId = matchIdMatch ? matchIdMatch[1] : '';
+  const slugMatch = url.match(/series\/[^/]+\/([^/]+)(?:-\d+th|-\d+st|-\d+nd|-\d+rd)-match/);
+  const slug = slugMatch ? slugMatch[1] : '';
+  const teams = extractTeamsFromSlug(slug);
+  const matchNoMatch = url.match(/(\d+)(?:st|nd|rd|th)-match/);
+  const matchNo = matchNoMatch ? matchNoMatch[1] : '?';
+
+  trainData.matchId = matchId;
+  trainData.teams = { home: teams[0] || 'Team1', away: teams[1] || 'Team2' };
+
+  const status = document.getElementById('fetchStatus');
+  status.textContent = '🤖 Claude AI analyzing match data...';
+  status.style.color = 'var(--cyan)';
+  document.getElementById('aiAnalysisCard').style.display = 'block';
+  document.getElementById('aiAnalysisResult').textContent = '⏳ Analyzing IPL 2026 data...';
+  document.getElementById('aiAnalysisBadge').textContent = 'Processing';
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `You are a Dream11 fantasy cricket expert with deep IPL 2026 knowledge. Extract match data and return ONLY valid JSON, no markdown, no other text.
+
+JSON format:
+{
+  "matchNo": 4,
+  "espnMatchId": "1527677",
+  "teams": {"home": "PBKS", "away": "GT"},
+  "captain": {"home": "Shreyas Iyer", "away": "Shubman Gill"},
+  "homeAdvantage": "PBKS",
+  "h2h": {"homeWins": 3, "awayWins": 2, "results": ["PBKS won by 11 runs (Mar 2025)"], "trend": "PBKS slight edge"},
+  "squad": {
+    "PBKS": [{"name": "Shreyas Iyer", "role": "BAT", "isCaptain": true}, {"name": "Arshdeep Singh", "role": "BOWL"}],
+    "GT": [{"name": "Shubman Gill", "role": "BAT", "isCaptain": true}, {"name": "Prasidh Krishna", "role": "BOWL"}]
+  },
+  "batters": [
+    {"name": "Shubman Gill", "team": "GT", "matches": 10, "runs": 502, "avg": 55.78, "sr": 158.86, "formLevel": "must_pick", "captainScore": 9},
+    {"name": "Shreyas Iyer", "team": "PBKS", "matches": 10, "runs": 347, "avg": 49.57, "sr": 162.91, "formLevel": "hot_strong", "captainScore": 8}
+  ],
+  "bowlers": [
+    {"name": "Prasidh Krishna", "team": "GT", "matches": 10, "wickets": 17, "economy": 8.85, "sr": 14.11, "formLevel": "must_pick"},
+    {"name": "Arshdeep Singh", "team": "PBKS", "matches": 9, "wickets": 11, "economy": 9.09, "sr": 17.63, "formLevel": "hot"}
+  ],
+  "injuries": [],
+  "safeCaptainOptions": ["Shubman Gill", "Shreyas Iyer"],
+  "boldCaptainOptions": ["Prabhsimran Singh", "Sai Sudharsan"],
+  "h2hBoost": 5,
+  "keyInsights": "Shubman Gill top form. Prasidh Krishna leading wicket-taker."
+}
+
+formLevel rules: must_pick(SR>175 OR Avg>55 OR Wkts>15), hot_strong(SR>155 OR Avg>42 OR Wkts>10), hot(SR>140 OR Avg>35 OR Wkts>7), neutral, cold, avoid(injured)`,
+        messages: [{
+          role: 'user',
+          content: `ESPN URL: ${url}\nTeams: ${teams.join(' vs ')}\nMatch ${matchNo} | ESPN ID: ${matchId}\n\nExtract complete squad, H2H, Players to Watch stats, injuries, captain picks for Dream11.\nKnown: Hazlewood(RCB) injured, Cummins(SRH) injured, Ishan Kishan captaining SRH.`
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const text = (data.content?.[0]?.text || '').replace(/```json|```/g, '').trim();
+
+    let parsed;
+    try { parsed = JSON.parse(text); }
+    catch(e) {
+      document.getElementById('aiAnalysisResult').textContent = text;
+      document.getElementById('aiAnalysisBadge').textContent = '⚠️ Review';
+      status.textContent = '⚠️ Partial parse — review above';
+      status.style.color = 'var(--amber)';
+      return;
+    }
+
+    trainData = { ...trainData, ...parsed };
+    renderAnalysisResults(parsed);
+    status.textContent = '✅ Analysis complete — review below and click Apply';
+    status.style.color = 'var(--green)';
+    document.getElementById('aiAnalysisBadge').textContent = '✅ Done';
+
+  } catch(e) {
+    status.textContent = '❌ ' + e.message;
+    status.style.color = 'var(--red)';
+    toast('Analysis failed: ' + e.message, '❌');
+  }
+}
+
+function extractTeamsFromSlug(slug) {
+  const m = { 'royal-challengers-bengaluru':'RCB','rcb':'RCB','sunrisers-hyderabad':'SRH','srh':'SRH',
+    'mumbai-indians':'MI','mi':'MI','kolkata-knight-riders':'KKR','kkr':'KKR','chennai-super-kings':'CSK',
+    'csk':'CSK','rajasthan-royals':'RR','rr':'RR','punjab-kings':'PBKS','pbks':'PBKS',
+    'gujarat-titans':'GT','gt':'GT','lucknow-super-giants':'LSG','lsg':'LSG','delhi-capitals':'DC','dc':'DC' };
+  const found = [];
+  for (const [k,v] of Object.entries(m)) { if (slug.includes(k) && !found.includes(v)) found.push(v); if (found.length===2) break; }
+  return found.length ? found : ['Team1','Team2'];
+}
+
+function renderAnalysisResults(data) {
+  const summary = `Extracted: ${data.batters?.length||0} batters, ${data.bowlers?.length||0} bowlers, ${Object.values(data.squad||{}).flat().length} squad players, ${data.injuries?.length||0} injuries\nH2H: ${data.h2h?.homeWins||0}-${data.h2h?.awayWins||0} | Home: ${data.homeAdvantage}\nInsight: ${data.keyInsights||'—'}`;
+  document.getElementById('aiAnalysisResult').textContent = summary;
+
+  if (data.h2h) {
+    document.getElementById('h2hCard').style.display = 'block';
+    document.getElementById('h2hTeam1Wins').textContent = data.h2h.homeWins||0;
+    document.getElementById('h2hTeam1Label').textContent = data.teams?.home||'Home';
+    document.getElementById('h2hTeam2Wins').textContent = data.h2h.awayWins||0;
+    document.getElementById('h2hTeam2Label').textContent = data.teams?.away||'Away';
+    document.getElementById('h2hList').innerHTML = (data.h2h.results||[]).map(r=>`<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;font-family:Barlow Condensed">${r}</div>`).join('');
+  }
+
+  if (data.batters?.length || data.bowlers?.length) {
+    document.getElementById('playersWatchCard').style.display = 'block';
+    renderPlayerCards('watchBatters', data.batters||[], 'batter');
+    renderPlayerCards('watchBowlers', data.bowlers||[], 'bowler');
+    if (data.squad) renderSquadSection(data.squad);
+  }
+
+  if (data.injuries?.length) {
+    document.getElementById('injuryCard').style.display = 'block';
+    document.getElementById('injuryList').innerHTML = data.injuries.map((p,i)=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+        <div><span style="font-size:13px;font-weight:600;color:var(--red)">${p.name}</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">${p.team} · ${p.reason||'injured'}</span></div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+          <input type="checkbox" checked id="injury_${i}"/> Mark AVOID</label>
+      </div>`).join('');
+  }
+
+  document.getElementById('applyCard').style.display = 'block';
+  buildTrainingSummary(data);
+}
+
+function renderPlayerCards(elId, players, type) {
+  const colors = {'must_pick':'var(--green)','hot_strong':'var(--cyan)','hot':'var(--text)','neutral':'var(--muted)','cold':'var(--amber)','avoid':'var(--red)'};
+  document.getElementById(elId).innerHTML = players.map((p,i)=>{
+    const stats = type==='batter' ? `${p.runs}R · Avg ${p.avg} · SR ${p.sr}` : `${p.wickets}W · Eco ${p.economy} · SR ${p.sr}`;
+    return `<div style="padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><span style="font-size:13px;font-weight:600;color:${colors[p.formLevel]||'var(--text)'}">${p.name}</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:6px">${p.team}</span>
+        ${p.captainScore>=8?'<span style="font-size:10px;background:rgba(0,212,255,.15);color:var(--cyan);padding:1px 5px;border-radius:4px;margin-left:5px">C pick</span>':''}</div>
+        <select id="form_${type}_${i}" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:3px 6px;border-radius:6px;font-size:11px">
+          <option value="must_pick" ${p.formLevel==='must_pick'?'selected':''}>Must Pick</option>
+          <option value="hot_strong" ${p.formLevel==='hot_strong'?'selected':''}>Hot Strong +35%</option>
+          <option value="hot" ${p.formLevel==='hot'?'selected':''}>Hot +20%</option>
+          <option value="neutral" ${p.formLevel==='neutral'?'selected':''}>Neutral</option>
+          <option value="cold" ${p.formLevel==='cold'?'selected':''}>Cold -20%</option>
+          <option value="avoid" ${p.formLevel==='avoid'?'selected':''}>Avoid</option>
+        </select>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:Barlow Condensed">${stats}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderSquadSection(squad) {
+  const el = document.getElementById('playersWatchCard');
+  const old = document.getElementById('squadSection'); if (old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'squadSection';
+  div.style.cssText = 'margin-top:16px;padding-top:14px;border-top:1px solid var(--border)';
+  const teamKeys = Object.keys(squad);
+  let html = '<div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--muted);margin-bottom:8px;font-family:JetBrains Mono">FULL SQUAD</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+  for (const tk of teamKeys) {
+    const players = squad[tk]||[];
+    html += `<div><div style="font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:6px;font-family:Barlow Condensed">${tk} (${players.length})</div>`;
+    for (const p of players) {
+      const rc = p.role==='BAT'?'var(--cyan)':p.role==='BOWL'?'var(--red)':p.role==='ALL'?'var(--green)':'var(--amber)';
+      html += `<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px;font-family:Barlow Condensed;border-bottom:1px solid rgba(255,255,255,.04)">
+        <span style="color:var(--text)">${p.isCaptain?'(c) ':''}${p.name}</span>
+        <span style="color:${rc};font-size:10px;font-weight:700">${p.role||'?'}</span></div>`;
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  div.innerHTML = html;
+  el.querySelector('.section-body').appendChild(div);
+}
+
+function buildTrainingSummary(data) {
+  const lines = [];
+  lines.push(`Match: ${data.teams?.home||'?'} vs ${data.teams?.away||'?'} (ESPN: ${data.espnMatchId||trainData.matchId})`);
+  lines.push(`Captains: ${data.captain?.home||'?'} (${data.teams?.home}) vs ${data.captain?.away||'?'} (${data.teams?.away})`);
+  lines.push(`H2H: ${data.homeAdvantage} leads ${data.h2h?.homeWins||0}-${data.h2h?.awayWins||0} → +${data.h2hBoost||5}% home boost`);
+  const sq = Object.values(data.squad||{}).flat().length;
+  if (sq) lines.push(`Squad: ${sq} players loaded for AI team generation`);
+  const mp = (data.batters||[]).concat(data.bowlers||[]).filter(p=>p.formLevel==='must_pick');
+  if (mp.length) lines.push(`Must picks: ${mp.map(p=>p.name).join(', ')}`);
+  lines.push(`Safe C: ${data.safeCaptainOptions?.[0]||'?'} | Bold C: ${data.boldCaptainOptions?.[0]||'?'}`);
+  if (data.keyInsights) lines.push(`Insight: ${data.keyInsights}`);
+  document.getElementById('trainingSummary').textContent = lines.join('\n');
+}
+
+function addManualOverride() {
+  const name = (document.getElementById('manualPlayer').value||'').trim();
+  const ov   = document.getElementById('manualOverride').value;
+  if (!name) { toast('Enter player name','⚠️'); return; }
+  if (!trainData.overrides) trainData.overrides = [];
+  trainData.overrides.push({ name, overrideType: ov });
+  document.getElementById('manualPlayer').value = '';
+  document.getElementById('manualOverrideList').innerHTML +=
+    `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px;font-family:Barlow Condensed">
+      <span style="color:var(--text)">${name}</span><span style="color:var(--cyan)">${ov}</span></div>`;
+  toast(`Added ${name} → ${ov}`,'✅');
+}
+
+async function applyTraining() {
+  const btn = document.querySelector('#applyCard .btn-green');
+  if (btn) { btn.textContent = '⏳ Saving...'; btn.disabled = true; }
+  const status = document.getElementById('applyStatus');
+  status.textContent = 'Saving to Firebase...'; status.style.color = 'var(--cyan)';
+
+  const mMap = {'must_pick':1.5,'hot_strong':1.35,'hot':1.20,'neutral':1.0,'cold':0.80,'avoid':0.01};
+  let applied = 0;
+
+  const allPlayers = [];
+  (trainData.batters||[]).forEach((p,i)=>{ const el=document.getElementById(`form_batter_${i}`); allPlayers.push({...p,formLevel:el?el.value:p.formLevel,type:'batter'}); });
+  (trainData.bowlers||[]).forEach((p,i)=>{ const el=document.getElementById(`form_bowler_${i}`); allPlayers.push({...p,formLevel:el?el.value:p.formLevel,type:'bowler'}); });
+
+  for (const p of allPlayers) {
+    if (p.formLevel === 'neutral') continue;
+    try {
+      await api('/api/admin/player-override','POST',{
+        playerId: p.name, overrideType: p.formLevel, multiplier: mMap[p.formLevel]||1.0,
+        reason: `ESPN ${p.type}: ${p.type==='batter'?`${p.runs}R SR${p.sr}`:`${p.wickets}W Eco${p.economy}`}`,
+        appliedAt: new Date().toISOString()
+      }); applied++;
+    } catch(e) { console.error(p.name, e.message); }
+  }
+
+  const injuries = (trainData.injuries||[]).filter((_,i)=>{ const cb=document.getElementById(`injury_${i}`); return cb?cb.checked:true; });
+  for (const inj of injuries) {
+    try { await api('/api/admin/player-override','POST',{ playerId:inj.name, overrideType:'avoid', multiplier:0.01, reason:inj.reason||'injured', appliedAt:new Date().toISOString() }); applied++; } catch(e) {}
+  }
+
+  for (const ov of (trainData.overrides||[])) {
+    try { await api('/api/admin/player-override','POST',{ playerId:ov.name, overrideType:ov.overrideType, multiplier:mMap[ov.overrideType]||1.0, reason:'manual - Train AI', appliedAt:new Date().toISOString() }); applied++; } catch(e) {}
+  }
+
+  // Save match intel (H2H, squad, captain hints) to Firebase
+  try {
+    await api('/api/admin/save-match-intel','POST',{
+      matchId: trainData.matchId, teams: trainData.teams, h2h: trainData.h2h,
+      squad: trainData.squad, captain: trainData.captain,
+      safeCaptainOptions: trainData.safeCaptainOptions, boldCaptainOptions: trainData.boldCaptainOptions,
+      h2hBoost: parseInt(document.getElementById('h2hBoost')?.value||'5'),
+      homeAdvantage: trainData.homeAdvantage, espnUrl: document.getElementById('espnUrlInput').value,
+      keyInsights: trainData.keyInsights, savedAt: new Date().toISOString()
+    });
+  } catch(e) { console.log('intel save:', e.message); }
+
+  status.textContent = `✅ ${applied} overrides + match intel saved! AI uses this at 12:30 AM.`;
+  status.style.color = 'var(--green)';
+  toast(`✅ ${applied} overrides saved to AI Brain!`);
+  if (btn) { btn.textContent = '✅ Applied!'; btn.disabled = false; }
+}
+
+async function regenerateTeamsNow() {
+  await applyTraining();
+  try {
+    const today = await api('/api/admin/today');
+    const match = today.matches?.[0];
+    if (match) {
+      toast('⚡ Regenerating teams...','⚡');
+      await api(`/api/admin/generate-teams/${match.id}`,'POST');
+      toast('✅ Teams regenerated with ESPN intel!');
+    } else { toast('No match today — intel saved for 12:30 AM cron','⚠️'); }
+  } catch(e) { toast('Regen: '+e.message,'❌'); }
+}
+
+
 
 setInterval(() => {
   const activePage = document.querySelector('.page.active')?.id;
