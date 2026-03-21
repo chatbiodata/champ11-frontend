@@ -1672,7 +1672,7 @@ function renderMatchesTable(matches) {
     const acc = m.accuracy ? `<span style="color:${m.accuracy>=65?'var(--green)':'var(--amber)'};font-family:'JetBrains Mono';font-weight:700">${m.accuracy}%</span>` : '<span style="color:var(--dim)">—</span>';
     return `<tr>
       <td><div style="font-weight:600;font-size:13px">${m.name || m.shortName || (m.teams?.home && m.teams?.away ? m.teams.home+' vs '+m.teams.away : '—')}</div><div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono'">${m.id||m.matchId||'—'}</div></td>
-      <td style="font-family:'JetBrains Mono';font-size:11px">${formatDate(m.dateTimeGMT||m.date)}</td>
+      <td style="font-family:'JetBrains Mono';font-size:11px">${formatDate(m.dateTimeGMT||m.date, m.timeIST)}</td>
       <td style="font-size:12px;color:var(--muted)">${(typeof m.venue==='object' ? (m.venue?.shortName||m.venue?.city||'—') : (m.venue||'—')).substring(0,22)}</td>
       <td><span class="badge ${statusBadge}">${status}</span></td>
       <td>${m.teamsReady||m.hasTeams?'<span class="badge badge-green">✓ Ready</span>':'<span class="badge badge-dim">Not Yet</span>'}</td>
@@ -2683,6 +2683,23 @@ async function loadTeamForMatch() {
     document.getElementById('safeTeamBadge').textContent = sc ? `${sc} players · C: ${safe.captain||'—'} | VC: ${safe.viceCaptain||'—'}` : 'Not generated';
     document.getElementById('boldTeamBadge').textContent = bc ? `${bc} players · C: ${bold.captain||'—'} | VC: ${bold.viceCaptain||'—'}` : 'Not generated';
 
+    // ── Differential count (players different between Safe & Bold) ──
+    if (sc && bc) {
+      const safeIds = new Set((safe.players||[]).map(p => p.id||p.name));
+      const boldIds = new Set((bold.players||[]).map(p => p.id||p.name));
+      const diffPlayers = [...boldIds].filter(id => !safeIds.has(id));
+      const diffCount = diffPlayers.length;
+      const sameCount = 11 - diffCount;
+      const diffBanner = document.getElementById('teamDiffBanner') || (() => {
+        const el = document.createElement('div');
+        el.id = 'teamDiffBanner';
+        el.style.cssText = 'margin:8px 0 14px;padding:8px 16px;border-radius:8px;background:rgba(255,179,0,0.1);border:1px solid rgba(255,179,0,0.25);font-family:Barlow Condensed;font-size:13px;letter-spacing:.5px;color:var(--amber)';
+        document.getElementById('teamMetaCard').after(el);
+        return el;
+      })();
+      diffBanner.innerHTML = `⚡ <strong>${diffCount} differential players</strong> (Bold has ${diffCount} unique picks vs Safe) · ${sameCount}/11 shared`;
+    }
+
   } catch(e) {
     document.getElementById('safeTeamPlayers').innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Teams not generated yet</div><div class="empty-sub">Cron generates at 12:30 AM IST · or use Controls → Generate Teams</div></div>`;
     document.getElementById('boldTeamPlayers').innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Teams not generated yet</div></div>`;
@@ -2735,7 +2752,7 @@ async function loadMatchCompare() {
 
     const sel = document.getElementById('compareMatchFilter');
     sel.innerHTML = '<option value="">— Select completed match —</option>' +
-      completed.map(m => `<option value="${m.id||m.matchId}">${m.name||m.teams?.join(' vs ')||'Match'} · ${formatDate(m.dateTimeGMT||m.date)}</option>`).join('');
+      completed.map(m => `<option value="${m.id||m.matchId}">${m.name||m.teams?.join(' vs ')||'Match'} · ${formatDate(m.dateTimeGMT||m.date, m.timeIST)}</option>`).join('');
 
     if (!completed.length) {
       sel.innerHTML = '<option value="">No completed matches yet — available after IPL starts</option>';
