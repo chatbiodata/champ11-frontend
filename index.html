@@ -370,6 +370,17 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 }
 .nav-badge:hover{background:rgba(184,255,0,0.2)}
 
+/* ── LOGIN NAV BUTTON ── */
+.login-nav-btn{
+  font-family:'Barlow Condensed';font-size:12px;font-weight:700;
+  letter-spacing:1px;text-transform:uppercase;
+  padding:6px 14px;border-radius:20px;
+  background:rgba(255,179,0,0.12);color:var(--gold,#FFB300);
+  border:1px solid rgba(255,179,0,0.35);
+  cursor:pointer;transition:.2s;white-space:nowrap;
+}
+.login-nav-btn:hover{background:rgba(255,179,0,0.25);border-color:rgba(255,179,0,0.6);}
+
 /* ── BELL NOTIFICATION ── */
 .bell-btn{
   position:relative;background:none;border:none;
@@ -385,7 +396,20 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 .bell-btn.subscribed .bell-icon{
   filter:drop-shadow(0 0 8px rgba(184,255,0,0.9));
 }
-.bell-btn:not(.subscribed) .bell-icon{opacity:0.45}
+.bell-btn:not(.subscribed) .bell-icon{
+  opacity:1;
+  animation: bellRing 2s ease-in-out infinite;
+}
+@keyframes bellRing {
+  0%,100%{transform:rotate(0) scale(1)}
+  5%{transform:rotate(-18deg) scale(1.1)}
+  10%{transform:rotate(18deg) scale(1.1)}
+  15%{transform:rotate(-14deg) scale(1.05)}
+  20%{transform:rotate(14deg) scale(1.05)}
+  25%{transform:rotate(-8deg)}
+  30%{transform:rotate(8deg)}
+  35%{transform:rotate(0) scale(1)}
+}
 /* shake animation when notification arrives */
 @keyframes bellShake{
   0%,100%{transform:rotate(0)}
@@ -1022,6 +1046,10 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   <div class="logo"><em>CHAMP</em><span>11</span></div>
   <div class="nav-right">
     <div class="nav-badge">🏏 IPL 2026 LIVE</div>
+    <!-- LOGIN BUTTON -->
+    <button class="login-nav-btn" onclick="openLoginModal()" title="Already have a pass? Login">
+      🔑 Login
+    </button>
     <!-- BELL NOTIFICATION BUTTON -->
     <button class="bell-btn" id="bellBtn" onclick="handleBellClick()" title="Get notified when Playing XI is announced">
       <span class="bell-icon" id="bellIcon">🔔</span>
@@ -1043,10 +1071,10 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 
 <!-- NOTIFICATION PERMISSION BANNER -->
 <div class="notif-banner" id="notifBanner">
-  <div class="notif-banner-title">🔔 Never Miss Playing XI</div>
+  <div class="notif-banner-title">🔔 Don't Miss Your AI Team!</div>
   <div class="notif-banner-msg">
-    Get instant alerts when Playing XI is announced at toss time.<br>
-    <strong style="color:var(--lime)">Your AI team updates in ~3 min after toss.</strong>
+    Playing XI drops at toss time — your AI team updates in <strong style="color:var(--lime)">~3 minutes</strong>.<br>
+    <span style="color:var(--gold,#FFB300);font-weight:600">⚡ Enable alerts so you never miss a winning team update.</span>
   </div>
   <div class="notif-banner-btns">
     <button class="notif-allow-btn" onclick="requestNotifPermission()">Allow Notifications</button>
@@ -2236,7 +2264,7 @@ async function loadMatchStrip() {
 
   } catch(e) {
     console.error('loadMatchStrip:', e.message);
-    // Show first 4 IPL 2026 matches as fallback (strip already declared above)
+    // Show first 4 IPL 2026 matches as fallback
     const stripFb = document.getElementById('matchesStrip');
     if (stripFb) stripFb.innerHTML = [
       {teams:'RCB vs SRH', venue:'Chinnaswamy, Bengaluru', date:'2026-03-28', time:'7:30 PM', id:'ipl2026-match-01'},
@@ -2262,7 +2290,7 @@ window.addEventListener('load', () => {
     setBellSubscribed(true);
     registerServiceWorker(false);
   } else if (!localStorage.getItem(BANNER_KEY)) {
-    setTimeout(showNotifBanner, 8000);
+    setTimeout(showNotifBanner, 20000);
   }
   // Poll every 2 min for XI confirmation
   setInterval(pollForXINotification, 2 * 60 * 1000);
@@ -2271,6 +2299,32 @@ window.addEventListener('load', () => {
   // Load real matches from Firebase
   loadMatchStrip();
 });
+
+
+// ── Login Modal ──────────────────────────────────────────────────
+function openLoginModal() {
+  // Re-use existing purchase key login flow
+  const key = prompt('Enter your purchase key (from your email/WhatsApp):');
+  if (!key || !key.trim()) return;
+  const k = key.trim().toUpperCase();
+  try {
+    const data = JSON.parse(localStorage.getItem(k));
+    if (data && Date.now() < data.expiresAt) {
+      localStorage.setItem('c11_latest', k);
+      showInAppToast('✅', 'Access Restored!',
+        `${data.matchName || 'Match'} — ${data.plan === 'safe' ? '🛡️ Safe' : data.plan === 'bold' ? '🔥 Bold' : '⚡ Both'} team unlocked.`, '');
+      setTimeout(() => { location.reload(); }, 1500);
+    } else if (data) {
+      showInAppToast('⏰', 'Pass Expired',
+        'This pass is expired. Please purchase a new one for today\'s match.', '');
+    } else {
+      showInAppToast('❌', 'Key Not Found',
+        'Check your email/WhatsApp for the correct key, or purchase a new pass.', '');
+    }
+  } catch(e) {
+    showInAppToast('❌', 'Invalid Key', 'Please check the key and try again.', '');
+  }
+}
 
 function handleBellClick() {
   if (localStorage.getItem(BELL_KEY) === 'granted') {
