@@ -1030,12 +1030,122 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 .hero-content>*:nth-child(6){animation-delay:.85s}
 
 @media(max-width:600px){
-  .stat-bar{flex-wrap:wrap}
-  .stat-item{flex:1 1 45%;border-right:none;border-bottom:1px solid rgba(255,255,255,0.06)}
-  .how-grid{grid-template-columns:1fr}
-  .pricing-grid{grid-template-columns:1fr 1fr}
-  .hero-title{font-size:clamp(48px,13vw,80px)}
+
+  /* ── NAV ── */
+  .nav{padding:0 14px;height:52px;}
+  .logo{font-size:22px;letter-spacing:3px;}
+  .nav-badge{
+    font-size:9px;padding:4px 8px;letter-spacing:1px;
+    white-space:nowrap;line-height:1.2;
+  }
+  .login-nav-btn{
+    font-size:10px;padding:5px 10px;letter-spacing:0.5px;
+  }
+  .bell-btn{padding:4px;}
+  .bell-icon{font-size:19px;}
+  .nav-right{gap:8px;}
+
+  /* ── HERO ── */
+  .hero-title{font-size:clamp(44px,14vw,72px);}
+  .hero-sub{font-size:12px;letter-spacing:2px;}
+  .hero-desc{font-size:15px;padding:14px 16px;}
+
+  /* ── MATCH STRIP ── */
+  .matches-strip{padding:0 16px;gap:12px;}
+  .match-chip{
+    min-width:calc(88vw);
+    padding:16px 18px;
+    background:rgba(2,5,15,0.88)!important;
+    border:1px solid rgba(255,255,255,0.2)!important;
+  }
+  .match-chip.featured{
+    background:rgba(0,20,10,0.92)!important;
+    border-color:rgba(0,230,118,0.4)!important;
+  }
+  .chip-time{font-size:11px;}
+  .chip-teams{font-size:20px;}
+  .chip-venue{font-size:11px;}
+  .chip-actions{gap:6px;flex-wrap:nowrap;}
+  .chip-btn{font-size:11px;padding:8px 10px;flex:1;}
+
+  /* ── STAT BAR ── */
+  .stat-bar{flex-wrap:wrap;}
+  .stat-item{
+    flex:1 1 45%;
+    border-right:none!important;
+    border-bottom:1px solid rgba(255,255,255,0.06);
+    padding:14px 10px;
+  }
+  .stat-val{font-size:28px;}
+  .stat-lbl{font-size:9px;}
+
+  /* ── SECTIONS ── */
+  .how-grid{grid-template-columns:1fr;}
+  .pricing-grid{grid-template-columns:1fr;}
+  .how-card{padding:18px;}
+  section,.section{padding-left:16px;padding-right:16px;}
 }
+
+/* Extra small phones */
+@media(max-width:380px){
+  .chip-btn{font-size:10px;padding:7px 7px;}
+  .match-chip{min-width:calc(92vw);}
+  .hero-title{font-size:42px;}
+  .login-nav-btn{display:none;}
+}
+
+/* ── LOGIN MODAL ── */
+.login-overlay{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);
+  align-items:center;justify-content:center;padding:20px;
+}
+.login-overlay.show{display:flex;}
+.login-box{
+  background:#0f1117;border:1px solid rgba(255,179,0,0.3);
+  border-radius:20px;padding:32px 28px;width:100%;max-width:400px;
+  box-shadow:0 0 40px rgba(255,179,0,0.15);
+  animation:slideUp .3s ease;
+}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.login-box-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.login-box-title{font-family:'Bebas Neue';font-size:22px;letter-spacing:2px;color:#FFB300;}
+.login-box-close{background:none;border:none;color:#888;font-size:20px;cursor:pointer;padding:4px 8px;border-radius:6px;}
+.login-box-close:hover{background:rgba(255,255,255,0.08);color:#fff;}
+.login-box-icon{font-size:36px;text-align:center;margin-bottom:12px;}
+.login-box-sub{font-size:13px;color:#888;text-align:center;margin-bottom:24px;line-height:1.5;}
+.login-box-sub strong{color:#FFB300;}
+.login-input-wrap{position:relative;margin-bottom:16px;}
+.login-input-prefix{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  font-size:14px;color:#aaa;font-family:'JetBrains Mono';
+  pointer-events:none;
+}
+.login-mobile-input{
+  width:100%;padding:14px 14px 14px 42px;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.15);border-radius:12px;
+  color:#fff;font-size:16px;font-family:'JetBrains Mono';
+  outline:none;transition:.2s;box-sizing:border-box;
+  -webkit-appearance:none;
+}
+.login-mobile-input:focus{border-color:#FFB300;background:rgba(255,179,0,0.06);}
+.login-mobile-input::placeholder{color:#555;}
+.login-submit-btn{
+  width:100%;padding:14px;border:none;border-radius:12px;
+  background:linear-gradient(135deg,#FFB300,#FF8C00);
+  color:#000;font-family:'Bebas Neue';font-size:18px;letter-spacing:2px;
+  cursor:pointer;transition:.2s;margin-top:4px;
+}
+.login-submit-btn:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(255,179,0,0.4);}
+.login-submit-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.login-error{color:#FF5252;font-size:12px;text-align:center;margin-top:8px;min-height:18px;}
+.login-divider{text-align:center;color:#555;font-size:11px;margin:16px 0;letter-spacing:1px;}
+.login-purchase-link{
+  display:block;text-align:center;font-size:13px;color:#00E676;
+  cursor:pointer;text-decoration:underline;
+}
+
 </style>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
@@ -1045,7 +1155,7 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 <nav class="nav">
   <div class="logo"><em>CHAMP</em><span>11</span></div>
   <div class="nav-right">
-    <div class="nav-badge">🏏 IPL 2026 LIVE</div>
+    <div class="nav-badge">🏏 IPL 2026</div>
     <!-- LOGIN BUTTON -->
     <button class="login-nav-btn" onclick="openLoginModal()" title="Already have a pass? Login">
       🔑 Login
@@ -2178,6 +2288,37 @@ async function doPayment() {
 }
 </script>
 
+
+<!-- ── LOGIN MODAL ── -->
+<div class="login-overlay" id="loginOverlay" onclick="if(event.target===this)closeLoginModal()">
+  <div class="login-box">
+    <div class="login-box-header">
+      <div class="login-box-title">🔑 Access Your Pass</div>
+      <button class="login-box-close" onclick="closeLoginModal()">✕</button>
+    </div>
+    <div class="login-box-icon">📱</div>
+    <div class="login-box-sub">
+      Enter the <strong>mobile number</strong> used during purchase.<br>
+      Your AI team will unlock instantly.
+    </div>
+    <div class="login-input-wrap">
+      <span class="login-input-prefix">+91</span>
+      <input class="login-mobile-input" id="loginMobileInput" type="tel"
+        maxlength="10" placeholder="98765 43210"
+        onkeyup="this.value=this.value.replace(/[^0-9]/g,'')"
+        onkeydown="if(event.key==='Enter')submitLogin()">
+    </div>
+    <div class="login-error" id="loginError"></div>
+    <button class="login-submit-btn" id="loginSubmitBtn" onclick="submitLogin()">
+      Unlock My Team →
+    </button>
+    <div class="login-divider">— OR —</div>
+    <span class="login-purchase-link" onclick="closeLoginModal();scrollToPricing()">
+      New here? Get AI teams from ₹9 →
+    </span>
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════════════════════
 // BELL NOTIFICATION SYSTEM — Champ11
@@ -2303,27 +2444,68 @@ window.addEventListener('load', () => {
 
 // ── Login Modal ──────────────────────────────────────────────────
 function openLoginModal() {
-  // Re-use existing purchase key login flow
-  const key = prompt('Enter your purchase key (from your email/WhatsApp):');
-  if (!key || !key.trim()) return;
-  const k = key.trim().toUpperCase();
+  document.getElementById('loginOverlay').classList.add('show');
+  document.getElementById('loginMobileInput').focus();
+  document.getElementById('loginError').textContent = '';
+}
+
+function closeLoginModal() {
+  document.getElementById('loginOverlay').classList.remove('show');
+  document.getElementById('loginMobileInput').value = '';
+  document.getElementById('loginError').textContent = '';
+}
+
+async function submitLogin() {
+  const mobile = (document.getElementById('loginMobileInput').value || '').trim();
+  const errEl  = document.getElementById('loginError');
+  const btn    = document.getElementById('loginSubmitBtn');
+
+  if (!mobile || mobile.length !== 10) {
+    errEl.textContent = '⚠️ Please enter a valid 10-digit mobile number.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Checking...';
+  errEl.textContent = '';
+
   try {
-    const data = JSON.parse(localStorage.getItem(k));
-    if (data && Date.now() < data.expiresAt) {
-      localStorage.setItem('c11_latest', k);
-      showInAppToast('✅', 'Access Restored!',
-        `${data.matchName || 'Match'} — ${data.plan === 'safe' ? '🛡️ Safe' : data.plan === 'bold' ? '🔥 Bold' : '⚡ Both'} team unlocked.`, '');
-      setTimeout(() => { location.reload(); }, 1500);
-    } else if (data) {
-      showInAppToast('⏰', 'Pass Expired',
-        'This pass is expired. Please purchase a new one for today\'s match.', '');
+    // Check backend for purchases by mobile number
+    const res  = await fetch(`${API_BASE}/api/purchases/by-mobile?mobile=${mobile}`);
+    const data = await res.json();
+
+    if (data.found && data.purchases && data.purchases.length > 0) {
+      // Find latest active purchase
+      const active = data.purchases.find(p => Date.now() < (p.expiresAt || 0));
+      const latest = active || data.purchases[0];
+
+      if (active) {
+        // Store in localStorage for instant access
+        localStorage.setItem('c11_latest', latest.purchaseKey);
+        localStorage.setItem(latest.purchaseKey, JSON.stringify(latest));
+        closeLoginModal();
+        showInAppToast('✅', 'Access Restored!',
+          `${latest.matchName || 'Match'} — ${latest.plan === 'safe' ? '🛡️ Safe' : latest.plan === 'bold' ? '🔥 Bold' : '⚡ Both'} team unlocked.`, '');
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        errEl.textContent = '⏰ Your last pass has expired. Buy a new one below.';
+        closeLoginModal();
+        scrollToPricing();
+      }
     } else {
-      showInAppToast('❌', 'Key Not Found',
-        'Check your email/WhatsApp for the correct key, or purchase a new pass.', '');
+      errEl.textContent = '❌ No purchase found for this number. Check the number or buy below.';
     }
   } catch(e) {
-    showInAppToast('❌', 'Invalid Key', 'Please check the key and try again.', '');
+    errEl.textContent = '⚠️ Connection error. Please try again.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Unlock My Team →';
   }
+}
+
+function scrollToPricing() {
+  const el = document.querySelector('.pricing-section') || document.querySelector('[class*="price"]');
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
 }
 
 function handleBellClick() {
