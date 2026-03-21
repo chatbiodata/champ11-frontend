@@ -627,8 +627,13 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 
 /* ── PRICING ── */
 .pricing-grid{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
   margin-bottom:60px;
+  max-width:760px;
+  margin-left:auto;
+  margin-right:auto;
 }
 .price-card{
   background:var(--card);border:1px solid var(--border);border-radius:14px;
@@ -658,6 +663,8 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 }
 .price-card.best .price-amount{color:var(--cyan)}
 .price-sub{font-family:'Barlow Condensed';font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:14px}
+.price-login-card{border-color:rgba(255,179,0,0.2);background:rgba(255,179,0,0.04);}
+.price-login-card:hover{border-color:rgba(255,179,0,0.4);background:rgba(255,179,0,0.08);}
 .price-cta{
   font-family:'Barlow Condensed';font-size:13px;font-weight:700;letter-spacing:1px;
   padding:8px 0;border-radius:8px;width:100%;border:none;cursor:pointer;transition:.2s;
@@ -1081,7 +1088,7 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 
   /* ── SECTIONS ── */
   .how-grid{grid-template-columns:1fr;}
-  .pricing-grid{grid-template-columns:1fr;}
+  .pricing-grid{grid-template-columns:1fr 1fr;gap:10px;}
   .how-card{padding:18px;}
   section,.section{padding-left:16px;padding-right:16px;}
 }
@@ -1322,11 +1329,19 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
     <div class="section-title">CHOOSE YOUR PLAN</div>
   </div>
   <div class="pricing-grid">
+    <!-- Row 1 -->
     <div class="price-card" onclick="openPayModal('Any Match','','safe')">
       <div class="price-label">Safe Team</div>
       <div class="price-amount">₹9</div>
       <div class="price-sub">Single match · 1 team</div>
       <button class="price-cta">Get Safe Team</button>
+    </div>
+    <div class="price-card best" onclick="openPayModal('Any Match','','both')">
+      <div class="price-badge">⚡ BEST VALUE</div>
+      <div class="price-label">Champ Bundle</div>
+      <div class="price-amount">₹15</div>
+      <div class="price-sub">Single match · Safe + Bold</div>
+      <button class="price-cta" style="background:linear-gradient(135deg,#00d4ff,#b8ff00);color:#000">Get Both Teams</button>
     </div>
     <div class="price-card" onclick="openPayModal('Any Match','','bold')">
       <div class="price-label">Bold Team</div>
@@ -1334,18 +1349,7 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
       <div class="price-sub">Single match · 1 team</div>
       <button class="price-cta">Get Bold Team</button>
     </div>
-    <div class="price-card best" onclick="openPayModal('Any Match','','both')">
-      <div class="price-badge">⚡ BEST VALUE</div>
-      <div class="price-label">Champ Bundle</div>
-      <div class="price-amount">₹15</div>
-      <div class="price-sub">Single match · Safe + Bold</div>
-      <button class="price-cta">Get Both Teams</button>
-    </div>
-    <div style="text-align:center;margin-bottom:10px">
-      <button onclick="showPassLogin()" style="background:none;border:1px solid rgba(0,212,255,0.3);color:rgba(0,212,255,0.8);padding:7px 18px;border-radius:20px;font-family:'Barlow Condensed';font-size:13px;letter-spacing:1px;cursor:pointer">
-        🔑 Already have a pass? Login
-      </button>
-    </div>
+    <!-- Row 2 -->
     <div class="price-card" onclick="openPayModal('Weekly Pass','All Matches','weekly')">
       <div class="price-label">Weekly Pass</div>
       <div class="price-amount">₹59</div>
@@ -1357,6 +1361,13 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
       <div class="price-amount">₹399</div>
       <div class="price-sub">84 matches · ₹4.75/match</div>
       <button class="price-cta">Get Season</button>
+    </div>
+    <!-- Login card - 3rd in row 2 -->
+    <div class="price-card price-login-card" onclick="openLoginModal()">
+      <div class="price-label" style="color:rgba(255,179,0,0.7)">Have a Pass?</div>
+      <div style="font-size:32px;margin:8px 0">🔑</div>
+      <div class="price-sub">Enter mobile to<br>unlock your team</div>
+      <button class="price-cta" style="background:rgba(255,179,0,0.15);color:#FFB300;border:1px solid rgba(255,179,0,0.3)">Login →</button>
     </div>
   </div>
 
