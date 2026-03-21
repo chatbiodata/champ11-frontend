@@ -2173,8 +2173,11 @@ async function loadMatchStrip() {
 
   try {
     const res  = await fetch(`${API_BASE}/api/matches/upcoming?limit=8`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    const matches = data.matches || data || [];
+    const matches = (data.matches || data || [])
+      .filter(m => m.date >= '2026-03-28')
+      .slice(0, 8);
 
     if (!matches.length) {
       strip.innerHTML = `
@@ -2233,7 +2236,24 @@ async function loadMatchStrip() {
 
   } catch(e) {
     console.error('loadMatchStrip:', e.message);
-    // Keep loading placeholder on error — don't break page
+    // Show first 4 IPL 2026 matches as fallback
+    const strip = document.getElementById('matchesStrip');
+    if (strip) strip.innerHTML = [
+      {teams:'RCB vs SRH', venue:'Chinnaswamy, Bengaluru', date:'2026-03-28', time:'7:30 PM', id:'ipl2026-match-01'},
+      {teams:'MI vs KKR',  venue:'Wankhede, Mumbai',       date:'2026-03-29', time:'7:30 PM', id:'ipl2026-match-02'},
+      {teams:'RR vs CSK',  venue:'Barsapara, Guwahati',    date:'2026-03-30', time:'7:30 PM', id:'ipl2026-match-03'},
+      {teams:'PBKS vs GT', venue:'Mullanpur, Chandigarh',  date:'2026-03-31', time:'7:30 PM', id:'ipl2026-match-04'},
+    ].map((m,i) => `
+      <div class="match-chip${i===0?' featured':''}" onclick="openPayModal('${m.teams}','${m.venue}','','${m.id}')">
+        <div class="chip-time">${m.date === '2026-03-28' ? '⚡ MAR 28' : 'MAR ' + m.date.slice(8)} · ${m.time}</div>
+        <div class="chip-teams">${m.teams}</div>
+        <div class="chip-venue">📍 ${m.venue}</div>
+        <div class="chip-actions">
+          <button class="chip-btn btn-safe" onclick="event.stopPropagation();openPayModal('${m.teams}','${m.venue}','safe','${m.id}')">🛡️ Safe ₹9</button>
+          <button class="chip-btn btn-bold" onclick="event.stopPropagation();openPayModal('${m.teams}','${m.venue}','bold','${m.id}')">🔥 Bold ₹11</button>
+          <button class="chip-btn btn-both" onclick="event.stopPropagation();openPayModal('${m.teams}','${m.venue}','both','${m.id}')">⚡ Both ₹15</button>
+        </div>
+      </div>`).join('');
   }
 }
 
