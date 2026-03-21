@@ -1086,47 +1086,12 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
       Get <strong>2 AI-optimised teams</strong> per match — Safe strategy and Bold differential picks. Starting from ₹9. No guesswork.
     </div>
 
-    <!-- Today's Matches -->
+    <!-- Today's Matches — Dynamic from Firebase -->
     <div class="matches-strip" id="matchesStrip">
-      <div class="match-chip featured" onclick="openPayModal('MI vs CSK','Wankhede, Mumbai')">
-        <div class="chip-time">⚡ TODAY · 7:30 PM</div>
-        <div class="chip-teams">MI vs CSK</div>
-        <div class="chip-venue">📍 Wankhede, Mumbai</div>
-        <div class="chip-actions">
-          <button class="chip-btn btn-safe" onclick="event.stopPropagation();openPayModal('MI vs CSK','Wankhede','safe')">🛡️ Safe ₹9</button>
-          <button class="chip-btn btn-bold" onclick="event.stopPropagation();openPayModal('MI vs CSK','Wankhede','bold')">🔥 Bold ₹11</button>
-          <button class="chip-btn btn-both" onclick="event.stopPropagation();openPayModal('MI vs CSK','Wankhede','both')">⚡ Both ₹15</button>
-        </div>
-      </div>
-      <div class="match-chip" onclick="openPayModal('RCB vs KKR','Chinnaswamy')">
-        <div class="chip-time">TOMORROW · 3:30 PM</div>
-        <div class="chip-teams">RCB vs KKR</div>
-        <div class="chip-venue">📍 Chinnaswamy, Bengaluru</div>
-        <div class="chip-actions">
-          <button class="chip-btn btn-safe" onclick="event.stopPropagation();openPayModal('RCB vs KKR','Chinnaswamy','safe')">🛡️ Safe ₹9</button>
-          <button class="chip-btn btn-bold" onclick="event.stopPropagation();openPayModal('RCB vs KKR','Chinnaswamy','bold')">🔥 Bold ₹11</button>
-          <button class="chip-btn btn-both" onclick="event.stopPropagation();openPayModal('RCB vs KKR','Chinnaswamy','both')">⚡ Both ₹15</button>
-        </div>
-      </div>
-      <div class="match-chip" onclick="openPayModal('SRH vs DC','Uppal')">
-        <div class="chip-time">TOMORROW · 7:30 PM</div>
-        <div class="chip-teams">SRH vs DC</div>
-        <div class="chip-venue">📍 Uppal, Hyderabad</div>
-        <div class="chip-actions">
-          <button class="chip-btn btn-safe" onclick="event.stopPropagation();openPayModal('SRH vs DC','Uppal','safe')">🛡️ Safe ₹9</button>
-          <button class="chip-btn btn-bold" onclick="event.stopPropagation();openPayModal('SRH vs DC','Uppal','bold')">🔥 Bold ₹11</button>
-          <button class="chip-btn btn-both" onclick="event.stopPropagation();openPayModal('SRH vs DC','Uppal','both')">⚡ Both ₹15</button>
-        </div>
-      </div>
-      <div class="match-chip" onclick="openPayModal('RR vs GT','Sawai Mansingh')">
-        <div class="chip-time">MAR 24 · 3:30 PM</div>
-        <div class="chip-teams">RR vs GT</div>
-        <div class="chip-venue">📍 Sawai Mansingh, Jaipur</div>
-        <div class="chip-actions">
-          <button class="chip-btn btn-safe" onclick="event.stopPropagation();openPayModal('RR vs GT','Jaipur','safe')">🛡️ Safe ₹9</button>
-          <button class="chip-btn btn-bold" onclick="event.stopPropagation();openPayModal('RR vs GT','Jaipur','bold')">🔥 Bold ₹11</button>
-          <button class="chip-btn btn-both" onclick="event.stopPropagation();openPayModal('RR vs GT','Jaipur','both')">⚡ Both ₹15</button>
-        </div>
+      <div class="match-chip" style="opacity:0.5;pointer-events:none">
+        <div class="chip-time">⏳ Loading matches...</div>
+        <div class="chip-teams" style="font-size:18px">IPL 2026</div>
+        <div class="chip-venue">📍 Fetching schedule</div>
       </div>
     </div>
 
@@ -2200,6 +2165,78 @@ const BELL_KEY   = 'champ11_notif';
 const BANNER_KEY = 'champ11_notif_dismissed';
 
 // Init on load
+
+// ── Dynamic Match Strip — loads real IPL 2026 matches from Firebase ──
+async function loadMatchStrip() {
+  const strip = document.getElementById('matchesStrip');
+  if (!strip) return;
+
+  try {
+    const res  = await fetch(`${API_BASE}/api/matches/upcoming?limit=8`);
+    const data = await res.json();
+    const matches = data.matches || data || [];
+
+    if (!matches.length) {
+      strip.innerHTML = `
+        <div class="match-chip featured">
+          <div class="chip-time">⚡ COMING SOON</div>
+          <div class="chip-teams">IPL 2026</div>
+          <div class="chip-venue">📍 Starts March 28</div>
+          <div class="chip-actions">
+            <button class="chip-btn btn-safe" onclick="openPayModal('IPL 2026','India','safe')">🛡️ Safe ₹9</button>
+            <button class="chip-btn btn-bold" onclick="openPayModal('IPL 2026','India','bold')">🔥 Bold ₹11</button>
+            <button class="chip-btn btn-both" onclick="openPayModal('IPL 2026','India','both')">⚡ Both ₹15</button>
+          </div>
+        </div>`;
+      return;
+    }
+
+    const today    = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    strip.innerHTML = matches.map((m, idx) => {
+      const matchDate = new Date(m.dateTimeGMT || m.date + 'T14:00:00Z');
+      const matchStr  = (m.date || '').substring(0, 10);
+      const timeIST   = m.timeIST || '7:30 PM';
+      const home      = m.teams?.home || '';
+      const away      = m.teams?.away || '';
+      const shortName = m.shortName || `${home} vs ${away}`;
+      const venue     = m.venue?.shortName || m.venue?.city || 'India';
+      const city      = m.venue?.city || '';
+      const matchId   = m.id || m.matchId || '';
+
+      // Time label
+      let timeLabel;
+      const diffDays = Math.round((matchDate - today) / (1000 * 60 * 60 * 24));
+      if (matchStr === todayStr)        timeLabel = `⚡ TODAY · ${timeIST}`;
+      else if (diffDays <= 1)           timeLabel = `TOMORROW · ${timeIST}`;
+      else {
+        const d = matchDate.toLocaleDateString('en-IN', { month:'short', day:'numeric' });
+        timeLabel = `${d} · ${timeIST}`;
+      }
+
+      const featured = idx === 0 ? ' featured' : '';
+      const teamsLabel = `${home} vs ${away}`;
+
+      return `
+        <div class="match-chip${featured}" onclick="openPayModal('${teamsLabel}','${venue}','','${matchId}')">
+          <div class="chip-time">${timeLabel}</div>
+          <div class="chip-teams">${teamsLabel}</div>
+          <div class="chip-venue">📍 ${venue}${city ? ', ' + city : ''}</div>
+          <div class="chip-actions">
+            <button class="chip-btn btn-safe" onclick="event.stopPropagation();openPayModal('${teamsLabel}','${venue}','safe','${matchId}')">🛡️ Safe ₹9</button>
+            <button class="chip-btn btn-bold" onclick="event.stopPropagation();openPayModal('${teamsLabel}','${venue}','bold','${matchId}')">🔥 Bold ₹11</button>
+            <button class="chip-btn btn-both" onclick="event.stopPropagation();openPayModal('${teamsLabel}','${venue}','both','${matchId}')">⚡ Both ₹15</button>
+          </div>
+        </div>`;
+    }).join('');
+
+  } catch(e) {
+    console.error('loadMatchStrip:', e.message);
+    // Keep loading placeholder on error — don't break page
+  }
+}
+
 window.addEventListener('load', () => {
   if (localStorage.getItem(BELL_KEY) === 'granted') {
     setBellSubscribed(true);
@@ -2211,6 +2248,8 @@ window.addEventListener('load', () => {
   setInterval(pollForXINotification, 2 * 60 * 1000);
   // First poll after 30 sec
   setTimeout(pollForXINotification, 30000);
+  // Load real matches from Firebase
+  loadMatchStrip();
 });
 
 function handleBellClick() {
