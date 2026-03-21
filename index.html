@@ -2236,9 +2236,9 @@ async function loadMatchStrip() {
 
   } catch(e) {
     console.error('loadMatchStrip:', e.message);
-    // Show first 4 IPL 2026 matches as fallback
-    const strip = document.getElementById('matchesStrip');
-    if (strip) strip.innerHTML = [
+    // Show first 4 IPL 2026 matches as fallback (strip already declared above)
+    const stripFb = document.getElementById('matchesStrip');
+    if (stripFb) stripFb.innerHTML = [
       {teams:'RCB vs SRH', venue:'Chinnaswamy, Bengaluru', date:'2026-03-28', time:'7:30 PM', id:'ipl2026-match-01'},
       {teams:'MI vs KKR',  venue:'Wankhede, Mumbai',       date:'2026-03-29', time:'7:30 PM', id:'ipl2026-match-02'},
       {teams:'RR vs CSK',  venue:'Barsapara, Guwahati',    date:'2026-03-30', time:'7:30 PM', id:'ipl2026-match-03'},
