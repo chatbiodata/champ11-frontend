@@ -1533,16 +1533,22 @@ function toast(msg, icon='✅') {
 // ─── OVERVIEW ────────────────────────────────────────────────────────────────
 async function loadOverview() {
   try {
-    // Load matches
-    const matches = await api('/api/matches');
+    // Load IPL 2026 matches only
+    const matchData = await api('/api/admin/matches-list');
+    const allM = (matchData.matches || []).map(m => ({
+      ...m,
+      id: m.id,
+      name: m.shortName || (m.teams?.home && m.teams?.away ? m.teams.home+' vs '+m.teams.away : m.name),
+      venue: typeof m.venue==='object' ? (m.venue?.name||m.venue?.shortName||'—') : (m.venue||'—'),
+    }));
     const today = new Date().toISOString().split('T')[0];
-    const todayMatches = (matches.matches || matches || []).filter(m =>
-      (m.date || m.dateTimeGMT || '').startsWith(today)
-    );
+    const todayMatches = allM.filter(m => (m.date||'').startsWith(today));
+    // Show next upcoming matches if none today
+    const upcoming = allM.filter(m => (m.date||'') >= today).slice(0,3);
     document.getElementById('ov-matches').textContent = todayMatches.length;
 
-    // Render today's matches
-    renderTodayMatches(todayMatches.length ? todayMatches : (matches.matches || matches || []).slice(0,3));
+    // Render today's matches or next upcoming
+    renderTodayMatches(todayMatches.length ? todayMatches : upcoming);
 
     // Try load purchases for revenue
     try {
@@ -2701,15 +2707,15 @@ function renderTeamList(elId, players, captainColor) {
   }
   document.getElementById(elId).innerHTML = players.map((p, i) => {
     const isCap = p.isCaptain;
-    const isVC  = p.isVC;
+    const isVC  = p.isVC || p.isViceCaptain;
     const badge = isCap ? `<span style="background:${captainColor};color:#000;font-size:9px;font-weight:800;padding:2px 7px;border-radius:4px;font-family:'JetBrains Mono'">C</span>`
-                : isVC  ? `<span style="background:rgba(255,255,255,0.15);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;font-family:'JetBrains Mono'">VC</span>`
+                : isVC  ? `<span style="background:rgba(255,179,0,0.25);color:#FFB300;border:1px solid rgba(255,179,0,0.6);font-size:10px;font-weight:900;padding:3px 8px;border-radius:5px;font-family:'JetBrains Mono'">VC</span>`
                 : '';
     const roleColor = p.role==='BAT'?'var(--cyan)':p.role==='BOWL'?'var(--red)':p.role==='ALL'?'var(--green)':'var(--amber)';
     return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
       <div style="width:22px;text-align:center;font-family:'JetBrains Mono';font-size:11px;color:var(--dim)">${i+1}</div>
       <div style="flex:1">
-        <div style="font-size:13px;font-weight:600;${isCap?'color:'+captainColor:''}">${p.name||'—'}</div>
+        <div style="font-size:13px;font-weight:600;${isCap?'color:'+captainColor:isVC?'color:var(--amber)':''}">${p.name||'—'}</div>
         <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono'">${p.team||''} · <span style="color:${roleColor}">${p.role||''}</span> · ₹${p.credits||'?'}cr</div>
       </div>
       ${badge}
