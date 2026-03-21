@@ -2275,7 +2275,7 @@ window.addEventListener('load', () => {
 function handleBellClick() {
   if (localStorage.getItem(BELL_KEY) === 'granted') {
     showInAppToast('🔔', 'Notifications Active',
-      'You'll be alerted at 3:05 PM & 7:05 PM IST when Playing XI is confirmed.',
+      "You'll be alerted at 3:05 PM & 7:05 PM IST when Playing XI is confirmed.",
       'AI team ready ~3 min after toss');
   } else {
     showNotifBanner();
@@ -2302,7 +2302,7 @@ async function requestNotifPermission() {
     setBellSubscribed(true);
     await registerServiceWorker(true);
     showInAppToast('✅', 'Notifications On!',
-      'You'll get alerted the moment Playing XI drops. AI team ready ~3 min after toss.', '');
+      "You'll get alerted the moment Playing XI drops. AI team ready ~3 min after toss.", '');
   } else {
     showInAppToast('❌', 'Permission Denied',
       'Go to browser Settings → Site Settings → Notifications to enable.', '');
