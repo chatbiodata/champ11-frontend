@@ -290,6 +290,10 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
     <div class="nav-item active" onclick="showPage('overview')"><span class="nav-icon">📊</span><span>Overview</span></div>
     <div class="nav-item" onclick="showPage('matches')"><span class="nav-icon">🏏</span><span>Matches</span></div>
     <div class="nav-item" onclick="showPage('revenue')"><span class="nav-icon">💰</span><span>Revenue</span></div>
+    <div class="nav-section">Teams</div>
+    <div class="nav-item" onclick="showPage('teams')"><span class="nav-icon">👥</span><span>Team Viewer</span></div>
+    <div class="nav-item" onclick="showPage('compare')"><span class="nav-icon">📊</span><span>Match Compare</span></div>
+    <div class="nav-item" onclick="showPage('venues')"><span class="nav-icon">🏟️</span><span>Venues</span></div>
     <div class="nav-section">AI Engine</div>
     <div class="nav-item" onclick="showPage('ai')"><span class="nav-icon">🧠</span><span>AI Brain</span></div>
     <div class="nav-item" onclick="showPage('players')"><span class="nav-icon">👤</span><span>Player Intel</span></div>
@@ -298,6 +302,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
     <div class="nav-item" onclick="showPage('logs')"><span class="nav-icon">📋</span><span>Logs</span></div>
     <div class="nav-item" onclick="showPage('today')"><span class="nav-icon">📅</span><span>Today</span></div>
     <div class="nav-item" onclick="showPage('notifications')"><span class="nav-icon">🔔</span><span>Notifications</span></div>
+    <div class="nav-item" onclick="showPage('devtools')"><span class="nav-icon">🛠️</span><span>Dev Tools</span></div>
     <div class="sidebar-footer">
       <div><span class="status-dot"></span><span class="status-text">BACKEND LIVE</span></div>
       <button class="logout-btn" onclick="doLogout()">⏻ Logout</button>
@@ -725,12 +730,83 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
         <div class="section-head"><div class="section-title">📅 IPL 2026 Schedule</div></div>
         <div class="section-body">
           <div class="control-row">
-            <div><div class="control-label">Seed IPL 2026 Schedule</div><div class="control-desc">Loads all 20 matches (Mar 28 – Apr 12) into Firebase. Zero API hits — uses official BCCI PDF data.</div></div>
+            <div><div class="control-label">Seed IPL 2026 Schedule</div><div class="control-desc">Loads all 20 matches (Mar 28 – Apr 12) into Firebase. Zero API hits.</div></div>
             <div class="control-actions"><button class="action-btn btn-green" onclick="seedSchedule()">📅 Seed Schedule</button></div>
           </div>
-          <div class="control-row">
-            <div><div class="control-label">Sync from CricAPI</div><div class="control-desc">Updates match IDs from CricAPI (run after IPL 2026 series goes live)</div></div>
-            <div class="control-actions"><button class="action-btn btn-amber" onclick="syncFromCricAPI()">↻ Sync CricAPI</button></div>
+        </div>
+      </div>
+
+      <!-- CricAPI Sync Panel -->
+      <div class="section-card" style="border-color:rgba(0,212,255,0.2)">
+        <div class="section-head">
+          <div class="section-title">🔄 CricAPI Auto-Sync</div>
+          <span class="badge badge-cyan" id="syncStatusBadge">—</span>
+        </div>
+        <div class="section-body">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7">
+            Connects CricAPI match IDs to our Firebase schedule.<br>
+            <strong style="color:var(--amber)">Run on March 28</strong> when IPL 2026 goes live on CricAPI.<br>
+            After sync → squad fetch, XI confirmation, scorecard all work automatically ✅
+          </div>
+
+          <!-- Sync status grid -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+            <div style="text-align:center;padding:10px;background:var(--card2);border-radius:8px">
+              <div style="font-size:20px;font-weight:800;color:var(--green);font-family:'Syne'" id="syncCount">—</div>
+              <div style="font-size:10px;color:var(--muted)">Matches Synced</div>
+            </div>
+            <div style="text-align:center;padding:10px;background:var(--card2);border-radius:8px">
+              <div style="font-size:20px;font-weight:800;color:var(--amber);font-family:'Syne'" id="unsyncCount">—</div>
+              <div style="font-size:10px;color:var(--muted)">Not Synced</div>
+            </div>
+            <div style="text-align:center;padding:10px;background:var(--card2);border-radius:8px">
+              <div style="font-size:13px;font-weight:700;color:var(--cyan);font-family:'JetBrains Mono'" id="seriesName" style="word-break:break-all">—</div>
+              <div style="font-size:10px;color:var(--muted)">Series Name</div>
+            </div>
+            <div style="text-align:center;padding:10px;background:var(--card2);border-radius:8px">
+              <div style="font-size:13px;font-weight:700;color:var(--text);font-family:'JetBrains Mono'" id="lastSyncTime">—</div>
+              <div style="font-size:10px;color:var(--muted)">Last Synced</div>
+            </div>
+          </div>
+
+          <!-- Match ID table -->
+          <div id="syncMatchList" style="max-height:200px;overflow-y:auto;margin-bottom:14px;font-size:11px;font-family:'JetBrains Mono'"></div>
+
+          <!-- Active provider badge -->
+          <div id="activeProviderBanner" style="padding:10px 14px;background:rgba(0,230,118,.05);border:1px solid rgba(0,230,118,.2);border-radius:8px;margin-bottom:14px;font-size:12px;font-family:'Barlow Condensed';letter-spacing:.5px">
+            Loading provider status...
+          </div>
+
+          <div class="control-row" style="border:none;padding:0">
+            <div>
+              <div class="control-label">🟢 Entity Sports Sync (Recommended)</div>
+              <div class="control-desc">100k requests/month · Fantasy credits · Injury updates · IPL specialist<br>
+              Set <code>ENTITY_ACCESS_KEY</code> in Railway → then click sync</div>
+            </div>
+            <div class="control-actions">
+              <button class="action-btn btn-green" onclick="syncEntity()">🔄 Entity Sync</button>
+            </div>
+          </div>
+
+          <div style="text-align:center;color:var(--muted);font-size:11px;padding:6px 0">— or —</div>
+
+          <div class="control-row" style="border:none;padding:0">
+            <div>
+              <div class="control-label">🟡 CricAPI Sync (Current — 100 hits/day)</div>
+              <div class="control-desc">Step 1: Find series ID (2 hits) → Step 2: Map all match IDs (~4 hits)</div>
+            </div>
+            <div class="control-actions">
+              <button class="action-btn btn-cyan" onclick="syncSeriesId()">🔍 Find Series</button>
+              <button class="action-btn btn-amber" onclick="runFullSync()">🔄 Full Sync</button>
+            </div>
+          </div>
+
+          <div class="control-row" style="border:none;padding:0;margin-top:8px">
+            <div><div class="control-label">Auto-Sync (uses best available)</div></div>
+            <div class="control-actions">
+              <button class="action-btn btn-green" onclick="runAutoSync()">⚡ Auto Sync</button>
+              <button class="action-btn btn-amber" onclick="loadSyncStatus()">↺ Status</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1267,7 +1343,7 @@ function showPage(name) {
   if (name === 'revenue') loadRevenue();
   if (name === 'ai') { loadAI(); loadActiveOverrides(); populateFeedbackMatches(); }
   if (name === 'players') loadPlayers();
-  if (name === 'controls') loadControls();
+  if (name === 'controls') { loadControls(); loadSyncStatus(); showActiveProvider(); }
   if (name === 'logs') loadLogs();
   if (name === 'devtools') loadDevTools();
   if (name === 'teams')    loadTeamViewer();
@@ -1354,7 +1430,7 @@ function renderWeightBars(elId, weights, color) {
 function renderTodayMatches(matches) {
   const el = document.getElementById('todayMatchesList');
   if (!matches.length) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🏏</div><div class="empty-title">No matches today</div><div class="empty-sub">Click "Sync from CricAPI" to load schedule</div></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🏏</div><div class="empty-title">No matches today</div><div class="empty-sub">Run seed-schedule from Controls to load IPL 2026 schedule</div></div>`;
     return;
   }
   el.innerHTML = matches.map(m => `
@@ -1644,7 +1720,7 @@ async function removeOverride(overrideId) {
 // ── POST-MATCH FEEDBACK ──────────────────────────────────────────
 async function populateFeedbackMatches() {
   try {
-    const data    = await api('/api/matches');
+    const data    = await api('/api/admin/matches-list');
     const matches = (data.matches || data || []).filter(m => m.status === 'completed');
     const sel     = document.getElementById('feedbackMatchSel');
     matches.slice(0, 20).forEach(m => {
@@ -1971,6 +2047,110 @@ async function scrapeStats() {
     await api('/api/admin/scrape-stats', 'POST');
     toast('✅ Stats scrape triggered — check Railway logs');
   } catch(e) { toast('Scrape triggered (check Railway logs)', '📊'); }
+}
+
+async function loadSyncStatus() {
+  try {
+    const data = await api('/api/admin/sync-status');
+    const synced   = data.synced   || 0;
+    const unsynced = data.unsynced || 0;
+    const total    = data.total    || 0;
+
+    document.getElementById('syncCount').textContent   = synced;
+    document.getElementById('unsyncCount').textContent = unsynced;
+    document.getElementById('seriesName').textContent  = data.series?.seriesName || 'Not found yet';
+    document.getElementById('lastSyncTime').textContent = data.series?.savedAt
+      ? new Date(data.series.savedAt).toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'})
+      : '—';
+
+    const badge = document.getElementById('syncStatusBadge');
+    if (synced === total && total > 0) {
+      badge.className = 'badge badge-green';
+      badge.textContent = '✅ FULLY SYNCED';
+    } else if (synced > 0) {
+      badge.className = 'badge badge-amber';
+      badge.textContent = `${synced}/${total} SYNCED`;
+    } else {
+      badge.className = 'badge badge-dim';
+      badge.textContent = 'NOT SYNCED';
+    }
+
+    // Match list
+    const list = document.getElementById('syncMatchList');
+    list.innerHTML = (data.matches || []).map(m => `
+      <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+        <span style="color:var(--text)">${m.shortName || m.id}</span>
+        <span style="color:${m.hasCricAPIId ? 'var(--green)' : 'var(--muted)'}">
+          ${m.hasCricAPIId ? '✅ ' + m.cricapi_match_id.slice(0,8) + '...' : '⏳ pending'}
+        </span>
+      </div>`).join('');
+  } catch(e) {
+    toast('Sync status error: ' + e.message, '❌');
+  }
+}
+
+async function syncSeriesId() {
+  toast('🔍 Searching CricAPI for IPL 2026...', '🔍');
+  try {
+    const r = await api('/api/admin/sync-series-id', 'POST');
+    if (r.success) {
+      toast(`✅ Found: "${r.seriesName}" — Series ID saved!`);
+      loadSyncStatus();
+    } else {
+      toast(r.message || 'IPL 2026 not live on CricAPI yet — try again on Mar 28', '⚠️');
+    }
+  } catch(e) { toast('Search failed: ' + e.message, '❌'); }
+}
+
+async function runFullSync() {
+  if (!confirm('Run full sync? This will use ~4 CricAPI API hits.')) return;
+  toast('🔄 Running full IPL 2026 sync...', '🔄');
+  try {
+    const r = await api('/api/admin/sync-ipl2026', 'POST');
+    if (r.success) {
+      toast(`✅ Synced ${r.matched} matches! ${r.unmatched} unmatched.`);
+      loadSyncStatus();
+    } else {
+      toast(r.message || 'Sync failed — IPL 2026 may not be live yet', '⚠️');
+    }
+  } catch(e) { toast('Sync failed: ' + e.message, '❌'); }
+}
+
+async function syncEntity() {
+  toast('🔄 Syncing via Entity Sports...', '🟢');
+  try {
+    const r = await api('/api/admin/sync-entity', 'POST');
+    if (r.success) {
+      toast(`✅ Entity Sports: ${r.matched} matches synced!`);
+      loadSyncStatus();
+    } else {
+      toast(r.message || 'Entity Sports sync failed', '⚠️');
+    }
+  } catch(e) { toast('Sync failed: ' + e.message, '❌'); }
+}
+
+async function runAutoSync() {
+  if (!confirm('Auto-sync using best available API provider?')) return;
+  toast('⚡ Auto-syncing...', '⚡');
+  try {
+    const r = await api('/api/admin/sync-auto', 'POST');
+    toast(r.success ? `✅ Synced ${r.matched} matches!` : (r.message || 'Sync failed'), r.success ? '✅' : '⚠️');
+    loadSyncStatus();
+  } catch(e) { toast('Sync failed: ' + e.message, '❌'); }
+}
+
+// Show which API is active
+async function showActiveProvider() {
+  try {
+    const p = await api('/api/admin/api-provider');
+    const banner = document.getElementById('activeProviderBanner');
+    if (!banner) return;
+    const icon  = p.active === 'entity' ? '🟢' : p.active === 'cricapi' ? '🟡' : '🔴';
+    const color = p.active === 'entity' ? 'var(--green)' : p.active === 'cricapi' ? 'var(--amber)' : 'var(--red)';
+    banner.style.borderColor = color + '44';
+    banner.innerHTML = `<strong style="color:${color}">${icon} Active: ${p.label}</strong><br>
+      <span style="color:var(--muted)">${p.recommendation}</span>`;
+  } catch(e) {}
 }
 
 async function seedSchedule() {
