@@ -479,12 +479,153 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   border-radius:20px;font-size:12px;cursor:pointer;
 }
 
+/* ── LIVE MATCH BANNER ── */
+#liveMatchBanner{
+  display:none;position:fixed;top:56px;left:0;right:0;z-index:90;
+  background:linear-gradient(135deg,rgba(255,59,59,0.15),rgba(255,107,0,0.1));
+  border-bottom:2px solid rgba(255,59,59,0.5);
+  padding:9px 16px;
+  font-family:'Barlow Condensed';font-size:13px;font-weight:700;
+  letter-spacing:0.5px;color:#fff;
+  align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+  animation:pulseBorder 2s infinite;
+}
+#liveMatchBanner.show{display:flex}
+@keyframes pulseBorder{0%,100%{border-bottom-color:rgba(255,59,59,0.5)}50%{border-bottom-color:rgba(255,59,59,1)}}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#ff3b3b;display:inline-block;animation:pulseDot 1s infinite;flex-shrink:0}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.3)}}
+.live-cta{
+  background:rgba(255,59,59,0.2);border:1px solid rgba(255,59,59,0.5);
+  padding:4px 12px;border-radius:20px;cursor:pointer;
+  font-size:11px;font-weight:700;letter-spacing:1px;color:#ff9999;
+  transition:.2s;white-space:nowrap;font-family:'Barlow Condensed';
+}
+.live-cta:hover{background:rgba(255,59,59,0.35)}
+
+/* ── XI CONFIRMED BANNER ── */
+#xiConfirmedBanner{
+  display:none;position:fixed;top:56px;left:0;right:0;z-index:91;
+  background:linear-gradient(135deg,rgba(0,230,118,0.12),rgba(0,212,255,0.08));
+  border-bottom:2px solid rgba(0,230,118,0.45);
+  padding:9px 16px;
+  font-family:'Barlow Condensed';font-size:13px;font-weight:700;
+  letter-spacing:0.5px;color:#fff;
+  align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+}
+#xiConfirmedBanner.show{display:flex}
+.xi-cta{
+  background:rgba(0,230,118,0.15);border:1px solid rgba(0,230,118,0.4);
+  padding:4px 12px;border-radius:20px;cursor:pointer;
+  font-size:11px;font-weight:700;letter-spacing:1px;color:#00e676;
+  transition:.2s;white-space:nowrap;font-family:'Barlow Condensed';
+}
+.xi-cta:hover{background:rgba(0,230,118,0.28)}
+
+/* ── MATCH SELECTOR ── */
+.match-selector-label{
+  font-family:'Barlow Condensed';font-size:11px;font-weight:700;
+  letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.35);
+  margin-bottom:10px;display:flex;align-items:center;gap:8px;
+}
+.match-selector-label::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.07)}
+
+/* ── MATCH CHIP ENHANCEMENTS ── */
+.match-chip{position:relative}
+.match-chip.active{
+  border-color:rgba(0,230,118,0.5)!important;
+  background:rgba(0,20,10,0.88)!important;
+  box-shadow:0 0 18px rgba(0,230,118,0.1);
+}
+.match-chip.active::before{background:linear-gradient(90deg,#00e676,transparent)!important}
+.match-chip.expired-chip{opacity:0.35;pointer-events:none;filter:grayscale(0.6)}
+.match-chip.live-chip{border-color:rgba(255,59,59,0.45)!important;background:rgba(20,5,5,0.85)!important}
+.chip-selected-indicator{
+  position:absolute;top:10px;right:10px;
+  width:20px;height:20px;border-radius:50%;
+  background:#00e676;display:none;
+  align-items:center;justify-content:center;
+  font-size:10px;color:#000;font-weight:900;
+}
+.match-chip.active .chip-selected-indicator{display:flex}
+.chip-toss{font-family:'Barlow Condensed';font-size:11px;color:#00e676;margin-top:3px;font-weight:700;letter-spacing:0.5px}
+.chip-status-badge{
+  font-family:'Barlow Condensed';font-size:9px;font-weight:700;
+  letter-spacing:1px;padding:2px 7px;border-radius:10px;
+}
+.badge-live{background:rgba(255,59,59,0.2);color:#ff3b3b;border:1px solid rgba(255,59,59,0.4)}
+.badge-today{background:rgba(184,255,0,0.1);color:#b8ff00;border:1px solid rgba(184,255,0,0.3)}
+.badge-tomorrow{background:rgba(0,212,255,0.1);color:#00d4ff;border:1px solid rgba(0,212,255,0.25)}
+.badge-upcoming{background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.4);border:1px solid rgba(255,255,255,0.1)}
+.badge-expired{background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.07)}
+
+/* ── DOUBLE HEADER NOTICE ── */
+#doubleHeaderNotice{
+  display:none;
+  background:rgba(255,204,0,0.07);border:1px solid rgba(255,204,0,0.22);
+  border-radius:10px;padding:9px 14px;margin-top:10px;
+  font-family:'Barlow Condensed';font-size:12px;font-weight:600;
+  color:rgba(255,204,0,0.8);letter-spacing:0.5px;line-height:1.5;
+}
+#doubleHeaderNotice.show{display:block}
+
+/* ── SELECTED MATCH BAR ── */
+#selectedMatchBar{
+  display:none;
+  background:linear-gradient(135deg,rgba(0,18,8,0.92),rgba(0,8,18,0.92));
+  border:1px solid rgba(0,230,118,0.28);border-radius:12px;
+  padding:13px 16px;margin-top:12px;
+  align-items:center;gap:12px;flex-wrap:wrap;
+}
+#selectedMatchBar.show{display:flex}
+.sel-match-info{flex:1;min-width:180px}
+.sel-match-name{font-family:'Bebas Neue';font-size:19px;letter-spacing:2px;color:#fff}
+.sel-match-meta{font-family:'Barlow Condensed';font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;line-height:1.5}
+.sel-match-xi{font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.5px;margin-top:3px}
+.sel-buy-btns{display:flex;gap:6px;flex-wrap:wrap}
+.sel-btn{
+  font-family:'Barlow Condensed';font-size:11px;font-weight:700;
+  letter-spacing:1px;padding:8px 12px;border-radius:8px;
+  border:none;cursor:pointer;transition:.2s;white-space:nowrap;
+}
+.sel-btn-safe{background:rgba(0,212,255,0.13);color:#00d4ff;border:1px solid rgba(0,212,255,0.3)}
+.sel-btn-bold{background:rgba(255,107,0,0.13);color:#ff6b00;border:1px solid rgba(255,107,0,0.3)}
+.sel-btn-both{background:rgba(184,255,0,0.1);color:#b8ff00;border:1px solid rgba(184,255,0,0.3)}
+.sel-btn-pass{background:rgba(255,204,0,0.09);color:#ffcc00;border:1px solid rgba(255,204,0,0.28)}
+.sel-btn:hover{opacity:0.82;transform:translateY(-1px)}
+
+/* ── PAY MODAL: MATCH HEADER ── */
+.pay-match-header{
+  background:linear-gradient(135deg,rgba(0,18,8,0.95),rgba(0,8,20,0.95));
+  border-bottom:1px solid rgba(255,255,255,0.07);
+  padding:16px 20px;
+}
+.pay-match-label{font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.28);margin-bottom:3px}
+.pay-match-teams{font-family:'Bebas Neue';font-size:24px;letter-spacing:2px;color:#fff;margin-bottom:3px}
+.pay-match-detail{font-family:'Barlow Condensed';font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5}
+.pay-match-xi-status{margin-top:5px;font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.5px}
+.xi-status-pending{color:#ffcc00}
+.xi-status-confirmed{color:#00e676}
+.xi-status-notice{
+  margin-top:6px;padding:6px 10px;border-radius:8px;
+  background:rgba(0,230,118,0.07);border:1px solid rgba(0,230,118,0.18);
+  font-family:'Barlow Condensed';font-size:11px;color:rgba(0,230,118,0.75);line-height:1.5;
+}
+
+/* ── TOSS UPDATE BANNER inside teams modal ── */
+.toss-update-banner{
+  background:rgba(0,230,118,0.07);border:1px solid rgba(0,230,118,0.22);
+  border-radius:10px;padding:9px 13px;margin-bottom:11px;
+  font-family:'Barlow Condensed';font-size:12px;font-weight:700;
+  color:rgba(0,230,118,0.85);letter-spacing:0.5px;line-height:1.6;
+}
+
 /* ── HERO CONTENT ── */
 .hero-content{
   position:relative;z-index:3;
   padding:0 24px 60px;
   max-width:1100px;margin:0 auto;width:100%;
   padding-top:80px;
+  transition:padding-top .3s;
 }
 .hero-eyebrow{
   font-family:'Barlow Condensed';font-size:12px;font-weight:700;
@@ -1175,6 +1316,20 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   </div>
 </nav>
 
+<!-- LIVE MATCH BANNER — shows from 12:01 AM on match day -->
+<div id="liveMatchBanner">
+  <span class="live-dot"></span>
+  <span id="liveBannerText">🏏 IPL 2026 — MATCH DAY 🔥</span>
+  <button class="live-cta" onclick="scrollToMatchSelector()">🔥 Make Your Dhurandhar Team Now!</button>
+</div>
+
+<!-- XI CONFIRMED BANNER — shows after toss -->
+<div id="xiConfirmedBanner">
+  <span>✅</span>
+  <span id="xiBannerText">Playing XI Confirmed! Your AI Dhurandhar Team is LIVE &amp; Updated 🔥</span>
+  <button class="xi-cta" onclick="scrollToMatchSelector()">View Updated Team →</button>
+</div>
+
 <!-- NOTIFICATION TOAST -->
 <div class="notif-toast" id="notifToast">
   <button class="notif-toast-close" onclick="closeToast()">✕</button>
@@ -1231,12 +1386,36 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
       Get <strong>2 AI-optimised teams</strong> per match — Safe strategy and Bold differential picks. Starting from ₹9. No guesswork.
     </div>
 
-    <!-- Today's Matches — Dynamic from Firebase -->
-    <div class="matches-strip" id="matchesStrip">
-      <div class="match-chip" style="opacity:0.5;pointer-events:none">
-        <div class="chip-time">⏳ Loading matches...</div>
-        <div class="chip-teams" style="font-size:18px">IPL 2026</div>
-        <div class="chip-venue">📍 Fetching schedule</div>
+    <!-- Smart Match Selector — Dynamic from Firebase -->
+    <div id="matchSelectorSection">
+      <div class="match-selector-label">📅 Select Your Match</div>
+
+      <div class="matches-strip" id="matchesStrip">
+        <div class="match-chip" style="opacity:0.5;pointer-events:none">
+          <div class="chip-time">⏳ Loading matches...</div>
+          <div class="chip-teams" style="font-size:18px">IPL 2026</div>
+          <div class="chip-venue">📍 Fetching schedule</div>
+        </div>
+      </div>
+
+      <!-- Double header notice -->
+      <div id="doubleHeaderNotice">
+        ⚡ <strong>Double Header Today!</strong> Two matches are scheduled. Please select the match above for which you'd like to buy your AI team. The afternoon match (3:30 PM) will no longer be available after 3:40 PM IST.
+      </div>
+
+      <!-- Selected match confirm bar -->
+      <div id="selectedMatchBar">
+        <div class="sel-match-info">
+          <div class="sel-match-name" id="selMatchName">Select a match above</div>
+          <div class="sel-match-meta" id="selMatchMeta"></div>
+          <div class="sel-match-xi" id="selMatchXI"></div>
+        </div>
+        <div class="sel-buy-btns">
+          <button class="sel-btn sel-btn-safe" onclick="buyForSelected('safe')">🛡️ Safe ₹9</button>
+          <button class="sel-btn sel-btn-bold" onclick="buyForSelected('bold')">🔥 Bold ₹11</button>
+          <button class="sel-btn sel-btn-both" onclick="buyForSelected('both')">⚡ Both ₹15</button>
+          <button class="sel-btn sel-btn-pass" onclick="buyForSelected('season')">🏆 Season ₹399</button>
+        </div>
       </div>
     </div>
 
@@ -1330,33 +1509,33 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   </div>
   <div class="pricing-grid">
     <!-- Row 1 -->
-    <div class="price-card" onclick="openPayModal('Any Match','','safe')">
+    <div class="price-card" onclick="openPayModalFromPricing('safe')">
       <div class="price-label">Safe Team</div>
       <div class="price-amount">₹9</div>
       <div class="price-sub">Single match · 1 team</div>
       <button class="price-cta">Get Safe Team</button>
     </div>
-    <div class="price-card best" onclick="openPayModal('Any Match','','both')">
+    <div class="price-card best" onclick="openPayModalFromPricing('both')">
       <div class="price-badge">⚡ BEST VALUE</div>
       <div class="price-label">Champ Bundle</div>
       <div class="price-amount">₹15</div>
       <div class="price-sub">Single match · Safe + Bold</div>
       <button class="price-cta" style="background:linear-gradient(135deg,#00d4ff,#b8ff00);color:#000">Get Both Teams</button>
     </div>
-    <div class="price-card" onclick="openPayModal('Any Match','','bold')">
+    <div class="price-card" onclick="openPayModalFromPricing('bold')">
       <div class="price-label">Bold Team</div>
       <div class="price-amount">₹11</div>
       <div class="price-sub">Single match · 1 team</div>
       <button class="price-cta">Get Bold Team</button>
     </div>
     <!-- Row 2 -->
-    <div class="price-card" onclick="openPayModal('Weekly Pass','All Matches','weekly')">
+    <div class="price-card" onclick="openPayModal('Weekly Pass','All Matches','weekly','')">
       <div class="price-label">Weekly Pass</div>
       <div class="price-amount">₹59</div>
       <div class="price-sub">9 matches · Both teams</div>
       <button class="price-cta">Get Weekly</button>
     </div>
-    <div class="price-card" onclick="openPayModal('Season Pass','IPL 2026','season')">
+    <div class="price-card" onclick="openPayModal('Season Pass','IPL 2026','season','')">
       <div class="price-label">Season Pass</div>
       <div class="price-amount">₹399</div>
       <div class="price-sub">84 matches · ₹4.75/match</div>
@@ -1384,10 +1563,13 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 <!-- PAYMENT MODAL -->
 <div class="modal-overlay" id="payModal" onclick="closeModal('payModal')">
   <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-top">
-      <button class="modal-close" onclick="closeModal('payModal')">×</button>
-      <div class="modal-match" id="modalMatch">MI vs CSK</div>
-      <div class="modal-venue" id="modalVenue">📍 Wankhede, Mumbai</div>
+    <div class="pay-match-header">
+      <button class="modal-close" onclick="closeModal('payModal')" style="float:right;margin-top:-4px">×</button>
+      <div class="pay-match-label">Buying team for match</div>
+      <div class="pay-match-teams" id="modalMatch">Select a match first</div>
+      <div class="pay-match-detail" id="modalVenue"></div>
+      <div class="pay-match-xi-status" id="payMatchXIStatus"></div>
+      <div class="xi-status-notice" id="payXINotice" style="display:none"></div>
     </div>
     <div class="modal-body">
       <div class="modal-plan-row" id="planRow">
@@ -1493,6 +1675,7 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
     <!-- SAFE TEAM panel -->
     <div class="teams-panel active" id="panelSafe">
       <!-- Canvas renders here — players drawn as image, not HTML text -->
+      <div class="toss-update-banner" id="tossBannerSafe" style="display:none"></div>
       <div class="canvas-wrap">
         <canvas id="safeCanvas"></canvas>
       </div>
@@ -1502,6 +1685,7 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 
     <!-- BOLD TEAM panel -->
     <div class="teams-panel" id="panelBold">
+      <div class="toss-update-banner" id="tossBannerBold" style="display:none"></div>
       <div class="canvas-wrap">
         <canvas id="boldCanvas"></canvas>
       </div>
@@ -1535,13 +1719,46 @@ function validatePhoneInput(input) {
   }
 }
 
-function openPayModal(match, venue, plan) {
+// ── currently selected match (set when user taps a chip) ──
+let selectedMatchData = null; // full match object
+
+function openPayModal(match, venue, plan, matchId) {
   currentMatch   = match;
-  currentMatchId = match;
-  document.getElementById('modalMatch').textContent = match;
-  document.getElementById('modalVenue').textContent = venue ? '📍 ' + venue : '📍 Select match above';
+  currentMatchId = matchId || match;
+
+  // ── Update pay modal match header ──────────────────────────
+  document.getElementById('modalMatch').textContent = match || 'Select a match above';
+
+  // Build detail line: venue + date + time
+  const md = selectedMatchData;
+  let detailLine = venue ? '📍 ' + venue : '';
+  if (md) {
+    const dateStr = md.date ? new Date(md.date + 'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'}) : '';
+    const timeStr = md.timeIST || '';
+    if (dateStr || timeStr) detailLine += (detailLine ? ' · ' : '') + dateStr + (timeStr ? ' · ' + timeStr + ' IST' : '');
+  }
+  document.getElementById('modalVenue').textContent = detailLine;
+
+  // XI / toss status line
+  const xiEl    = document.getElementById('payMatchXIStatus');
+  const noticeEl= document.getElementById('payXINotice');
+  if (md && md.xiConfirmed) {
+    const toss = md.tossWinner ? `${md.tossWinner} elected to ${md.tossChoice === 'bat' ? '🏏 bat' : '🎯 bowl'}.` : '';
+    xiEl.innerHTML = `<span class="xi-status-confirmed">✅ Playing XI Confirmed</span>`;
+    noticeEl.textContent = `${toss} Final team is shown — same team you'll copy to Dream11.`;
+    noticeEl.style.display = 'block';
+  } else if (md && md.teamsGenerated) {
+    xiEl.innerHTML = `<span class="xi-status-pending">⏳ Pre-toss team — updates automatically after toss</span>`;
+    noticeEl.textContent = 'Team will auto-refresh when Playing XI is announced at toss time. No action needed.';
+    noticeEl.style.display = 'block';
+  } else {
+    xiEl.textContent = '';
+    noticeEl.style.display = 'none';
+  }
+
   document.getElementById('upsellBar').classList.remove('show');
   selectPlan(plan || 'both');
+
   // Phone shown ONLY for weekly/season — daily match users need no phone
   const needsPhone = plan === 'weekly' || plan === 'season';
   document.getElementById('phoneSection').style.display = needsPhone ? 'block' : 'none';
@@ -1552,6 +1769,75 @@ function openPayModal(match, venue, plan) {
   }
   document.getElementById('payModal').classList.add('open');
   if (needsPhone) setTimeout(() => document.getElementById('phoneInput').focus(), 300);
+}
+
+// Called from pricing section — requires a match to be selected first
+function openPayModalFromPricing(plan) {
+  if (!selectedMatchData) {
+    // Scroll to match selector and flash it
+    scrollToMatchSelector();
+    const strip = document.getElementById('matchesStrip');
+    strip.style.outline = '2px solid #00e676';
+    strip.style.borderRadius = '12px';
+    strip.style.transition = 'outline 0.3s';
+    setTimeout(() => { strip.style.outline = 'none'; }, 2000);
+    showToast('⬆️ First select a match above, then buy your team!');
+    return;
+  }
+  openPayModal(
+    selectedMatchData.shortName || `${selectedMatchData.teams?.home} vs ${selectedMatchData.teams?.away}`,
+    selectedMatchData.venue?.shortName || selectedMatchData.venue?.name || selectedMatchData.venue || '',
+    plan,
+    selectedMatchData.id || selectedMatchData.matchId
+  );
+}
+
+// Called from selected match bar buttons
+function buyForSelected(plan) {
+  if (!selectedMatchData) { showToast('⬆️ Select a match first'); return; }
+  openPayModal(
+    selectedMatchData.shortName || `${selectedMatchData.teams?.home} vs ${selectedMatchData.teams?.away}`,
+    selectedMatchData.venue?.shortName || selectedMatchData.venue?.name || selectedMatchData.venue || '',
+    plan,
+    selectedMatchData.id || selectedMatchData.matchId
+  );
+}
+
+function scrollToMatchSelector() {
+  const el = document.getElementById('matchSelectorSection') || document.getElementById('matchesStrip');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// Select a match chip and update the selected bar
+function selectMatchChip(matchData, chipEl) {
+  selectedMatchData = matchData;
+  currentMatchId    = matchData.id || matchData.matchId;
+  currentMatch      = matchData.shortName || `${matchData.teams?.home} vs ${matchData.teams?.away}`;
+
+  // Update chip active state
+  document.querySelectorAll('.match-chip').forEach(c => c.classList.remove('active'));
+  if (chipEl) chipEl.classList.add('active');
+
+  // Update selected match bar
+  const bar = document.getElementById('selectedMatchBar');
+  bar.classList.add('show');
+
+  document.getElementById('selMatchName').textContent = currentMatch;
+
+  const venue  = matchData.venue?.shortName || matchData.venue?.name || matchData.venue || '';
+  const date   = matchData.date  ? new Date(matchData.date + 'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'}) : '';
+  const time   = matchData.timeIST || '7:30 PM';
+  document.getElementById('selMatchMeta').textContent = [venue, date, time + ' IST'].filter(Boolean).join(' · ');
+
+  const xiEl = document.getElementById('selMatchXI');
+  if (matchData.xiConfirmed) {
+    const toss = matchData.tossWinner ? `${matchData.tossWinner} elected to ${matchData.tossChoice === 'bat' ? '🏏 bat' : '🎯 bowl'}` : '';
+    xiEl.innerHTML = `<span style="color:#00e676">✅ Playing XI Confirmed ${toss ? '· ' + toss : ''}</span>`;
+  } else if (matchData.teamsGenerated) {
+    xiEl.innerHTML = `<span style="color:#ffcc00">⏳ Pre-toss team ready — auto-updates after toss</span>`;
+  } else {
+    xiEl.textContent = '';
+  }
 }
 
 function selectPlan(p) {
@@ -1971,6 +2257,29 @@ function showTeamsAfterPayment(teams, paymentId) {
 
   document.getElementById('teamsModal').classList.add('open');
 
+  // Show toss banner if XI confirmed
+  const tossBannerSafe = document.getElementById('tossBannerSafe');
+  const tossBannerBold = document.getElementById('tossBannerBold');
+  if (tossBannerSafe && tossBannerBold) {
+    const md = selectedMatchData;
+    if (md && md.xiConfirmed && md.tossWinner) {
+      const tossMsg = `✅ Playing XI Confirmed · ${md.tossWinner} elected to ${md.tossChoice === 'bat' ? '🏏 bat' : '🎯 bowl'} first. This team has been auto-updated with confirmed XI.`;
+      tossBannerSafe.textContent = tossMsg;
+      tossBannerBold.textContent = tossMsg;
+      tossBannerSafe.style.display = 'block';
+      tossBannerBold.style.display = 'block';
+    } else if (md && !md.xiConfirmed) {
+      const preMsg = '⏳ Pre-toss team — will auto-update with confirmed Playing XI after toss. No action needed.';
+      tossBannerSafe.textContent = preMsg;
+      tossBannerBold.textContent = preMsg;
+      tossBannerSafe.style.display = 'block';
+      tossBannerBold.style.display = 'block';
+    } else {
+      tossBannerSafe.style.display = 'none';
+      tossBannerBold.style.display = 'none';
+    }
+  }
+
   // Render canvases after modal is visible (needs layout)
   setTimeout(renderBothCanvases, 120);
 
@@ -2346,6 +2655,92 @@ const BANNER_KEY = 'champ11_notif_dismissed';
 
 // Init on load
 
+// ─── MATCH CLASSIFICATION ────────────────────────────────────────────────────
+function classifyMatch(m) {
+  const now       = new Date();
+  const matchUTC  = new Date(m.dateTimeGMT || (m.date + 'T14:00:00Z'));
+  const todayIST  = new Date(now.getTime() + 5.5*60*60*1000);
+  const todayStr  = todayIST.toISOString().split('T')[0];
+  const matchStr  = (m.date || '').substring(0, 10);
+  const expireUTC = new Date(matchUTC.getTime() + 10*60*1000);
+  const isExpired = now > expireUTC;
+  const isToday   = matchStr === todayStr;
+  const isTomorrow= !isToday && Math.round((matchUTC - now) / (1000*60*60*24)) <= 1;
+  const istHours  = (matchUTC.getTime() - now.getTime()) / (60*60*1000);
+  const isLive    = m.status === 'live' || (isToday && istHours >= -2 && istHours <= 0);
+  return { isExpired, isToday, isTomorrow, isLive, matchUTC, expireUTC };
+}
+
+function handleChipClick(chipEl, matchId) {
+  const m = window._allMatchData?.[matchId];
+  if (!m) return;
+  const { isExpired } = classifyMatch(m);
+  if (isExpired) { showToast('\u26d4 This match has already started. Teams are locked.'); return; }
+  selectMatchChip(m, chipEl);
+  document.getElementById('selectedMatchBar')?.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function chipBuy(matchId, plan) {
+  const m = window._allMatchData?.[matchId];
+  if (!m) return;
+  const { isExpired } = classifyMatch(m);
+  if (isExpired) { showToast('\u26d4 Match started — teams locked.'); return; }
+  selectMatchChip(m, document.getElementById('chip-' + matchId));
+  buyForSelected(plan);
+}
+
+function buildFallbackChips() {
+  const fallback = [
+    {id:'ipl2026-match-01', shortName:'RCB vs SRH', teams:{home:'RCB',away:'SRH'}, venue:{shortName:'Chinnaswamy', city:'Bengaluru'}, date:'2026-03-28', timeIST:'7:30 PM', teamsGenerated:true},
+    {id:'ipl2026-match-02', shortName:'MI vs KKR',  teams:{home:'MI', away:'KKR'}, venue:{shortName:'Wankhede',    city:'Mumbai'},    date:'2026-03-29', timeIST:'7:30 PM', teamsGenerated:true},
+    {id:'ipl2026-match-03', shortName:'RR vs CSK',  teams:{home:'RR', away:'CSK'}, venue:{shortName:'Barsapara',   city:'Guwahati'},  date:'2026-03-30', timeIST:'7:30 PM', teamsGenerated:true},
+    {id:'ipl2026-match-04', shortName:'PBKS vs GT', teams:{home:'PBKS',away:'GT'}, venue:{shortName:'Mullanpur',   city:'Chandigarh'},date:'2026-03-31', timeIST:'7:30 PM', teamsGenerated:true},
+  ];
+  window._allMatchData = {};
+  fallback.forEach(m => { window._allMatchData[m.id] = m; });
+  setTimeout(() => {
+    const chipEl = document.getElementById('chip-' + fallback[0].id);
+    selectMatchChip(fallback[0], chipEl);
+  }, 100);
+  return fallback.map((m, i) => {
+    const d = new Date(m.date + 'T00:00:00').toLocaleDateString('en-IN',{month:'short',day:'numeric'});
+    return `<div class="match-chip${i===0?' featured':''}" id="chip-${m.id}" onclick="handleChipClick(this,'${m.id}')"><div class="chip-selected-indicator">\u2713</div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><div class="chip-time">${d} \u00b7 ${m.timeIST}</div><span class="chip-status-badge badge-upcoming">UPCOMING</span></div><div class="chip-teams">${m.shortName}</div><div class="chip-venue">\ud83d\udccd ${m.venue.shortName}, ${m.venue.city}</div><div class="chip-actions"><button class="chip-btn btn-safe" onclick="event.stopPropagation();chipBuy('${m.id}','safe')">\ud83d\udee1\ufe0f Safe \u20b99</button><button class="chip-btn btn-bold" onclick="event.stopPropagation();chipBuy('${m.id}','bold')">\ud83d\udd25 Bold \u20b911</button><button class="chip-btn btn-both" onclick="event.stopPropagation();chipBuy('${m.id}','both')">\u26a1 Both \u20b915</button></div></div>`;
+  }).join('');
+}
+
+function updateLiveBanner(matches) {
+  const now      = new Date();
+  const todayIST = new Date(now.getTime() + 5.5*60*60*1000);
+  const todayStr = todayIST.toISOString().split('T')[0];
+  const todayM   = matches.filter(m => (m.date||'').substring(0,10) === todayStr);
+  const liveBanner = document.getElementById('liveMatchBanner');
+  const xiBanner   = document.getElementById('xiConfirmedBanner');
+  if (!liveBanner) return;
+  if (!todayM.length) { liveBanner.classList.remove('show'); xiBanner.classList.remove('show'); return; }
+  const xiMatch = todayM.find(m => m.xiConfirmed && !classifyMatch(m).isExpired);
+  if (xiMatch) {
+    xiBanner.classList.add('show');
+    liveBanner.classList.remove('show');
+    const toss = xiMatch.tossWinner ? ` · ${xiMatch.tossWinner} elected to ${xiMatch.tossChoice === 'bat' ? '\ud83c\udfd8 bat' : '\ud83c\udfaf bowl'}` : '';
+    document.getElementById('xiBannerText').textContent =
+      `\u2705 ${xiMatch.shortName||"Today's match"} — Playing XI Confirmed${toss}! AI team updated \ud83d\udd25`;
+    return;
+  }
+  const nonExpired = todayM.filter(m => !classifyMatch(m).isExpired);
+  if (!nonExpired.length) { liveBanner.classList.remove('show'); return; }
+  liveBanner.classList.add('show');
+  if (nonExpired.length === 1) {
+    const m = nonExpired[0];
+    const { isLive } = classifyMatch(m);
+    document.getElementById('liveBannerText').textContent =
+      isLive ? `\ud83c\udfd8 ${m.shortName} — MATCH IN PROGRESS \ud83d\udd25`
+             : `\ud83c\udfd8 ${m.shortName} — MATCH DAY \ud83d\udd25 · ${m.timeIST||'7:30 PM'} IST`;
+  } else {
+    const names = nonExpired.map(m => `${m.shortName} (${m.timeIST||''})`).join(' + ');
+    document.getElementById('liveBannerText').textContent = `\ud83c\udfd8 ${names} — DOUBLE HEADER TODAY! \ud83d\udd25`;
+  }
+}
+
 // ── Dynamic Match Strip — loads real IPL 2026 matches from Firebase ──
 async function loadMatchStrip() {
   const strip = document.getElementById('matchesStrip');
@@ -2355,85 +2750,82 @@ async function loadMatchStrip() {
     const res  = await fetch(`${API_BASE}/api/matches/upcoming?limit=8`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    const matches = (data.matches || data || [])
+    const allMatches = (data.matches || data || [])
       .filter(m => m.date >= '2026-03-28')
       .slice(0, 8);
 
-    if (!matches.length) {
-      strip.innerHTML = `
-        <div class="match-chip featured">
-          <div class="chip-time">⚡ COMING SOON</div>
-          <div class="chip-teams">IPL 2026</div>
-          <div class="chip-venue">📍 Starts March 28</div>
-          <div class="chip-actions">
-            <button class="chip-btn btn-safe" onclick="openPayModal('IPL 2026','India','safe')">🛡️ Safe ₹9</button>
-            <button class="chip-btn btn-bold" onclick="openPayModal('IPL 2026','India','bold')">🔥 Bold ₹11</button>
-            <button class="chip-btn btn-both" onclick="openPayModal('IPL 2026','India','both')">⚡ Both ₹15</button>
-          </div>
-        </div>`;
+    if (!allMatches.length) {
+      strip.innerHTML = buildFallbackChips();
       return;
     }
 
-    const today    = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const now = new Date();
+    const todayIST = new Date(now.getTime() + 5.5*60*60*1000);
+    const todayStr = todayIST.toISOString().split('T')[0];
 
-    strip.innerHTML = matches.map((m, idx) => {
-      const matchDate = new Date(m.dateTimeGMT || m.date + 'T14:00:00Z');
-      const matchStr  = (m.date || '').substring(0, 10);
-      const timeIST   = m.timeIST || '7:30 PM';
+    // Detect double header
+    const todayMatches = allMatches.filter(m => (m.date||'').substring(0,10) === todayStr);
+    const isDoubleHeader = todayMatches.length >= 2;
+    const doubleNotice = document.getElementById('doubleHeaderNotice');
+    if (doubleNotice) doubleNotice.classList.toggle('show', isDoubleHeader);
+
+    strip.innerHTML = allMatches.map((m, idx) => {
+      const { isExpired, isToday, isTomorrow, isLive, matchUTC } = classifyMatch(m);
       const home      = m.teams?.home || '';
       const away      = m.teams?.away || '';
       const shortName = m.shortName || `${home} vs ${away}`;
-      const venue     = m.venue?.shortName || m.venue?.city || 'India';
-      const city      = m.venue?.city || '';
-      const matchId   = m.id || m.matchId || '';
+      const venueObj  = m.venue || {};
+      const venueName = (typeof venueObj === 'string') ? venueObj : (venueObj.shortName || venueObj.name || 'India');
+      const city      = venueObj.city || '';
+      const timeIST   = m.timeIST || '7:30 PM';
+      const matchId   = (m.id || m.matchId || '').replace(/'/g, "\\'");
 
-      // Time label
       let timeLabel;
-      const diffDays = Math.round((matchDate - today) / (1000 * 60 * 60 * 24));
-      if (matchStr === todayStr)        timeLabel = `⚡ TODAY · ${timeIST}`;
-      else if (diffDays <= 1)           timeLabel = `TOMORROW · ${timeIST}`;
+      if (isExpired)       timeLabel = '⛔ EXPIRED';
+      else if (isLive)     timeLabel = '🔴 LIVE NOW';
+      else if (isToday)    timeLabel = `⚡ TODAY · ${timeIST}`;
+      else if (isTomorrow) timeLabel = `TOMORROW · ${timeIST}`;
       else {
-        const d = matchDate.toLocaleDateString('en-IN', { month:'short', day:'numeric' });
+        const d = matchUTC.toLocaleDateString('en-IN', { month:'short', day:'numeric' });
         timeLabel = `${d} · ${timeIST}`;
       }
 
-      const featured = idx === 0 ? ' featured' : '';
-      const teamsLabel = `${home} vs ${away}`;
+      let badgeHTML = '';
+      if (isLive)          badgeHTML = '<span class="chip-status-badge badge-live">🔴 LIVE</span>';
+      else if (isExpired)  badgeHTML = '<span class="chip-status-badge badge-expired">EXPIRED</span>';
+      else if (isToday)    badgeHTML = '<span class="chip-status-badge badge-today">TODAY</span>';
+      else if (isTomorrow) badgeHTML = '<span class="chip-status-badge badge-tomorrow">TOMORROW</span>';
+      else                 badgeHTML = '<span class="chip-status-badge badge-upcoming">UPCOMING</span>';
 
-      return `
-        <div class="match-chip${featured}" onclick="openPayModal('${teamsLabel}','${venue}','','${matchId}')">
-          <div class="chip-time">${timeLabel}</div>
-          <div class="chip-teams">${teamsLabel}</div>
-          <div class="chip-venue">📍 ${venue}${city ? ', ' + city : ''}</div>
-          <div class="chip-actions">
-            <button class="chip-btn btn-safe" onclick="event.stopPropagation();openPayModal('${teamsLabel}','${venue}','safe','${matchId}')">🛡️ Safe ₹9</button>
-            <button class="chip-btn btn-bold" onclick="event.stopPropagation();openPayModal('${teamsLabel}','${venue}','bold','${matchId}')">🔥 Bold ₹11</button>
-            <button class="chip-btn btn-both" onclick="event.stopPropagation();openPayModal('${teamsLabel}','${venue}','both','${matchId}')">⚡ Both ₹15</button>
-          </div>
-        </div>`;
+      let tossLine = '';
+      if (m.xiConfirmed && m.tossWinner) {
+        tossLine = `<div class="chip-toss">✅ ${m.tossWinner} elected to ${m.tossChoice === 'bat' ? '🏏 bat' : '🎯 bowl'}</div>`;
+      }
+
+      const chipClasses = ['match-chip', idx===0 && !isExpired ? 'featured':'', isExpired?'expired-chip':'', isLive?'live-chip':''].filter(Boolean).join(' ');
+      const safeId = (m.id || m.matchId || '').replace(/'/g, "\\'");
+
+      return `<div class="${chipClasses}" id="chip-${safeId}" onclick="handleChipClick(this,'${safeId}')"><div class="chip-selected-indicator">✓</div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><div class="chip-time">${timeLabel}</div>${badgeHTML}</div><div class="chip-teams">${shortName}</div><div class="chip-venue">📍 ${venueName}${city?', '+city:''}</div>${tossLine}<div class="chip-actions"><button class="chip-btn btn-safe" onclick="event.stopPropagation();chipBuy('${safeId}','safe')">🛡️ Safe ₹9</button><button class="chip-btn btn-bold" onclick="event.stopPropagation();chipBuy('${safeId}','bold')">🔥 Bold ₹11</button><button class="chip-btn btn-both" onclick="event.stopPropagation();chipBuy('${safeId}','both')">⚡ Both ₹15</button></div></div>`;
     }).join('');
+
+    // Store matches globally for chip lookup
+    window._allMatchData = {};
+    allMatches.forEach(m => { const id = m.id || m.matchId; if (id) window._allMatchData[id] = m; });
+
+    // Auto-select best match
+    const best = allMatches.find(m => { const {isExpired,isToday} = classifyMatch(m); return isToday && !isExpired; })
+              || allMatches.find(m => { const {isTomorrow,isExpired} = classifyMatch(m); return isTomorrow && !isExpired; })
+              || allMatches.find(m => !classifyMatch(m).isExpired);
+    if (best) {
+      const chipEl = document.getElementById('chip-' + (best.id || best.matchId));
+      selectMatchChip(best, chipEl);
+    }
+
+    updateLiveBanner(allMatches);
 
   } catch(e) {
     console.error('loadMatchStrip:', e.message);
-    // Show first 4 IPL 2026 matches as fallback
-    const stripFb = document.getElementById('matchesStrip');
-    if (stripFb) stripFb.innerHTML = [
-      {teams:'RCB vs SRH', venue:'Chinnaswamy, Bengaluru', date:'2026-03-28', time:'7:30 PM', id:'ipl2026-match-01'},
-      {teams:'MI vs KKR',  venue:'Wankhede, Mumbai',       date:'2026-03-29', time:'7:30 PM', id:'ipl2026-match-02'},
-      {teams:'RR vs CSK',  venue:'Barsapara, Guwahati',    date:'2026-03-30', time:'7:30 PM', id:'ipl2026-match-03'},
-      {teams:'PBKS vs GT', venue:'Mullanpur, Chandigarh',  date:'2026-03-31', time:'7:30 PM', id:'ipl2026-match-04'},
-    ].map((m,i) => `
-      <div class="match-chip${i===0?' featured':''}" onclick="openPayModal('${m.teams}','${m.venue}','','${m.id}')">
-        <div class="chip-time">${m.date === '2026-03-28' ? '⚡ MAR 28' : 'MAR ' + m.date.slice(8)} · ${m.time}</div>
-        <div class="chip-teams">${m.teams}</div>
-        <div class="chip-venue">📍 ${m.venue}</div>
-        <div class="chip-actions">
-          <button class="chip-btn btn-safe" onclick="event.stopPropagation();openPayModal('${m.teams}','${m.venue}','safe','${m.id}')">🛡️ Safe ₹9</button>
-          <button class="chip-btn btn-bold" onclick="event.stopPropagation();openPayModal('${m.teams}','${m.venue}','bold','${m.id}')">🔥 Bold ₹11</button>
-          <button class="chip-btn btn-both" onclick="event.stopPropagation();openPayModal('${m.teams}','${m.venue}','both','${m.id}')">⚡ Both ₹15</button>
-        </div>
-      </div>`).join('');
+    strip.innerHTML = buildFallbackChips();
   }
 }
 
