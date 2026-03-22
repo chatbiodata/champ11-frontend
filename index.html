@@ -1199,15 +1199,16 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   .nav{padding:0 14px;height:52px;}
   .logo{font-size:22px;letter-spacing:3px;}
   .nav-badge{
-    font-size:9px;padding:4px 8px;letter-spacing:1px;
+    font-size:9px;padding:4px 7px;letter-spacing:0.5px;
     white-space:nowrap;line-height:1.2;
   }
   .login-nav-btn{
-    font-size:10px;padding:5px 10px;letter-spacing:0.5px;
+    font-size:10px;padding:5px 9px;letter-spacing:0.5px;
+    white-space:nowrap;flex-shrink:0;
   }
-  .bell-btn{padding:4px;}
+  .bell-btn{padding:4px;flex-shrink:0;}
   .bell-icon{font-size:19px;}
-  .nav-right{gap:8px;}
+  .nav-right{gap:6px;flex-wrap:nowrap;align-items:center;}
 
   /* ── HERO ── */
   .hero-title{font-size:clamp(44px,14vw,72px);}
@@ -1255,7 +1256,9 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   .chip-btn{font-size:10px;padding:7px 7px;}
   .match-chip{min-width:calc(92vw);}
   .hero-title{font-size:42px;}
-  .login-nav-btn{display:none;}
+  /* login-nav-btn stays visible — users need to login on mobile */
+  .login-nav-btn{font-size:9px;padding:4px 7px;letter-spacing:0;}
+  .nav-badge{display:none;} /* hide IPL badge on very small screens to make room */
 }
 
 /* ── LOGIN MODAL ── */
@@ -1626,6 +1629,20 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
       </div>
       <button class="modal-pay-btn" onclick="doPayment()">PAY WITH RAZORPAY</button>
       <div class="modal-note">🔒 Secured by Razorpay · UPI · Cards · Net Banking</div>
+      <!-- Razorpay trust badges -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:5px;font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.3)">
+          <span style="font-size:13px">🔐</span> SSL ENCRYPTED
+        </div>
+        <div style="width:1px;height:14px;background:rgba(255,255,255,0.1)"></div>
+        <div style="display:flex;align-items:center;gap:5px;font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.3)">
+          <span style="font-size:13px">🏦</span> RBI REGULATED
+        </div>
+        <div style="width:1px;height:14px;background:rgba(255,255,255,0.1)"></div>
+        <div style="display:flex;align-items:center;gap:5px;font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:1px;color:rgba(0,212,255,0.5)">
+          <span style="font-size:13px">✅</span> POWERED BY RAZORPAY
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1741,8 +1758,8 @@ function openPayModal(match, venue, plan, matchId) {
   currentMatchId = matchId || match;
 
   // ── Access guard: only today + tomorrow for per-match and pass holders ──
-  const md = selectedMatchData || window._allMatchData?.[matchId];
-  if (!checkMatchAccessAllowed(md, plan)) return; // shows "coming soon" modal
+  const matchGuard = selectedMatchData || window._allMatchData?.[matchId];
+  if (!checkMatchAccessAllowed(matchGuard, plan)) return; // shows "coming soon" modal
 
   // ── Update pay modal match header ──────────────────────────
   document.getElementById('modalMatch').textContent = match || 'Select a match above';
@@ -2266,7 +2283,14 @@ function showTeamsAfterPayment(teams, paymentId) {
     document.getElementById('tabBold').style.display = '';
     document.getElementById('tabSafe').innerHTML = '🛡️ SAFE ✅';
     document.getElementById('tabBold').innerHTML = '🔥 BOLD ✅';
-    banner.classList.add('show'); switchTab('safe');
+    banner.classList.add('show');
+    // Show differential count — how many Bold picks differ from Safe
+    if (currentSafeTeam?.players && currentBoldTeam?.players) {
+      const safeIds   = new Set(currentSafeTeam.players.map(p => p.id || p.name));
+      const diffCount = currentBoldTeam.players.filter(p => !safeIds.has(p.id || p.name)).length;
+      banner.innerHTML = `⚡ CHAMP BUNDLE — BOTH TEAMS UNLOCKED &nbsp;·&nbsp; <strong style="color:#fff">${diffCount} BOLD DIFFERENTIAL PICKS</strong> · TAP TABS TO COMPARE`;
+    }
+    switchTab('safe');
   }
 
   document.getElementById('teamsModal').classList.add('open');
@@ -2344,14 +2368,22 @@ function getMatchLockTime(matchData) {
   return new Date(new Date(gmt).getTime() + 10 * 60 * 1000);
 }
 
+// IPL launch dates — always purchasable until their match starts
+const IPL_LAUNCH_DATES = ['2026-03-28', '2026-03-29'];
+
 function isTodayOrTomorrow(matchDate) {
   // matchDate: 'YYYY-MM-DD' string
   if (!matchDate) return false;
+  const d = matchDate.substring(0, 10);
+
+  // Always allow IPL launch matches (Mar 28 & 29) until they expire
+  if (IPL_LAUNCH_DATES.includes(d)) return true;
+
+  // Once IPL starts (Mar 28+), use today/tomorrow window
   const now      = new Date();
   const istNow   = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
   const today    = istNow.toISOString().split('T')[0];
   const tomorrow = new Date(istNow.getTime() + 24*60*60*1000).toISOString().split('T')[0];
-  const d        = matchDate.substring(0, 10);
   return d === today || d === tomorrow;
 }
 
@@ -2521,7 +2553,7 @@ async function restoreTeamView(paymentId) {
   if (Date.now() > data.expiresAt) {
     localStorage.removeItem(key);
     pruneExpiredPurchases();
-    showToast('🔒 Match has started — teams are locked.');
+    showToast('🔒 Match started (1st over done) — teams are now locked.');
     document.getElementById('restoreBanner')?.remove();
     return;
   }
