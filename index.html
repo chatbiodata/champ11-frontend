@@ -611,6 +611,25 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   font-family:'Barlow Condensed';font-size:11px;color:rgba(0,230,118,0.75);line-height:1.5;
 }
 
+/* ── COMING SOON MODAL ── */
+#comingSoonModal .csm-inner{
+  background:#0d1520;border:1px solid rgba(0,212,255,0.28);
+  border-radius:20px;padding:36px 28px;max-width:380px;width:100%;
+  text-align:center;
+  animation:fadeUp .35s ease;
+}
+#comingSoonModal .csm-emoji{font-size:52px;margin-bottom:14px;display:block}
+#comingSoonModal .csm-title{font-family:'Bebas Neue';font-size:28px;letter-spacing:3px;color:#00d4ff;margin-bottom:10px}
+#comingSoonModal .csm-body{font-family:'Barlow Condensed';font-size:14px;color:rgba(255,255,255,0.6);line-height:1.75;margin-bottom:20px}
+#comingSoonModal .csm-hint{font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:1px;color:rgba(0,230,118,0.6);margin-bottom:20px}
+#comingSoonModal .csm-ok{
+  background:rgba(0,212,255,0.12);border:1px solid rgba(0,212,255,0.3);
+  color:#00d4ff;padding:12px 36px;border-radius:10px;
+  font-family:'Bebas Neue';font-size:17px;letter-spacing:2px;cursor:pointer;
+  transition:.2s;
+}
+#comingSoonModal .csm-ok:hover{background:rgba(0,212,255,0.22)}
+
 /* ── TOSS UPDATE BANNER inside teams modal ── */
 .toss-update-banner{
   background:rgba(0,230,118,0.07);border:1px solid rgba(0,230,118,0.22);
@@ -976,9 +995,15 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   overflow-y:auto;
   -webkit-overflow-scrolling:touch;
   flex:1;
+  min-height:0;
   padding:16px 16px 32px;
 }
-.teams-panel.active{display:block}
+.teams-panel.active{
+  display:block;
+  /* Ensure it takes full available height same as safe panel */
+  height:100%;
+  box-sizing:border-box;
+}
 
 .team-header{
   display:flex;align-items:center;justify-content:space-between;
@@ -1060,15 +1085,6 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   height:100%;background:var(--cyan);border-radius:2px;
   transition:width 1s linear;
 }
-
-/* Copy team button */
-.copy-team-btn{
-  width:100%;margin-top:14px;padding:13px;border-radius:10px;
-  background:rgba(184,255,0,0.08);border:1px solid rgba(184,255,0,0.2);
-  color:var(--lime);font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;
-  cursor:pointer;transition:.2s;
-}
-.copy-team-btn:hover{background:rgba(184,255,0,0.14)}
 
 /* ── BLUR SHIELD ── */
 #blurShield{
@@ -1679,7 +1695,6 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
       <div class="canvas-wrap">
         <canvas id="safeCanvas"></canvas>
       </div>
-      <button class="copy-team-btn" onclick="copyTeamCanvas('safe')">📋 COPY SAFE TEAM TO DREAM11</button>
       <div style="text-align:center;margin-top:8px;font-family:'Barlow Condensed';font-size:10px;color:rgba(255,255,255,0.1);letter-spacing:2px" id="safeWatermark">CHAMP11.IN</div>
     </div>
 
@@ -1689,7 +1704,6 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
       <div class="canvas-wrap">
         <canvas id="boldCanvas"></canvas>
       </div>
-      <button class="copy-team-btn" onclick="copyTeamCanvas('bold')" style="border-color:rgba(255,107,0,0.2);color:var(--orange)">📋 COPY BOLD TEAM TO DREAM11</button>
       <div style="text-align:center;margin-top:8px;font-family:'Barlow Condensed';font-size:10px;color:rgba(255,255,255,0.1);letter-spacing:2px" id="boldWatermark">CHAMP11.IN</div>
     </div>
 
@@ -1725,6 +1739,10 @@ let selectedMatchData = null; // full match object
 function openPayModal(match, venue, plan, matchId) {
   currentMatch   = match;
   currentMatchId = matchId || match;
+
+  // ── Access guard: only today + tomorrow for per-match and pass holders ──
+  const md = selectedMatchData || window._allMatchData?.[matchId];
+  if (!checkMatchAccessAllowed(md, plan)) return; // shows "coming soon" modal
 
   // ── Update pay modal match header ──────────────────────────
   document.getElementById('modalMatch').textContent = match || 'Select a match above';
@@ -1814,17 +1832,15 @@ function selectMatchChip(matchData, chipEl) {
   currentMatchId    = matchData.id || matchData.matchId;
   currentMatch      = matchData.shortName || `${matchData.teams?.home} vs ${matchData.teams?.away}`;
 
-  // Update chip active state
   document.querySelectorAll('.match-chip').forEach(c => c.classList.remove('active'));
   if (chipEl) chipEl.classList.add('active');
 
-  // Update selected match bar
   const bar = document.getElementById('selectedMatchBar');
   bar.classList.add('show');
 
   document.getElementById('selMatchName').textContent = currentMatch;
 
-  const venue  = matchData.venue?.shortName || matchData.venue?.name || matchData.venue || '';
+  const venue  = matchData.venue?.shortName || matchData.venue?.name || (typeof matchData.venue === 'string' ? matchData.venue : '') || '';
   const date   = matchData.date  ? new Date(matchData.date + 'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'}) : '';
   const time   = matchData.timeIST || '7:30 PM';
   document.getElementById('selMatchMeta').textContent = [venue, date, time + ' IST'].filter(Boolean).join(' · ');
@@ -1837,6 +1853,24 @@ function selectMatchChip(matchData, chipEl) {
     xiEl.innerHTML = `<span style="color:#ffcc00">⏳ Pre-toss team ready — auto-updates after toss</span>`;
   } else {
     xiEl.textContent = '';
+  }
+
+  // Show/hide buy buttons based on today/tomorrow rule
+  const isFuture = !isTodayOrTomorrow(matchData.date);
+  const { isExpired } = classifyMatch(matchData);
+  const btnsEl = document.querySelector('.sel-buy-btns');
+  if (btnsEl) {
+    if (isExpired) {
+      btnsEl.innerHTML = `<div style="font-family:'Barlow Condensed';font-size:12px;color:rgba(255,82,82,0.7);padding:6px 0">🔒 Match started — teams locked</div>`;
+    } else if (isFuture) {
+      btnsEl.innerHTML = `<button class="sel-btn" style="background:rgba(255,204,0,0.08);color:rgba(255,204,0,0.6);border:1px solid rgba(255,204,0,0.2);cursor:pointer" onclick="showComingSoonModal(selectedMatchData)">⏳ Team Available on Match Day</button>`;
+    } else {
+      btnsEl.innerHTML = `
+        <button class="sel-btn sel-btn-safe" onclick="buyForSelected('safe')">🛡️ Safe ₹9</button>
+        <button class="sel-btn sel-btn-bold" onclick="buyForSelected('bold')">🔥 Bold ₹11</button>
+        <button class="sel-btn sel-btn-both" onclick="buyForSelected('both')">⚡ Both ₹15</button>
+        <button class="sel-btn sel-btn-pass" onclick="buyForSelected('season')">🏆 Season ₹399</button>`;
+    }
   }
 }
 
@@ -1899,47 +1933,18 @@ function showToast(msg) {
 }
 
 function switchTab(which) {
-  // Update tab styling
   document.getElementById('tabSafe').classList.toggle('active', which === 'safe');
   document.getElementById('tabBold').classList.toggle('active', which === 'bold');
-  // Show correct panel — reset scroll to top each time
   const safe = document.getElementById('panelSafe');
   const bold = document.getElementById('panelBold');
   safe.classList.toggle('active', which === 'safe');
   bold.classList.toggle('active', which === 'bold');
   if (which === 'safe') safe.scrollTop = 0;
-  if (which === 'bold') bold.scrollTop = 0;
-}
-
-function copyTeamCanvas(which) {
-  const team = which === 'safe' ? currentSafeTeam : currentBoldTeam;
-  if (!team || !team.players) { showToast('⚠️ No team data yet'); return; }
-  const captain = team.players.find(p => p.isCaptain)?.name || '';
-  const vc      = team.players.find(p => p.isVC)?.name || '';
-  const names   = team.players.map((p,i) => {
-    const tag = p.isCaptain ? ' [C]' : p.isVC ? ' [VC]' : '';
-    return `${i+1}. ${p.name}${tag}`;
-  }).join('\n');
-
-  // Embed full traceable watermark in copied text
-  // If this text is shared anywhere, the buyer ID travels with it
-  const buyerId  = currentSession.maskedId || 'GUEST';
-  const txnShort = currentSession.txnId ? currentSession.txnId.slice(-8).toUpperCase() : '--------';
-  const wm       = `[ID:${txnShort}]`;  // short but unique
-
-  const text =
-    `🏏 CHAMP11 ${which.toUpperCase()} TEAM ${wm}\n` +
-    `${currentMatch}\n\n` +
-    `C: ${captain} | VC: ${vc}\n\n` +
-    `${names}\n\n` +
-    `📲 Get your own team: champ11.in\n` +
-    `━━━━━━━━━━━━━━━━━\n` +
-    `⚠️ This team is personalized to ${buyerId}.\n` +
-    `Sharing violates Terms of Service.`;
-
-  navigator.clipboard.writeText(text)
-    .then(() => showToast('✅ Team copied! Paste in Dream11.'))
-    .catch(()  => showToast('📋 Team ready — enter manually in Dream11.'));
+  if (which === 'bold') {
+    bold.scrollTop = 0;
+    // Re-render bold canvas — it was hidden when first rendered so width was 0
+    if (currentBoldTeam) setTimeout(() => renderTeamCanvas('boldCanvas', currentBoldTeam, 'bold'), 30);
+  }
 }
 
 // ─── CANVAS TEAM RENDERER ────────────────────────────────────────────────────
@@ -2028,32 +2033,41 @@ function renderTeamCanvas(canvasId, team, strategy) {
     const y    = HEADER + (i * ROW_H);
     const midY = y + ROW_H / 2;
 
+    // Normalise C/VC — backend may send either isVC or isViceCaptain
+    const isCap = p.isCaptain || false;
+    const isVC  = p.isVC || p.isViceCaptain || false;
+
     // Row bg
     if (i % 2 === 0) { ctx.fillStyle='rgba(255,255,255,0.018)'; ctx.fillRect(0,y,W,ROW_H); }
-    if (p.isCaptain) { ctx.fillStyle='rgba(240,180,41,0.12)'; ctx.fillRect(0,y,W,ROW_H); }
-    if (p.isVC)      { ctx.fillStyle='rgba(168,224,74,0.10)'; ctx.fillRect(0,y,W,ROW_H); }
+    if (isCap)        { ctx.fillStyle='rgba(240,180,41,0.14)'; ctx.fillRect(0,y,W,ROW_H); }
+    if (isVC)         { ctx.fillStyle='rgba(168,224,74,0.12)'; ctx.fillRect(0,y,W,ROW_H); }
 
     // Team color bar
     const tc = TEAM_COLORS[p.team] || '#888';
     ctx.fillStyle = tc + 'cc'; ctx.fillRect(0, y+8, 3, ROW_H-16);
 
-    // Captain/VC badge
-    if (p.isCaptain || p.isVC) {
-      const bText = p.isCaptain ? 'C' : 'VC';
-      const bCol  = p.isCaptain ? '#f0b429' : '#a8e04a';
-      const bW    = p.isCaptain ? 20 : 26;
+    // Captain / VC badge — always drawn when applicable
+    if (isCap || isVC) {
+      const bText = isCap ? 'C' : 'VC';
+      const bCol  = isCap ? '#f0b429' : '#a8e04a';
+      const bW    = isCap ? 22 : 28;
       ctx.fillStyle = bCol;
-      ctx.beginPath(); ctx.roundRect(10, midY-11, bW, 22, 4); ctx.fill();
-      ctx.font='bold 11px "Barlow Condensed",Arial'; ctx.fillStyle='#000';
-      ctx.textAlign='center'; ctx.fillText(bText, 10+bW/2, midY+4); ctx.textAlign='left';
+      ctx.beginPath(); ctx.roundRect(8, midY-12, bW, 24, 5); ctx.fill();
+      ctx.font = 'bold 12px "Barlow Condensed",Arial';
+      ctx.fillStyle = '#000';
+      ctx.textAlign = 'center';
+      ctx.fillText(bText, 8 + bW/2, midY + 4);
+      ctx.textAlign = 'left';
     }
 
-    // Name
-    const nameX = (p.isCaptain || p.isVC) ? 44 : 14;
-    ctx.font='bold 13px "Barlow Condensed",Arial'; ctx.fillStyle='#fff';
-    ctx.fillText(p.name, nameX, midY-2);
-    ctx.font='10px "Barlow Condensed",Arial'; ctx.fillStyle=tc+'cc';
-    ctx.fillText(p.team, nameX, midY+11);
+    // Name — gold for C, green for VC, white for others
+    const nameX = (isCap || isVC) ? 46 : 14;
+    ctx.font = 'bold 13px "Barlow Condensed",Arial';
+    ctx.fillStyle = isCap ? '#f0d060' : isVC ? '#a8e04a' : '#fff';
+    ctx.fillText(p.name, nameX, midY - 2);
+    ctx.font = '10px "Barlow Condensed",Arial';
+    ctx.fillStyle = tc + 'cc';
+    ctx.fillText(p.team, nameX, midY + 11);
 
     // Role pill
     const rc = ROLE_COLORS[p.role] || ROLE_COLORS.BAT;
@@ -2283,7 +2297,7 @@ function showTeamsAfterPayment(teams, paymentId) {
   // Render canvases after modal is visible (needs layout)
   setTimeout(renderBothCanvases, 120);
 
-  // Save to localStorage for refresh recovery
+  // Save to localStorage — expires at match lock time
   if (paymentId) {
     savePurchaseToLocal(paymentId, currentMatch, currentPlan,
       JSON.stringify(currentSafeTeam), JSON.stringify(currentBoldTeam));
@@ -2323,54 +2337,201 @@ const DEMO_BOLD_TEAM = {
 };
 
 // ─── SESSION PERSISTENCE ─────────────────────────────────────────────────────
+function getMatchLockTime(matchData) {
+  // Match expires 10 min after kick-off
+  if (!matchData) return null;
+  const gmt = matchData.dateTimeGMT || (matchData.date + 'T14:00:00Z');
+  return new Date(new Date(gmt).getTime() + 10 * 60 * 1000);
+}
+
+function isTodayOrTomorrow(matchDate) {
+  // matchDate: 'YYYY-MM-DD' string
+  if (!matchDate) return false;
+  const now      = new Date();
+  const istNow   = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+  const today    = istNow.toISOString().split('T')[0];
+  const tomorrow = new Date(istNow.getTime() + 24*60*60*1000).toISOString().split('T')[0];
+  const d        = matchDate.substring(0, 10);
+  return d === today || d === tomorrow;
+}
+
+// ── PURCHASE ACCESS GUARD ─────────────────────────────────────────────────────
+// Called before opening payment modal — blocks future matches for per-match buyers
+function checkMatchAccessAllowed(matchData, plan) {
+  // Pass holders (weekly/season) — only today + tomorrow
+  if (plan === 'weekly' || plan === 'season') {
+    if (matchData && !isTodayOrTomorrow(matchData.date)) {
+      showComingSoonModal(matchData);
+      return false;
+    }
+    return true;
+  }
+  // Per-match buyers (safe/bold/both) — only today + tomorrow
+  if (matchData && !isTodayOrTomorrow(matchData.date)) {
+    showComingSoonModal(matchData);
+    return false;
+  }
+  return true;
+}
+
+function showComingSoonModal(matchData) {
+  let m = document.getElementById('comingSoonModal');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = 'comingSoonModal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.88);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;';
+    m.innerHTML = `<div class="csm-inner">
+      <span class="csm-emoji">⏳</span>
+      <div class="csm-title">AI TEAM IN PROGRESS</div>
+      <div class="csm-body" id="comingSoonText">Our AI is building this team.<br>You can buy today's or tomorrow's AI team right now.</div>
+      <div class="csm-hint">📅 TEAM AVAILABLE ON MATCH DAY MORNING</div>
+      <button class="csm-ok" onclick="document.getElementById('comingSoonModal').style.display='none'">GOT IT</button>
+    </div>`;
+    m.addEventListener('click', e => { if (e.target === m) m.style.display = 'none'; });
+    document.body.appendChild(m);
+  }
+  if (matchData) {
+    const mName = matchData.shortName || '';
+    const mDate = matchData.date
+      ? new Date(matchData.date + 'T00:00:00').toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' })
+      : '';
+    document.getElementById('comingSoonText').innerHTML =
+      `<strong style="color:#fff">${mName}</strong>${mDate ? ` is on <strong style="color:#ffcc00">${mDate}</strong>` : ''}.<br><br>
+       Our AI Dhurandhar Playing 11 will be ready on match day morning ☀️<br><br>
+       You can buy <strong style="color:#00e676">Today's or Tomorrow's</strong> team right now!`;
+  }
+  m.style.display = 'flex';
+}
+
+// ── SESSION PERSISTENCE — per-match key, expires at match lock time ───────────
 function savePurchaseToLocal(paymentId, match, plan, safeJSON, boldJSON) {
   try {
+    const matchId    = currentMatchId || match;
+    const matchData  = window._allMatchData?.[matchId] || selectedMatchData;
+    const lockTime   = getMatchLockTime(matchData);
+    const expiresAt  = lockTime ? lockTime.getTime() : Date.now() + 24*60*60*1000;
+
     const key  = 'c11_' + paymentId;
-    const data = { paymentId, match, matchId: currentMatchId || match, plan, safeJSON, boldJSON,
-                   savedAt: Date.now(), expiresAt: Date.now() + 24*60*60*1000 }; // 24hrs — covers midnight buy → 7:30 PM match
+    const data = {
+      paymentId, match, matchId,
+      plan, safeJSON, boldJSON,
+      savedAt:   Date.now(),
+      expiresAt,
+      matchDate: matchData?.date || '',
+    };
     localStorage.setItem(key, JSON.stringify(data));
+
+    // Track all purchases in an index so we can show multiple
+    const index = JSON.parse(localStorage.getItem('c11_index') || '[]');
+    if (!index.includes(key)) { index.push(key); localStorage.setItem('c11_index', JSON.stringify(index)); }
+
+    // Also set latest for quick access
     localStorage.setItem('c11_latest', key);
   } catch(e) {}
 }
 
-function getLatestPurchase() {
+function pruneExpiredPurchases() {
   try {
-    const key = localStorage.getItem('c11_latest');
-    if (!key) return null;
-    const data = JSON.parse(localStorage.getItem(key));
-    if (!data || Date.now() > data.expiresAt) {
-      localStorage.removeItem(key); localStorage.removeItem('c11_latest'); return null;
+    const index  = JSON.parse(localStorage.getItem('c11_index') || '[]');
+    const valid  = [];
+    index.forEach(key => {
+      const raw = localStorage.getItem(key);
+      if (!raw) return;
+      try {
+        const d = JSON.parse(raw);
+        if (Date.now() < d.expiresAt) {
+          valid.push(key);
+        } else {
+          localStorage.removeItem(key);
+        }
+      } catch(e) { localStorage.removeItem(key); }
+    });
+    localStorage.setItem('c11_index', JSON.stringify(valid));
+    // Update latest to most recent valid
+    if (valid.length > 0) {
+      localStorage.setItem('c11_latest', valid[valid.length - 1]);
+    } else {
+      localStorage.removeItem('c11_latest');
     }
-    return data;
-  } catch(e) { return null; }
+    return valid;
+  } catch(e) { return []; }
+}
+
+function getAllActivePurchases() {
+  const validKeys = pruneExpiredPurchases();
+  const purchases = [];
+  validKeys.forEach(key => {
+    try {
+      const d = JSON.parse(localStorage.getItem(key));
+      if (d) purchases.push(d);
+    } catch(e) {}
+  });
+  return purchases;
+}
+
+function getLatestPurchase() {
+  const purchases = getAllActivePurchases();
+  if (!purchases.length) return null;
+  return purchases[purchases.length - 1];
 }
 
 function restorePurchaseOnLoad() {
-  const data = getLatestPurchase();
-  if (!data) return;
-  const mins = Math.round((Date.now()-data.savedAt)/60000);
-  const timeLabel = mins < 60 ? `${mins} min ago` : `${Math.round(mins/60)} hr ago`;
-  showRestoreBanner(data, timeLabel);
+  const purchases = getAllActivePurchases();
+  if (!purchases.length) return;
+
+  // For double header: show all active purchases
+  if (purchases.length === 1) {
+    const data = purchases[0];
+    const mins = Math.round((Date.now() - data.savedAt) / 60000);
+    const timeLabel = mins < 60 ? `${mins} min ago` : `${Math.round(mins/60)} hr ago`;
+    showRestoreBanner(data, timeLabel);
+  } else {
+    // Multiple active purchases (double header)
+    showMultipleRestoreBanner(purchases);
+  }
 }
 
 function showRestoreBanner(data, timeLabel) {
   let banner = document.getElementById('restoreBanner');
-  if (!banner) { banner = document.createElement('div'); banner.id='restoreBanner'; document.body.appendChild(banner); }
-  const planLabel = data.plan==='both'?'Safe + Bold':data.plan==='safe'?'Safe Team':'Bold Team';
-  banner.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:300;background:linear-gradient(135deg,#0d1520,#0a1a10);border-top:2px solid rgba(0,230,118,0.4);padding:14px 20px;display:flex;align-items:center;gap:12px;font-family:Barlow Condensed,sans-serif;animation:slideUp .3s ease';
-  banner.innerHTML=`<div style="flex:1"><div style="font-size:13px;font-weight:700;letter-spacing:1px;color:rgba(0,230,118,0.9)">🔓 YOU HAVE AN UNLOCKED TEAM</div><div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px">${data.match} · ${planLabel} · ${timeLabel}</div></div><button onclick="restoreTeamView('${data.paymentId}')" style="background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);color:rgba(0,230,118,0.9);padding:8px 16px;border-radius:8px;cursor:pointer;font-family:Bebas Neue;font-size:14px;letter-spacing:2px;white-space:nowrap">VIEW TEAM</button><button onclick="this.parentElement.remove()" style="background:none;border:none;color:rgba(255,255,255,0.2);cursor:pointer;font-size:20px;padding:0 4px">×</button>`;
+  if (!banner) { banner = document.createElement('div'); banner.id = 'restoreBanner'; document.body.appendChild(banner); }
+  const planLabel = data.plan === 'both' ? 'Safe + Bold' : data.plan === 'safe' ? 'Safe Team' : 'Bold Team';
+  const matchShort = data.match && data.match.length > 25 ? data.match.substring(0,24) + '…' : (data.match || '');
+  banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:300;background:linear-gradient(135deg,#0d1520,#0a1a10);border-top:2px solid rgba(0,230,118,0.4);padding:12px 16px;display:flex;align-items:center;gap:10px;font-family:Barlow Condensed,sans-serif;';
+  banner.innerHTML = `<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700;letter-spacing:1px;color:rgba(0,230,118,0.9)">🔓 TEAM UNLOCKED</div><div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${matchShort} · ${planLabel} · ${timeLabel}</div></div><button onclick="restoreTeamView('${data.paymentId}')" style="background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);color:rgba(0,230,118,0.9);padding:7px 14px;border-radius:8px;cursor:pointer;font-family:Bebas Neue;font-size:13px;letter-spacing:1px;white-space:nowrap;flex-shrink:0">VIEW →</button><button onclick="document.getElementById('restoreBanner').remove()" style="background:none;border:none;color:rgba(255,255,255,0.2);cursor:pointer;font-size:18px;padding:0 4px;flex-shrink:0">×</button>`;
+}
+
+function showMultipleRestoreBanner(purchases) {
+  // Build one banner with multiple match chips
+  let banner = document.getElementById('restoreBanner');
+  if (!banner) { banner = document.createElement('div'); banner.id = 'restoreBanner'; document.body.appendChild(banner); }
+  const btns = purchases.map(d => {
+    const short = d.match || d.matchId;
+    return `<button onclick="restoreTeamView('${d.paymentId}')" style="background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);color:rgba(0,230,118,0.9);padding:6px 12px;border-radius:8px;cursor:pointer;font-family:Bebas Neue;font-size:12px;letter-spacing:1px;white-space:nowrap;">${short} →</button>`;
+  }).join('');
+  banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:300;background:linear-gradient(135deg,#0d1520,#0a1a10);border-top:2px solid rgba(0,230,118,0.4);padding:12px 16px;font-family:Barlow Condensed,sans-serif;';
+  banner.innerHTML = `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div style="font-size:12px;font-weight:700;color:rgba(0,230,118,0.9);">🔓 ${purchases.length} TEAMS UNLOCKED</div>${btns}<button onclick="document.getElementById('restoreBanner').remove()" style="background:none;border:none;color:rgba(255,255,255,0.2);cursor:pointer;font-size:18px;margin-left:auto;padding:0 4px">×</button></div>`;
 }
 
 async function restoreTeamView(paymentId) {
   const key  = 'c11_' + paymentId;
   const data = JSON.parse(localStorage.getItem(key) || 'null');
-  if (!data) { showToast('⚠️ Session expired. Contact support.'); return; }
+  if (!data) { showToast('⚠️ Session expired — match has started.'); return; }
+
+  // Re-check expiry
+  if (Date.now() > data.expiresAt) {
+    localStorage.removeItem(key);
+    pruneExpiredPurchases();
+    showToast('🔒 Match has started — teams are locked.');
+    document.getElementById('restoreBanner')?.remove();
+    return;
+  }
+
   currentMatch   = data.match;
   currentPlan    = data.plan;
   currentMatchId = data.matchId || data.match;
   document.getElementById('restoreBanner')?.remove();
-  // Always fetch LATEST team — may be updated after toss at 7:04 PM
   showToast('⏳ Loading latest team...');
+
   try {
     const res = await fetch(
       `${API_BASE}/api/payment/team-access?paymentId=${paymentId}&matchId=${encodeURIComponent(currentMatchId)}`
@@ -2381,18 +2542,20 @@ async function restoreTeamView(paymentId) {
         const t = fresh.teams || fresh;
         currentSafeTeam = t.safe || null;
         currentBoldTeam = t.bold || null;
-        data.safeJSON    = JSON.stringify(currentSafeTeam);
-        data.boldJSON    = JSON.stringify(currentBoldTeam);
+        // Update cache with fresh teams
+        data.safeJSON = JSON.stringify(currentSafeTeam);
+        data.boldJSON = JSON.stringify(currentBoldTeam);
         localStorage.setItem(key, JSON.stringify(data));
         showTeamsAfterPayment({ safe: currentSafeTeam, bold: currentBoldTeam }, paymentId);
         if (fresh.xiConfirmed)
-          setTimeout(() => showToast('✅ Playing XI confirmed! Team updated after toss.'), 1000);
+          setTimeout(() => showToast('✅ Playing XI confirmed! Team updated after toss.'), 800);
         else
-          setTimeout(() => showToast('⏳ Pre-toss team — updates after 7:00 PM toss.'), 1000);
+          setTimeout(() => showToast('⏳ Pre-toss team — updates after toss automatically.'), 800);
         return;
       }
     }
   } catch(e) { console.log('[Restore] Using cached:', e.message); }
+
   // Fallback to cached
   try {
     currentSafeTeam = data.safeJSON ? JSON.parse(data.safeJSON) : DEMO_SAFE_TEAM;
@@ -2484,6 +2647,21 @@ async function doPayment() {
   const prices = { safe: 9, bold: 11, both: 15, weekly: 59, season: 399 };
   const price = prices[currentPlan] || 15;
   const btn = document.querySelector('.modal-pay-btn');
+
+  // Guard — double check match is still valid (user could have had modal open a long time)
+  const md = selectedMatchData || window._allMatchData?.[currentMatchId];
+  if (md && !checkMatchAccessAllowed(md, currentPlan)) {
+    closeModal('payModal');
+    return;
+  }
+  if (md) {
+    const { isExpired } = classifyMatch(md);
+    if (isExpired) {
+      closeModal('payModal');
+      showToast('🔒 Match has started — teams locked!');
+      return;
+    }
+  }
 
   // Phone required ONLY for weekly/season — not for ₹9/₹11/₹15 per match
   const needsPhone = currentPlan === 'weekly' || currentPlan === 'season';
@@ -2805,7 +2983,13 @@ async function loadMatchStrip() {
       const chipClasses = ['match-chip', idx===0 && !isExpired ? 'featured':'', isExpired?'expired-chip':'', isLive?'live-chip':''].filter(Boolean).join(' ');
       const safeId = (m.id || m.matchId || '').replace(/'/g, "\\'");
 
-      return `<div class="${chipClasses}" id="chip-${safeId}" onclick="handleChipClick(this,'${safeId}')"><div class="chip-selected-indicator">✓</div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><div class="chip-time">${timeLabel}</div>${badgeHTML}</div><div class="chip-teams">${shortName}</div><div class="chip-venue">📍 ${venueName}${city?', '+city:''}</div>${tossLine}<div class="chip-actions"><button class="chip-btn btn-safe" onclick="event.stopPropagation();chipBuy('${safeId}','safe')">🛡️ Safe ₹9</button><button class="chip-btn btn-bold" onclick="event.stopPropagation();chipBuy('${safeId}','bold')">🔥 Bold ₹11</button><button class="chip-btn btn-both" onclick="event.stopPropagation();chipBuy('${safeId}','both')">⚡ Both ₹15</button></div></div>`;
+      // Future matches (beyond tomorrow) show "Coming Soon" instead of buy buttons
+      const isFuture = !isExpired && !isToday && !isTomorrow;
+      const actionButtons = isFuture
+        ? `<div class="chip-actions"><button class="chip-btn" style="background:rgba(255,204,0,0.08);color:rgba(255,204,0,0.6);border:1px solid rgba(255,204,0,0.2);flex:1;font-size:10px;cursor:pointer" onclick="event.stopPropagation();showComingSoonModal(window._allMatchData?.['${safeId}'])">⏳ Team on Match Day</button></div>`
+        : `<div class="chip-actions"><button class="chip-btn btn-safe" onclick="event.stopPropagation();chipBuy('${safeId}','safe')">🛡️ Safe ₹9</button><button class="chip-btn btn-bold" onclick="event.stopPropagation();chipBuy('${safeId}','bold')">🔥 Bold ₹11</button><button class="chip-btn btn-both" onclick="event.stopPropagation();chipBuy('${safeId}','both')">⚡ Both ₹15</button></div>`;
+
+      return `<div class="${chipClasses}" id="chip-${safeId}" onclick="handleChipClick(this,'${safeId}')"><div class="chip-selected-indicator">✓</div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><div class="chip-time">${timeLabel}</div>${badgeHTML}</div><div class="chip-teams">${shortName}</div><div class="chip-venue">📍 ${venueName}${city?', '+city:''}</div>${tossLine}${actionButtons}</div>`;
     }).join('');
 
     // Store matches globally for chip lookup
@@ -2840,6 +3024,13 @@ window.addEventListener('load', () => {
   setInterval(pollForXINotification, 2 * 60 * 1000);
   // First poll after 30 sec
   setTimeout(pollForXINotification, 30000);
+  // Prune expired purchases every 5 min — silently removes expired restore banners
+  setInterval(() => {
+    pruneExpiredPurchases();
+    // If restore banner is showing but all purchases expired, remove it
+    const banner = document.getElementById('restoreBanner');
+    if (banner && getAllActivePurchases().length === 0) banner.remove();
+  }, 5 * 60 * 1000);
   // Load real matches from Firebase
   loadMatchStrip();
 });
@@ -2873,25 +3064,36 @@ async function submitLogin() {
   errEl.textContent = '';
 
   try {
-    // Check backend for purchases by mobile number
     const res  = await fetch(`${API_BASE}/api/purchases/by-mobile?mobile=${mobile}`);
     const data = await res.json();
 
     if (data.found && data.purchases && data.purchases.length > 0) {
-      // Find latest active purchase
-      const active = data.purchases.find(p => Date.now() < (p.expiresAt || 0));
-      const latest = active || data.purchases[0];
+      // Filter to only today+tomorrow active purchases
+      const allActive = data.purchases.filter(p => Date.now() < (p.expiresAt || 0));
+      const todayTomorrow = allActive.filter(p => isTodayOrTomorrow(p.matchDate || ''));
 
-      if (active) {
-        // Store in localStorage for instant access
-        localStorage.setItem('c11_latest', latest.purchaseKey);
-        localStorage.setItem(latest.purchaseKey, JSON.stringify(latest));
+      if (todayTomorrow.length > 0) {
+        // Restore today/tomorrow purchases into localStorage
+        const index = JSON.parse(localStorage.getItem('c11_index') || '[]');
+        todayTomorrow.forEach(p => {
+          const key = 'c11_' + p.paymentId;
+          localStorage.setItem(key, JSON.stringify({
+            ...p, savedAt: Date.now()
+          }));
+          if (!index.includes(key)) index.push(key);
+        });
+        localStorage.setItem('c11_index', JSON.stringify(index));
+        if (todayTomorrow.length > 0) localStorage.setItem('c11_latest', 'c11_' + todayTomorrow[0].paymentId);
+
         closeLoginModal();
-        showInAppToast('✅', 'Access Restored!',
-          `${latest.matchName || 'Match'} — ${latest.plan === 'safe' ? '🛡️ Safe' : latest.plan === 'bold' ? '🔥 Bold' : '⚡ Both'} team unlocked.`, '');
-        setTimeout(() => location.reload(), 1500);
+        const names = todayTomorrow.map(p => p.match || p.matchId).join(', ');
+        showInAppToast('✅', 'Teams Unlocked!', `${names} — tap "VIEW" below to see your AI team.`, '');
+        setTimeout(() => restorePurchaseOnLoad(), 500);
+      } else if (allActive.length > 0) {
+        // Has active passes but not for today/tomorrow
+        errEl.textContent = '⚠️ Your passes are for future matches. AI teams for today and tomorrow are available.';
       } else {
-        errEl.textContent = '⏰ Your last pass has expired. Buy a new one below.';
+        errEl.textContent = '⏰ Your last purchase has expired. Buy a new team below.';
         closeLoginModal();
         scrollToPricing();
       }
@@ -3116,6 +3318,6 @@ function setBellSubscribed(on) {
     <dt>Which IPL matches does Champ11 cover in 2026?</dt>
     <dd>All 84 IPL 2026 matches including all league games and playoffs (Qualifier 1, Eliminator, Qualifier 2, and the Final).</dd>
     <dt>Can beginners use Champ11 for Dream11?</dt>
-    <dd>Absolutely. Champ11 is designed for all Dream11 players. Just pick your match, choose Safe or Bold, pay ₹9-15, and copy the team to Dream11 or My11Circle instantly.</dd>
+    <dd>Absolutely. Champ11 is designed for all Dream11 players. Just pick your match, choose Safe or Bold, pay ₹9-15, and enter the team in Dream11 or My11Circle instantly.</dd>
     <dt>How is Champ11 different from free Dream11 prediction sites?</dt>
  
