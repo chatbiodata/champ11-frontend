@@ -1966,8 +1966,14 @@ function switchTab(which) {
   if (which === 'safe') safe.scrollTop = 0;
   if (which === 'bold') {
     bold.scrollTop = 0;
-    // Re-render bold canvas — it was hidden when first rendered so width was 0
-    if (currentBoldTeam) setTimeout(() => renderTeamCanvas('boldCanvas', currentBoldTeam, 'bold'), 30);
+    // FIX #22: re-render bold canvas after tab is visible so width is non-zero.
+    // Wait 60ms (not 30ms) to ensure CSS display:block has applied and layout is done.
+    // Only render if currentBoldTeam is already populated — avoids blank canvas flash.
+    setTimeout(() => {
+      if (currentBoldTeam && currentBoldTeam.players && currentBoldTeam.players.length > 0) {
+        renderTeamCanvas('boldCanvas', currentBoldTeam, 'bold');
+      }
+    }, 60);
   }
 }
 
@@ -2418,7 +2424,7 @@ function showComingSoonModal(matchData) {
   if (!m) {
     m = document.createElement('div');
     m.id = 'comingSoonModal';
-    m.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.88);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;';
+    m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.88);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;';
     m.innerHTML = `<div class="csm-inner">
       <span class="csm-emoji">⏳</span>
       <div class="csm-title">AI TEAM IN PROGRESS</div>
@@ -2445,7 +2451,14 @@ function showComingSoonModal(matchData) {
 // ── SESSION PERSISTENCE — per-match key, expires at match lock time ───────────
 function savePurchaseToLocal(paymentId, match, plan, safeJSON, boldJSON) {
   try {
-    const matchId    = currentMatchId || match;
+    // FIX #21: always prefer the real Firebase doc ID (e.g. "ipl2026-match-01")
+    // For pass plans use sentinel IDs — same ones used in create-order and verify
+    // so the stored matchId is always meaningful and consistent
+    const matchId = (plan === 'weekly') ? 'weekly-pass-ipl2026'
+      : (plan === 'season') ? 'season-pass-ipl2026'
+      : (currentMatchId && currentMatchId !== match)  // exclude display names
+        ? currentMatchId
+        : (selectedMatchData?.id) || (selectedMatchData?.matchId) || '';
     const matchData  = window._allMatchData?.[matchId] || selectedMatchData;
     const lockTime   = getMatchLockTime(matchData);
     const expiresAt  = lockTime ? lockTime.getTime() : Date.now() + 24*60*60*1000;
@@ -2567,13 +2580,26 @@ async function restoreTeamView(paymentId) {
 
   currentMatch   = data.match;
   currentPlan    = data.plan;
-  currentMatchId = data.matchId || data.match;
+  // FIX #21: always use the Firebase doc ID (stored as data.matchId at payment time),
+  // never use data.match which is the display name like "MI vs CSK, 1st Match"
+  currentMatchId = data.matchId || '';
   document.getElementById('restoreBanner')?.remove();
   showToast('⏳ Loading latest team...');
 
+  // Guard: if we somehow don't have a real matchId, fall back to cache immediately
+  if (!currentMatchId || currentMatchId === data.match) {
+    console.warn('[Restore] No Firebase doc ID found in localStorage — using cached teams');
+    try {
+      currentSafeTeam = data.safeJSON ? JSON.parse(data.safeJSON) : DEMO_SAFE_TEAM;
+      currentBoldTeam = data.boldJSON ? JSON.parse(data.boldJSON) : DEMO_BOLD_TEAM;
+      showTeamsAfterPayment(null, paymentId);
+    } catch(e) { showToast('⚠️ Could not restore. Contact support@champ11.in'); }
+    return;
+  }
+
   try {
     const res = await fetch(
-      `${API_BASE}/api/payment/team-access?paymentId=${paymentId}&matchId=${encodeURIComponent(currentMatchId)}`
+      `${API_BASE}/api/payment/team-access?paymentId=${encodeURIComponent(paymentId)}&matchId=${encodeURIComponent(currentMatchId)}`
     );
     if (res.ok) {
       const fresh = await res.json();
@@ -2763,7 +2789,7 @@ async function doPayment() {
         // Step 3: Verify payment on backend
         btn.textContent = '⏳ Verifying payment...';
         try {
-          const verify = await fetch(`${API_BASE}/api/payment/verify`, {
+          const res2 = await fetch(`${API_BASE}/api/payment/verify`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2771,19 +2797,33 @@ async function doPayment() {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature:  response.razorpay_signature,
               plan:    currentPlan,
-              matchId: currentMatchId || currentMatch
+              // Use same matchId that was sent to create-order — consistent across both calls
+              // For passes: 'weekly-pass-ipl2026' or 'season-pass-ipl2026'
+              // For per-match: Firebase doc ID like 'ipl2026-match-01'
+              matchId: matchIdForPayment,
+              // send phone so it's stored in purchase record for pass-status and piracy lookups
+              phone:   currentUserPhone || null,
             })
           });
 
           // Log the raw response for debugging
-          const resultText = await verify.text();
+          const resultText = await res2.text();
           let result = {};
           try { result = JSON.parse(resultText); } catch(e) {}
 
-          if (!verify.ok) {
-            console.error('Verify failed:', verify.status, resultText);
-            showTeamsAfterPayment(null, response.razorpay_payment_id);
-            showToast('✅ Payment done! Teams unlocked.');
+          if (!res2.ok) {
+            // FIX #4: server returned an error — do NOT show teams
+            console.error('Verify failed:', res2.status, resultText);
+            btn.disabled = false;
+            btn.textContent = `PAY ₹${price} WITH RAZORPAY`;
+            showToast('❌ Payment verification failed. Please contact support@champ11.in with your payment ID: ' + response.razorpay_payment_id.slice(-6));
+            return;
+          }
+
+          if (!result.success) {
+            btn.disabled = false;
+            btn.textContent = `PAY ₹${price} WITH RAZORPAY`;
+            showToast('❌ ' + (result.error || 'Verification failed. Contact support.'));
             return;
           }
 
@@ -2791,10 +2831,11 @@ async function doPayment() {
           showToast('✅ Payment verified! Teams unlocked.');
 
         } catch(e) {
+          // FIX #4: network/fetch error — do NOT show teams, show support message
           console.error('Verify error:', e);
-          // Razorpay called this handler = payment was captured
-          showTeamsAfterPayment(null, response.razorpay_payment_id);
-          showToast('✅ Payment done! Teams unlocked.');
+          btn.disabled = false;
+          btn.textContent = `PAY ₹${price} WITH RAZORPAY`;
+          showToast('⚠️ Could not verify payment. Your money is safe — contact support@champ11.in with payment ID: ' + (response.razorpay_payment_id || '').slice(-6));
         }
       },
       modal: {
