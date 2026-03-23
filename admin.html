@@ -1577,13 +1577,20 @@ async function doLogin() {
   if (!API_BASE || !ADMIN_SECRET) { showLoginErr('Please fill both fields'); return; }
 
   try {
-    const r = await fetch(`${API_BASE}/health`);
+    // SECURITY FIX: Previously called /health (public) — any wrong secret still
+    // showed the dashboard. Now calls /api/admin/health which requires x-admin-secret.
+    // A wrong secret returns 403 and shows an error before the dashboard opens.
+    const r = await fetch(`${API_BASE}/api/admin/health`, {
+      headers: { 'x-admin-secret': ADMIN_SECRET }
+    });
+    if (r.status === 403) { showLoginErr('❌ Invalid admin secret. Check and try again.'); return; }
     if (!r.ok) throw new Error('Backend unreachable');
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     document.getElementById('apiStatusText').textContent = new URL(API_BASE).host;
     loadOverview();
   } catch(e) {
+    if (e.message === '❌ Invalid admin secret. Check and try again.') return;
     showLoginErr('❌ Cannot reach backend. Check URL.');
   }
 }
@@ -2242,7 +2249,7 @@ async function loadControls() {
   ];
 
   try {
-    const health = await api('/health');
+    const health = await api('/api/admin/health'); // SECURITY FIX: was /health (public) — now uses admin-protected endpoint
     services.forEach(s => {
       const ok = health[s.id] || health.services?.[s.id];
       document.getElementById(s.desc).textContent = ok
@@ -2601,7 +2608,7 @@ async function loadToday() {
 async function loadNotifications() {
   try {
     const [health, subData] = await Promise.all([
-      api('/health'),
+      api('/api/admin/health'), // SECURITY FIX: was /health (public)
       api('/api/notifications/count').catch(() => ({ subscribers: 0 }))
     ]);
 
@@ -2686,16 +2693,18 @@ function maskId(id) {
 // ─── DEV TOOLS ────────────────────────────────────────────────────
 function loadDevTools() {
   const base = API_BASE || 'https://champ11-backend-production.up.railway.app';
-  // FIX: Never fall back to a hardcoded secret — use placeholder text instead
   const secret = ADMIN_SECRET || '<YOUR_ADMIN_SECRET>';
+  // SECURITY FIX: Mask the secret in the DOM so screen-share/screenshots don't leak it.
+  // The real secret is still used when you click Copy (see copyCurl below).
+  const maskedSecret = secret.length > 4 ? secret.slice(0, 4) + '*'.repeat(secret.length - 4) : '****';
 
   const curls = {
-    sync:   `curl -X POST ${base}/api/matches/sync \\\n  -H "x-admin-secret: ${secret}"`,
-    fetch:  `curl -X POST ${base}/api/admin/backtest/fetch \\\n  -H "x-admin-secret: ${secret}" \\\n  -H "Content-Type: application/json" \\\n  -d '{"limit":15}'`,
-    seed:   `curl -X POST ${base}/api/admin/backtest/seed \\\n  -H "x-admin-secret: ${secret}"`,
-    train:  `curl -X POST ${base}/api/admin/backtest/run-all \\\n  -H "x-admin-secret: ${secret}"`,
-    status: `curl ${base}/api/admin/backtest/status \\\n  -H "x-admin-secret: ${secret}"`,
-    reset:  `curl -X POST ${base}/api/admin/backtest/reset \\\n  -H "x-admin-secret: ${secret}"`,
+    sync:   `curl -X POST ${base}/api/matches/sync \\\n  -H "x-admin-secret: ${maskedSecret}"`,
+    fetch:  `curl -X POST ${base}/api/admin/backtest/fetch \\\n  -H "x-admin-secret: ${maskedSecret}" \\\n  -H "Content-Type: application/json" \\\n  -d '{"limit":15}'`,
+    seed:   `curl -X POST ${base}/api/admin/backtest/seed \\\n  -H "x-admin-secret: ${maskedSecret}"`,
+    train:  `curl -X POST ${base}/api/admin/backtest/run-all \\\n  -H "x-admin-secret: ${maskedSecret}"`,
+    status: `curl ${base}/api/admin/backtest/status \\\n  -H "x-admin-secret: ${maskedSecret}"`,
+    reset:  `curl -X POST ${base}/api/admin/backtest/reset \\\n  -H "x-admin-secret: ${maskedSecret}"`,
   };
 
   Object.entries(curls).forEach(([key, val]) => {
@@ -2707,7 +2716,10 @@ function loadDevTools() {
 function copyCurl(key) {
   const el = document.getElementById('curl-' + key);
   if (!el) return;
-  navigator.clipboard.writeText(el.textContent).then(() => {
+  // SECURITY FIX: DOM shows masked secret (****) — always copy the real secret instead
+  const realSecret = ADMIN_SECRET || '<YOUR_ADMIN_SECRET>';
+  const realText = el.textContent.replace(/x-admin-secret: [^\"\n]+/g, `x-admin-secret: ${realSecret}`);
+  navigator.clipboard.writeText(realText).then(() => {
     toast('✅ Copied to clipboard!');
   }).catch(() => {
     toast('Select and copy manually', '⚠️');
