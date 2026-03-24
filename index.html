@@ -1165,13 +1165,64 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   user-select:none;
 }
 
-/* ── TICKER ── */
-@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.ticker-wrap{background:rgba(0,212,255,0.06);border-top:1px solid rgba(0,212,255,0.12);border-bottom:1px solid rgba(0,212,255,0.12);padding:10px 0;overflow:hidden;white-space:nowrap;margin-bottom:60px}
-.ticker-inner{display:inline-block;animation:ticker 24s linear infinite}
-@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.ticker-item{display:inline-block;font-family:'Barlow Condensed';font-size:12px;font-weight:700;letter-spacing:2px;color:rgba(0,212,255,0.6);padding:0 32px;text-transform:uppercase}
-.ticker-sep{color:rgba(0,212,255,0.2)}
+/* ── TICKER (dynamic live ticker — replaces static version) ── */
+#champ11-ticker{
+  position:sticky;top:56px;left:0;right:0;z-index:99;
+  width:100%;height:34px;overflow:hidden;
+  background:#050c12;
+  border-bottom:1px solid rgba(0,212,255,0.15);
+  box-shadow:0 1px 10px rgba(0,188,212,0.07);
+}
+#champ11-ticker::before,#champ11-ticker::after{
+  content:'';position:absolute;top:0;width:60px;height:100%;z-index:2;pointer-events:none;
+}
+#champ11-ticker::before{left:0;background:linear-gradient(to right,#050c12,transparent)}
+#champ11-ticker::after{right:0;background:linear-gradient(to left,#050c12,transparent)}
+.ticker-track{
+  display:flex;align-items:center;height:100%;
+  white-space:nowrap;
+  animation:ticker-scroll linear infinite;
+  will-change:transform;
+}
+@media(hover:hover){#champ11-ticker:hover .ticker-track{animation-play-state:paused}}
+@keyframes ticker-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ticker-item{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:0 18px;
+  font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:1.2px;text-transform:uppercase;
+  color:rgba(0,212,255,0.82);
+  flex-shrink:0;user-select:none;
+}
+.ticker-item.match-today{color:#00e5ff}
+.ticker-dot{
+  display:inline-block;width:5px;height:5px;border-radius:50%;
+  background:rgba(0,188,212,0.35);flex-shrink:0;
+}
+.ticker-live-dot{
+  display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:#00e676;flex-shrink:0;
+  animation:t-pulse 1.6s ease-in-out infinite;
+  box-shadow:0 0 6px rgba(0,230,118,0.55);
+}
+@keyframes t-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.45;transform:scale(0.72)}}
+.ticker-today-badge{
+  background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.28);
+  color:#00e676;font-size:9px;font-weight:700;letter-spacing:1.5px;
+  padding:1px 5px;border-radius:3px;
+}
+.ticker-xi-badge{
+  background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.28);
+  color:#00d4ff;font-size:9px;font-weight:700;letter-spacing:1.5px;
+  padding:1px 5px;border-radius:3px;
+}
+.ticker-loading{display:flex;align-items:center;height:100%;padding:0 20px;gap:12px}
+.ticker-shimmer{
+  height:9px;border-radius:3px;
+  background:linear-gradient(90deg,rgba(0,188,212,0.05) 0%,rgba(0,188,212,0.13) 50%,rgba(0,188,212,0.05) 100%);
+  background-size:200% 100%;animation:t-shimmer 1.3s linear infinite;
+}
+@keyframes t-shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
 
 /* ── FOOTER ── */
 .footer{
@@ -1366,6 +1417,18 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   </div>
 </nav>
 
+<!-- LIVE TICKER — dynamic, fetches today's matches from API -->
+<div id="champ11-ticker">
+  <div class="ticker-loading" id="ticker-loading">
+    <div class="ticker-shimmer" style="width:150px"></div>
+    <div class="ticker-shimmer" style="width:190px"></div>
+    <div class="ticker-shimmer" style="width:130px"></div>
+    <div class="ticker-shimmer" style="width:200px"></div>
+    <div class="ticker-shimmer" style="width:160px"></div>
+  </div>
+  <div class="ticker-track" id="ticker-track" style="display:none"></div>
+</div>
+
 <!-- LIVE MATCH BANNER — shows from 12:01 AM on match day -->
 <div id="liveMatchBanner">
   <span class="live-dot"></span>
@@ -1490,32 +1553,6 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
     </div>
   </div>
 </section>
-
-<!-- TICKER -->
-<div class="ticker-wrap">
-  <div class="ticker-inner">
-    <span class="ticker-item">MI vs CSK · Today 7:30 PM · Wankhede</span>
-    <span class="ticker-sep">◆</span>
-    <span class="ticker-item">AI Accuracy: 68% this season</span>
-    <span class="ticker-sep">◆</span>
-    <span class="ticker-item">RCB vs KKR · Tomorrow 3:30 PM · Chinnaswamy</span>
-    <span class="ticker-sep">◆</span>
-    <span class="ticker-item">Playing XI confirmed 2 hrs before match</span>
-    <span class="ticker-sep">◆</span>
-    <span class="ticker-item">Season Pass · ₹399 · All 84 matches</span>
-    <span class="ticker-sep">◆</span>
-    <span class="ticker-item">MI vs CSK · Today 7:30 PM · Wankhede</span>
-    <span class="ticker-sep">◆</span>
-    <span class="ticker-item">AI Accuracy: 68% this season</span>
-    <span class="ticker-sep">◆</span>
-    <span class="ticker-item">RCB vs KKR · Tomorrow 3:30 PM · Chinnaswamy</span>
-    <span class="ticker-sep">◆</span>
-    <span class="ticker-item">Playing XI confirmed 2 hrs before match</span>
-    <span class="ticker-sep">◆</span>
-    <span class="ticker-item">Season Pass · ₹399 · All 84 matches</span>
-    <span class="ticker-sep">◆</span>
-  </div>
-</div>
 
 <!-- MAIN -->
 <main class="main">
@@ -1661,7 +1698,7 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
     <div class="footer-bottom">
       <div>© 2026 Champ11.in · All rights reserved</div>
       <div>AI-Powered · Not affiliated with Dream11 · For entertainment only</div>
-      <div><span style="color:rgba(255,255,255,0.2)">support@champ11.in</span></div>
+      <div><span style="color:rgba(255,255,255,0.2)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="7d0e080d0d120f093d1e151c100d4c4c531413">[email&#160;protected]</a></span></div>
     </div>
 
   </div>
@@ -1818,7 +1855,7 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<script data-cfasync="false">
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false">
 const API_BASE = 'https://champ11-backend-production.up.railway.app';
 let currentPlan = 'both';
 let currentMatch = '';
@@ -3464,6 +3501,132 @@ function closeInAppToast() {
 function setBellSubscribed(on) {
   document.getElementById('bellBtn').classList.toggle('subscribed', on);
 }
+
+/* ── LIVE TICKER INIT ─────────────────────────────────────────
+   Fetches upcoming matches from the API and builds a live
+   scrolling ticker. Falls back to static items if API is down.
+─────────────────────────────────────────────────────────────── */
+(function() {
+  const SCROLL_PX_PER_SEC = 65;
+
+  const STATIC_ITEMS = [
+    { text: 'Playing XI Confirmed 2 Hrs Before Match' },
+    { text: 'Season Pass · ₹399 · All 84 Matches' },
+    { text: 'AI Accuracy: 68% This Season' },
+    { text: 'Safe Team + Bold Team · ₹15 Per Match' },
+    { text: 'Weekly Pass · ₹59 · 9 Matches' },
+  ];
+
+  function dot() {
+    const d = document.createElement('span');
+    d.className = 'ticker-dot';
+    return d;
+  }
+
+  function makeItem(cfg) {
+    const el = document.createElement('div');
+    el.className = 'ticker-item' + (cfg.isToday ? ' match-today' : '');
+    if (cfg.isLive) {
+      const ld = document.createElement('span');
+      ld.className = 'ticker-live-dot';
+      el.appendChild(ld);
+    }
+    if (cfg.isToday) {
+      const b = document.createElement('span');
+      b.className = 'ticker-today-badge';
+      b.textContent = 'TODAY';
+      el.appendChild(b);
+    }
+    if (cfg.isXi) {
+      const x = document.createElement('span');
+      x.className = 'ticker-xi-badge';
+      x.textContent = 'XI CONFIRMED';
+      el.appendChild(x);
+    }
+    const t = document.createElement('span');
+    t.textContent = cfg.text;
+    el.appendChild(t);
+    return el;
+  }
+
+  function buildTicker(items) {
+    const track   = document.getElementById('ticker-track');
+    const loading = document.getElementById('ticker-loading');
+    if (!track || !loading) return;
+
+    function buildSet() {
+      const frag = document.createDocumentFragment();
+      items.forEach(() => {});
+      items.forEach(item => {
+        frag.appendChild(makeItem(item));
+        frag.appendChild(dot());
+      });
+      return frag;
+    }
+
+    track.appendChild(buildSet());
+    track.appendChild(buildSet());
+
+    loading.style.display = 'none';
+    track.style.display   = 'flex';
+
+    requestAnimationFrame(() => {
+      const dur = (track.scrollWidth / 2) / SCROLL_PX_PER_SEC;
+      track.style.animationDuration = dur.toFixed(1) + 's';
+    });
+  }
+
+  async function initTicker() {
+    let matches = [];
+    try {
+      const r = await fetch(API_BASE + '/api/matches/upcoming?limit=8', {
+        signal: AbortSignal.timeout ? AbortSignal.timeout(5000) : undefined
+      });
+      if (r.ok) {
+        const d = await r.json();
+        matches = d.matches || [];
+      }
+    } catch(e) { /* fallback to static items */ }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const items    = [];
+
+    matches.forEach(m => {
+      const isToday = (m.date || '').startsWith(todayStr);
+      const isXi    = !!m.xiConfirmed;
+      const isLive  = isToday && m.status === 'live';
+      const name    = m.shortName || m.name || 'Match';
+      const time    = m.timeIST || '';
+      const rawVenue = m.venue || '';
+      const venue   = (typeof rawVenue === 'object'
+        ? (rawVenue.shortName || rawVenue.name || '')
+        : rawVenue).split(',')[0].trim();
+
+      let text;
+      if (isToday) {
+        text = [name, time, venue].filter(Boolean).join(' · ');
+      } else {
+        const mDate = new Date(m.date + 'T00:00:00');
+        const now   = new Date(); now.setHours(0,0,0,0);
+        const diff  = Math.round((mDate - now) / 86400000);
+        const lbl   = diff === 1 ? 'Tomorrow' : m.date;
+        text = [name, lbl + (time ? ' ' + time : ''), venue].filter(Boolean).join(' · ');
+      }
+      items.push({ text, isToday, isXi, isLive });
+    });
+
+    STATIC_ITEMS.forEach(s => items.push(s));
+    if (!items.length) items.push({ text: 'Champ11 · AI Dream11 Teams · IPL 2026' });
+
+    buildTicker(items);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTicker);
+  } else {
+    initTicker();
+  }
+})();
 </script>
 
 <!-- ═══════════════════════════════════════════════
@@ -3503,6 +3666,4 @@ function setBellSubscribed(on) {
     <dt>Which IPL matches does Champ11 cover in 2026?</dt>
     <dd>All 84 IPL 2026 matches including all league games and playoffs (Qualifier 1, Eliminator, Qualifier 2, and the Final).</dd>
     <dt>Can beginners use Champ11 for Dream11?</dt>
-    <dd>Absolutely. Champ11 is designed for all Dream11 players. Just pick your match, choose Safe or Bold, pay ₹9-15, and enter the team in Dream11 or My11Circle instantly.</dd>
-    <dt>How is Champ11 different from free Dream11 prediction sites?</dt>
- 
+    <dd>Absolutely. Champ11 
