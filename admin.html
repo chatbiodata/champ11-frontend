@@ -53,7 +53,11 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
   position:fixed;left:0;top:0;bottom:0;width:220px;z-index:50;
   background:var(--surface);border-right:1px solid var(--border);
   display:flex;flex-direction:column;padding:0;
+  overflow-y:auto;overflow-x:hidden;
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.08) transparent;
 }
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
 .sidebar-logo{
   padding:22px 20px 18px;border-bottom:1px solid var(--border);
   font-family:'Syne';font-size:20px;font-weight:800;letter-spacing:2px;
