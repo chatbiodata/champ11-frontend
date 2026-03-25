@@ -2054,8 +2054,9 @@ async function viewPassHolderTeam() {
   if (btn) { btn.textContent = '⏳ Loading...'; btn.disabled = true; }
 
   try {
-    // Fetch team using phone + matchId — backend validates pass is active
-    const res  = await fetch(`${API_BASE}/api/teams/${matchId}?userId=phone_91${phone}`);
+    // Fetch team using dedicated pass-holder endpoint
+    // This endpoint checks pass_pins collection, not purchases — correct for pass holders
+    const res  = await fetch(`${API_BASE}/api/teams/pass-access/${matchId}?phone=${phone}`);
     const data = await res.json();
 
     if (!res.ok) {
@@ -3054,10 +3055,19 @@ window.addEventListener('load', () => {
       .then(d => {
         if (d.hasPass) {
           showPassBanner(savedPhone, passType, expiry); // also calls applyPassHolderUI(true)
-          // Refresh match bar so returning pass holder sees View Team button
-          setTimeout(() => {
-            if (selectedMatchData) selectMatchChip(selectedMatchData, document.getElementById('chip-' + (selectedMatchData.id || selectedMatchData.matchId)));
-          }, 1200); // slight delay — match strip may still be loading
+          // Refresh match bar so returning pass holder sees View Team button.
+          // Retry up to 8 times (every 500ms = 4 seconds total) until
+          // selectedMatchData is available (loadMatchStrip may still be fetching)
+          let _retries = 0;
+          const _refreshInterval = setInterval(() => {
+            _retries++;
+            if (selectedMatchData) {
+              selectMatchChip(selectedMatchData, document.getElementById('chip-' + (selectedMatchData.id || selectedMatchData.matchId)));
+              clearInterval(_refreshInterval);
+            } else if (_retries >= 8) {
+              clearInterval(_refreshInterval); // give up after 4 seconds
+            }
+          }, 500);
         } else {
           localStorage.removeItem('c11_pass_phone');
           localStorage.removeItem('c11_pass_type');
