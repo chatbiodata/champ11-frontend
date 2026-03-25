@@ -2441,8 +2441,51 @@ function renderTeamCanvas(canvasId, team, strategy) {
 }
 
 function renderBothCanvases() {
-  if (currentSafeTeam) renderTeamCanvas('safeCanvas', currentSafeTeam, 'safe');
-  if (currentBoldTeam) renderTeamCanvas('boldCanvas', currentBoldTeam, 'bold');
+  if (currentSafeTeam && currentSafeTeam.players && currentSafeTeam.players.length > 0) {
+    renderTeamCanvas('safeCanvas', currentSafeTeam, 'safe');
+  } else if (currentSafeTeam?._notReady) {
+    renderNotReadyCanvas('safeCanvas', currentSafeTeam.matchName || currentMatch || '');
+  }
+  if (currentBoldTeam && currentBoldTeam.players && currentBoldTeam.players.length > 0) {
+    renderTeamCanvas('boldCanvas', currentBoldTeam, 'bold');
+  } else if (currentBoldTeam?._notReady) {
+    renderNotReadyCanvas('boldCanvas', currentBoldTeam.matchName || currentMatch || '');
+  }
+}
+
+// Shows a clean "Team not ready" message on canvas instead of wrong demo players
+function renderNotReadyCanvas(canvasId, matchName) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const wrap = canvas.parentElement;
+  const W    = wrap ? wrap.clientWidth : 340;
+  canvas.width  = W || 340;
+  canvas.height = 220;
+  const ctx = canvas.getContext('2d');
+  // Background
+  ctx.fillStyle = '#0a1520';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // Border
+  ctx.strokeStyle = 'rgba(0,212,255,0.15)';
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(1, 1, canvas.width - 2, canvas.height - 2);
+  // Clock icon
+  ctx.font      = '36px serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('⏳', canvas.width / 2, 80);
+  // Title
+  ctx.font      = 'bold 14px Barlow Condensed, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.fillText('AI TEAM GENERATING', canvas.width / 2, 115);
+  // Subtitle
+  ctx.font      = '12px Barlow Condensed, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.fillText(matchName || 'This match', canvas.width / 2, 138);
+  ctx.fillText('Team will be ready on match day morning', canvas.width / 2, 158);
+  // Bottom note
+  ctx.font      = '10px Barlow Condensed, sans-serif';
+  ctx.fillStyle = 'rgba(0,212,255,0.4)';
+  ctx.fillText('Auto-updates after Playing XI is confirmed', canvas.width / 2, 185);
 }
 
 // Re-render on resize
@@ -2558,11 +2601,25 @@ function showTeamsAfterPayment(teams, paymentId) {
     txnId:    paymentId || '',
   };
 
-  // Set teams — use backend data or fallback to demo
+  // Set teams — use backend data only, NEVER show wrong demo teams
   if (teams?.safe?.players) currentSafeTeam = teams.safe;
   if (teams?.bold?.players) currentBoldTeam = teams.bold;
-  if (!currentSafeTeam) currentSafeTeam = DEMO_SAFE_TEAM;
-  if (!currentBoldTeam) currentBoldTeam = DEMO_BOLD_TEAM;
+  // If no real team from backend — show a placeholder, NOT MI/CSK demo players
+  // Demo teams show wrong players for matches that aren't MI vs CSK
+  if (!currentSafeTeam || !currentSafeTeam.players) {
+    currentSafeTeam = {
+      players: [],
+      _notReady: true,
+      matchName: currentMatch || '',
+    };
+  }
+  if (!currentBoldTeam || !currentBoldTeam.players) {
+    currentBoldTeam = {
+      players: [],
+      _notReady: true,
+      matchName: currentMatch || '',
+    };
+  }
 
   // Update header
   document.getElementById('teamsModalMatch').textContent = currentMatch + ' · AI Teams';
@@ -2908,8 +2965,10 @@ async function restoreTeamView(paymentId) {
   if (!currentMatchId || currentMatchId === data.match) {
     console.warn('[Restore] No Firebase doc ID found in localStorage — using cached teams');
     try {
-      currentSafeTeam = data.safeJSON ? JSON.parse(data.safeJSON) : DEMO_SAFE_TEAM;
-      currentBoldTeam = data.boldJSON ? JSON.parse(data.boldJSON) : DEMO_BOLD_TEAM;
+      const _sp = data.safeJSON ? JSON.parse(data.safeJSON) : null;
+      const _bp = data.boldJSON ? JSON.parse(data.boldJSON) : null;
+      currentSafeTeam = (_sp?.players?.length > 0) ? _sp : { players: [], _notReady: true, matchName: data.match || '' };
+      currentBoldTeam = (_bp?.players?.length > 0) ? _bp : { players: [], _notReady: true, matchName: data.match || '' };
       showTeamsAfterPayment(null, paymentId);
     } catch(e) { showToast('⚠️ Could not restore. Contact support@champ11.in'); }
     return;
@@ -2939,10 +2998,13 @@ async function restoreTeamView(paymentId) {
     }
   } catch(e) { console.log('[Restore] Using cached:', e.message); }
 
-  // Fallback to cached
+  // Fallback to cached — if no cached team, show not-ready placeholder (not wrong demo)
   try {
-    currentSafeTeam = data.safeJSON ? JSON.parse(data.safeJSON) : DEMO_SAFE_TEAM;
-    currentBoldTeam = data.boldJSON ? JSON.parse(data.boldJSON) : DEMO_BOLD_TEAM;
+    const safeParsed = data.safeJSON ? JSON.parse(data.safeJSON) : null;
+    const boldParsed = data.boldJSON ? JSON.parse(data.boldJSON) : null;
+    // Only use cached if it has real players — never fall back to wrong DEMO_SAFE_TEAM
+    currentSafeTeam = (safeParsed?.players?.length > 0) ? safeParsed : { players: [], _notReady: true, matchName: data.match || '' };
+    currentBoldTeam = (boldParsed?.players?.length > 0) ? boldParsed : { players: [], _notReady: true, matchName: data.match || '' };
     showTeamsAfterPayment(null, paymentId);
   } catch(e) { showToast('⚠️ Could not restore. Contact support@champ11.in'); }
 }
@@ -3224,8 +3286,38 @@ async function doPayment() {
             localStorage.setItem('c11_pass_expiry', result.expiresAt || '');
             showPassBanner(currentUserPhone || '', currentPlan, result.expiresAt || null);
           } else {
-            showTeamsAfterPayment(result.teams || null, response.razorpay_payment_id);
-            showToast('✅ Payment verified! Teams unlocked.');
+            // Fetch real team immediately from Firebase — do NOT use demo teams
+            // payment/verify never returns team data (security), so we call team-access here
+            showToast('⏳ Loading your AI team...');
+            try {
+              const matchIdForFetch = currentMatchId || result.matchId || '';
+              const teamRes = await fetch(
+                `${API_BASE}/api/payment/team-access?paymentId=${encodeURIComponent(response.razorpay_payment_id)}&matchId=${encodeURIComponent(matchIdForFetch)}`
+              );
+              if (teamRes.ok) {
+                const teamData = await teamRes.json();
+                const safeTeam = teamData.safe || teamData.teams?.safe || null;
+                const boldTeam = teamData.bold || teamData.teams?.bold || null;
+                if (safeTeam || boldTeam) {
+                  currentSafeTeam = safeTeam;
+                  currentBoldTeam = boldTeam;
+                  showTeamsAfterPayment({ safe: safeTeam, bold: boldTeam }, response.razorpay_payment_id);
+                  showToast('✅ Payment verified! AI team unlocked.');
+                } else {
+                  // Teams not generated yet for this match
+                  showTeamsAfterPayment(null, response.razorpay_payment_id);
+                  showToast('⏳ Payment verified! AI team generating — check back on match day morning.');
+                }
+              } else {
+                // team-access failed — still show modal (will use cached/demo)
+                showTeamsAfterPayment(null, response.razorpay_payment_id);
+                showToast('✅ Payment verified! Team loading...');
+              }
+            } catch(fetchErr) {
+              console.error('[TeamFetch]', fetchErr.message);
+              showTeamsAfterPayment(null, response.razorpay_payment_id);
+              showToast('✅ Payment verified! Teams unlocked.');
+            }
           }
 
         } catch(e) {
