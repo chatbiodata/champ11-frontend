@@ -303,6 +303,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
     <div class="nav-item" onclick="showPage('trainai')"><span class="nav-icon">🎯</span><span>Train AI</span></div>
     <div class="nav-item" onclick="showPage('players')"><span class="nav-icon">👤</span><span>Player Intel</span></div>
     <div class="nav-section">System</div>
+    <div class="nav-item" onclick="showPage('passholders')"><span class="nav-icon">🎟️</span><span>Pass Holders</span></div>
     <div class="nav-item" onclick="showPage('controls')"><span class="nav-icon">⚡</span><span>Controls</span></div>
     <div class="nav-item" onclick="showPage('cricapi')"><span class="nav-icon">🔄</span><span>CricAPI Sync</span></div>
     <div class="nav-item" onclick="showPage('logs')"><span class="nav-icon">📋</span><span>Logs</span></div>
@@ -1557,6 +1558,55 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
       </div>
     </div>
 
+
+    <!-- ── PASS HOLDERS ── -->
+    <div class="page" id="page-passholders">
+      <div class="topbar">
+        <div class="page-title">🎟️ Pass Holders</div>
+        <div class="topbar-right">
+          <button class="refresh-btn" onclick="loadPassHolders()">↺ Refresh</button>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+        <div class="stat-card green"><div class="stat-label">Total Active</div><div class="stat-val" id="ph-total">—</div><div class="stat-sub">Weekly + Season</div></div>
+        <div class="stat-card cyan"><div class="stat-label">Weekly Passes</div><div class="stat-val" id="ph-weekly">—</div><div class="stat-sub">7-day passes</div></div>
+        <div class="stat-card amber"><div class="stat-label">Season Passes</div><div class="stat-val" id="ph-season">—</div><div class="stat-sub">All 84 matches</div></div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">All Pass Holders — Mobile · PIN · Expiry · Device</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="phSearch" type="text" placeholder="Search by mobile..." oninput="filterPassHolders()"
+              style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;width:180px;outline:none"/>
+            <select id="phFilter" onchange="filterPassHolders()" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px;outline:none">
+              <option value="all">All plans</option>
+              <option value="weekly">Weekly only</option>
+              <option value="season">Season only</option>
+            </select>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table" id="phTable">
+            <thead><tr>
+              <th>Mobile</th>
+              <th>Plan</th>
+              <th>PIN</th>
+              <th>Expires</th>
+              <th>Device Locked</th>
+              <th>Last Login</th>
+              <th>Actions</th>
+            </tr></thead>
+            <tbody id="phBody">
+              <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -1639,6 +1689,7 @@ function showPage(name) {
   if (name === 'venues')   loadVenues();
   if (name === 'today')   loadToday();
   if (name === 'notifications') loadNotifications();
+  if (name === 'passholders')   loadPassHolders();
 }
 
 // ─── API HELPER ──────────────────────────────────────────────────────────────
@@ -3481,6 +3532,94 @@ setInterval(() => {
   const activePage = document.querySelector('.page.active')?.id;
   if (activePage === 'page-overview') loadOverview();
 }, 60000); // refresh every 60s
+
+// ═══════════════════════════════════════════════════
+// PASS HOLDERS — Admin page
+// ═══════════════════════════════════════════════════
+let _allPassHolders = [];
+
+async function loadPassHolders() {
+  document.getElementById('phBody').innerHTML =
+    '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">Loading...</td></tr>';
+  try {
+    const data = await api('/api/admin/pass-holders');
+    _allPassHolders = data.holders || [];
+    renderPassHolders(_allPassHolders);
+    document.getElementById('ph-total').textContent  = _allPassHolders.filter(h => h.active).length;
+    document.getElementById('ph-weekly').textContent = _allPassHolders.filter(h => h.plan === 'weekly' && h.active).length;
+    document.getElementById('ph-season').textContent = _allPassHolders.filter(h => h.plan === 'season' && h.active).length;
+  } catch(e) {
+    document.getElementById('phBody').innerHTML =
+      `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--red)">Error: ${e.message}</td></tr>`;
+  }
+}
+
+function filterPassHolders() {
+  const q  = (document.getElementById('phSearch').value || '').toLowerCase();
+  const pf = document.getElementById('phFilter').value;
+  const filtered = _allPassHolders.filter(h => {
+    const matchQ    = !q || h.phone.includes(q);
+    const matchPlan = pf === 'all' || h.plan === pf;
+    return matchQ && matchPlan;
+  });
+  renderPassHolders(filtered);
+}
+
+function renderPassHolders(holders) {
+  if (!holders.length) {
+    document.getElementById('phBody').innerHTML =
+      '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">No pass holders found</td></tr>';
+    return;
+  }
+  document.getElementById('phBody').innerHTML = holders.map(h => {
+    const expired  = h.expiresAt && new Date(h.expiresAt) < new Date();
+    const expLabel = h.expiresAt
+      ? new Date(h.expiresAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})
+      : 'All 84 matches';
+    const expColor = expired ? 'var(--red)' : 'var(--green)';
+    const deviceLabel = h.deviceId
+      ? `<span style="color:var(--amber);font-size:10px;font-family:'JetBrains Mono'">🔒 ${h.deviceId.slice(0,8)}…</span>`
+      : '<span style="color:var(--dim);font-size:11px">Not set</span>';
+    const lastLogin = h.lastLogin
+      ? new Date(h.lastLogin).toLocaleDateString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})
+      : '—';
+    return `<tr>
+      <td style="font-family:'JetBrains Mono';font-size:12px;font-weight:600">${h.phone}</td>
+      <td><span class="badge ${h.plan==='season'?'badge-amber':'badge-cyan'}">${h.plan}</span></td>
+      <td style="font-family:'JetBrains Mono';font-size:13px;font-weight:700;color:var(--cyan);letter-spacing:2px">${h.pinDisplay || '••••••'}</td>
+      <td style="font-family:'JetBrains Mono';font-size:11px;color:${expColor}">${expLabel}${expired?' ⚠️ EXPIRED':''}</td>
+      <td>${deviceLabel}</td>
+      <td style="font-size:11px;color:var(--muted)">${lastLogin}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="action-btn btn-amber" onclick="resetPassPin('${h.phone}')" style="font-size:10px;padding:4px 8px">🔄 Reset PIN</button>
+        <button class="action-btn btn-red"   onclick="clearPassDevice('${h.phone}')" style="font-size:10px;padding:4px 8px">📵 Clear Device</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function resetPassPin(phone) {
+  if (!confirm(`Reset PIN for ${phone}? A new PIN will be generated and shown here. The user must contact support to get it.`)) return;
+  try {
+    toast('Resetting PIN...', '⏳');
+    const data = await api(`/api/admin/pass-holders/${phone}/reset-pin`, 'POST');
+    toast(`✅ New PIN for ${phone}: ${data.newPin} — share with user via support@champ11.in`, '🔐');
+    await loadPassHolders();
+  } catch(e) {
+    toast('Reset failed: ' + e.message, '❌');
+  }
+}
+
+async function clearPassDevice(phone) {
+  if (!confirm(`Clear device lock for ${phone}? They will be able to login on a new device.`)) return;
+  try {
+    await api(`/api/admin/pass-holders/${phone}/clear-device`, 'POST');
+    toast(`✅ Device lock cleared for ${phone}`, '📵');
+    await loadPassHolders();
+  } catch(e) {
+    toast('Failed: ' + e.message, '❌');
+  }
+}
 </script>
 </body>
 </html>
