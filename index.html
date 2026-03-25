@@ -2145,7 +2145,10 @@ function selectMatchChip(matchData, chipEl) {
   document.getElementById('selMatchMeta').textContent = [venue, date, time + ' IST'].filter(Boolean).join(' · ');
 
   const xiEl = document.getElementById('selMatchXI');
-  if (matchData.xiConfirmed) {
+  // Show admin-updated time prominently if match is delayed/postponed
+  if (matchData.extendedTimeIST) {
+    xiEl.innerHTML = `<span style="color:#ff9800">⏰ Match time updated to <strong>${matchData.extendedTimeIST}</strong> IST · Team lock time extended accordingly</span>`;
+  } else if (matchData.xiConfirmed) {
     const toss = matchData.tossWinner ? `${matchData.tossWinner} elected to ${matchData.tossChoice === 'bat' ? '🏏 bat' : '🎯 bowl'}` : '';
     xiEl.innerHTML = `<span style="color:#00e676">✅ Playing XI Confirmed ${toss ? '· ' + toss : ''}</span>`;
   } else if (matchData.teamsGenerated) {
@@ -3353,25 +3356,55 @@ function canShowNotifBanner() {
 
 // ─── MATCH CLASSIFICATION ────────────────────────────────────────────────────
 function classifyMatch(m) {
-  const now       = new Date();
-  const matchUTC  = new Date(m.dateTimeGMT || (m.date + 'T14:00:00Z'));
-  const todayIST  = new Date(now.getTime() + 5.5*60*60*1000);
-  const todayStr  = todayIST.toISOString().split('T')[0];
-  const matchStr  = (m.date || '').substring(0, 10);
-  const expireUTC = new Date(matchUTC.getTime() + 10*60*1000);
-  const isExpired = now > expireUTC;
-  const isToday   = matchStr === todayStr;
-  const isTomorrow= !isToday && Math.round((matchUTC - now) / (1000*60*60*24)) <= 1;
-  const istHours  = (matchUTC.getTime() - now.getTime()) / (60*60*1000);
-  const isLive    = m.status === 'live' || (isToday && istHours >= -2 && istHours <= 0);
-  return { isExpired, isToday, isTomorrow, isLive, matchUTC, expireUTC };
+  const now      = new Date();
+  const matchUTC = new Date(m.dateTimeGMT || (m.date + 'T14:00:00Z'));
+  const todayIST = new Date(now.getTime() + 5.5*60*60*1000);
+  const todayStr = todayIST.toISOString().split('T')[0];
+  const matchStr = (m.date || '').substring(0, 10);
+
+  // ── LOCK TIME — when teams lock and new purchases stop ────────────────
+  // Default: 10 minutes after match start (3:40 PM / 7:40 PM IST as per 1st over rule)
+  // Admin can override by setting m.lockTimeGMT (e.g. for delayed/postponed matches)
+  // m.lockTimeGMT is stored in Firestore and returned by /api/matches/upcoming
+  let lockUTC;
+  if (m.lockTimeGMT) {
+    lockUTC = new Date(m.lockTimeGMT); // admin-extended time
+  } else {
+    lockUTC = new Date(matchUTC.getTime() + 10 * 60 * 1000); // default: +10 min
+  }
+
+  // ── COMPLETED — match is done, hide from user strip ─────────────────────
+  // Rules:
+  //   Mar 28 match → hidden from Apr 1 onwards (3 days later)
+  //   Mar 29 match → hidden from Apr 2 onwards
+  //   Any match   → hidden 3 days after its date in IST
+  // Admin sets status:'completed' explicitly, OR time-based fallback kicks in.
+  // This ensures completed matches disappear cleanly the next couple of days.
+  let isCompleted = m.status === 'completed';
+  if (!isCompleted && m.date) {
+    // 3 days after match date in IST (match date + 3 days at midnight IST)
+    const matchDateIST  = new Date(m.date + 'T00:00:00+05:30');
+    const hideAfterIST  = new Date(matchDateIST.getTime() + 3 * 24 * 60 * 60 * 1000);
+    isCompleted = now > hideAfterIST;
+  }
+
+  const isExpired  = now > lockUTC;  // past lock time — no new purchases
+  const isToday    = matchStr === todayStr;
+  const isTomorrow = !isToday && Math.round((matchUTC - now) / (1000*60*60*24)) <= 1;
+  const istHours   = (matchUTC.getTime() - now.getTime()) / (60*60*1000);
+  const isLive     = m.status === 'live' || (isToday && istHours >= -2 && istHours <= 0);
+
+  // If admin set an extended time — show it in UI
+  const extendedIST = m.extendedTimeIST || null; // e.g. "8:30 PM" — shown on chip
+
+  return { isExpired, isCompleted, isToday, isTomorrow, isLive, matchUTC, lockUTC, extendedIST };
 }
 
 function handleChipClick(chipEl, matchId) {
   const m = window._allMatchData?.[matchId];
   if (!m) return;
   const { isExpired } = classifyMatch(m);
-  if (isExpired) { showToast('\u26d4 This match has already started. Teams are locked.'); return; }
+  if (isExpired) { showToast('✅ Match completed — teams are locked. Past matches are visible till 3 days after match date.'); return; }
   selectMatchChip(m, chipEl);
   document.getElementById('selectedMatchBar')?.scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
@@ -3380,7 +3413,7 @@ function chipBuy(matchId, plan) {
   const m = window._allMatchData?.[matchId];
   if (!m) return;
   const { isExpired } = classifyMatch(m);
-  if (isExpired) { showToast('\u26d4 Match started — teams locked.'); return; }
+  if (isExpired) { showToast('✅ Match completed — no new purchases. Paid users can still view their team.'); return; }
   selectMatchChip(m, document.getElementById('chip-' + matchId));
   buyForSelected(plan);
 }
@@ -3465,8 +3498,20 @@ async function loadMatchStrip() {
     const doubleNotice = document.getElementById('doubleHeaderNotice');
     if (doubleNotice) doubleNotice.classList.toggle('show', isDoubleHeader);
 
-    strip.innerHTML = allMatches.map((m, idx) => {
-      const { isExpired, isToday, isTomorrow, isLive, matchUTC } = classifyMatch(m);
+    // Filter out completed matches — users never see past matches
+    // Only show: upcoming, today, tomorrow, and accessible IPL_LAUNCH_DATES matches
+    const visibleMatches = allMatches.filter(m => {
+      const { isCompleted } = classifyMatch(m);
+      return !isCompleted;
+    });
+
+    if (!visibleMatches.length) {
+      strip.innerHTML = '<div class="match-chip" style="opacity:0.5;pointer-events:none"><div class="chip-teams" style="font-size:18px">IPL 2026</div><div class="chip-venue">No upcoming matches · Check back soon</div></div>';
+      return;
+    }
+
+    strip.innerHTML = visibleMatches.map((m, idx) => {
+      const { isExpired, isToday, isTomorrow, isLive, matchUTC, extendedIST } = classifyMatch(m);
       const home      = m.teams?.home || '';
       const away      = m.teams?.away || '';
       const shortName = m.shortName || `${home} vs ${away}`;
@@ -3476,48 +3521,73 @@ async function loadMatchStrip() {
       const timeIST   = m.timeIST || '7:30 PM';
       const matchId   = (m.id || m.matchId || '').replace(/'/g, "\\'");
 
+      // If admin extended the match time, show updated time with indicator
+      const displayTime = extendedIST ? `${extendedIST} ⏰` : timeIST;
+
       let timeLabel;
-      if (isExpired)       timeLabel = '⛔ EXPIRED';
+      if (isExpired)       timeLabel = '✅ MATCH COMPLETED';
       else if (isLive)     timeLabel = '🔴 LIVE NOW';
-      else if (isToday)    timeLabel = `⚡ TODAY · ${timeIST}`;
-      else if (isTomorrow) timeLabel = `TOMORROW · ${timeIST}`;
+      else if (isToday)    timeLabel = `⚡ TODAY · ${displayTime}`;
+      else if (isTomorrow) timeLabel = `TOMORROW · ${displayTime}`;
       else {
         const d = matchUTC.toLocaleDateString('en-IN', { month:'short', day:'numeric' });
-        timeLabel = `${d} · ${timeIST}`;
+        timeLabel = `${d} · ${displayTime}`;
       }
 
       let badgeHTML = '';
-      if (isLive)          badgeHTML = '<span class="chip-status-badge badge-live">🔴 LIVE</span>';
-      else if (isExpired)  badgeHTML = '<span class="chip-status-badge badge-expired">EXPIRED</span>';
-      else if (isToday)    badgeHTML = '<span class="chip-status-badge badge-today">TODAY</span>';
-      else if (isTomorrow) badgeHTML = '<span class="chip-status-badge badge-tomorrow">TOMORROW</span>';
-      else                 badgeHTML = '<span class="chip-status-badge badge-upcoming">UPCOMING</span>';
+      if (isLive)             badgeHTML = '<span class="chip-status-badge badge-live">🔴 LIVE</span>';
+      else if (isExpired)     badgeHTML = '<span class="chip-status-badge badge-expired">✅ COMPLETED</span>';
+      else if (extendedIST)   badgeHTML = '<span class="chip-status-badge" style="background:rgba(255,152,0,0.15);color:#ff9800;border-color:rgba(255,152,0,0.3)">⏰ TIME UPDATED</span>';
+      else if (isToday)       badgeHTML = '<span class="chip-status-badge badge-today">TODAY</span>';
+      else if (isTomorrow)    badgeHTML = '<span class="chip-status-badge badge-tomorrow">TOMORROW</span>';
+      else                    badgeHTML = '<span class="chip-status-badge badge-upcoming">UPCOMING</span>';
 
       let tossLine = '';
       if (m.xiConfirmed && m.tossWinner) {
         tossLine = `<div class="chip-toss">✅ ${m.tossWinner} elected to ${m.tossChoice === 'bat' ? '🏏 bat' : '🎯 bowl'}</div>`;
       }
 
+      // Postpone/delay notice — shown when admin flags the match
+      let postponeLine = '';
+      if (m.postponed || m.postponeNote || m.extendedTimeIST) {
+        const note = m.postponeNote || (m.extendedTimeIST ? `Start time updated to ${m.extendedTimeIST}` : 'Match time updated');
+        postponeLine = `<div style="background:rgba(255,179,0,0.1);border:1px solid rgba(255,179,0,0.25);border-radius:6px;padding:5px 8px;margin-top:5px;font-family:'Barlow Condensed';font-size:10px;color:rgba(255,179,0,0.9);letter-spacing:0.5px">⏰ ${note}</div>`;
+      }
+
       const chipClasses = ['match-chip', idx===0 && !isExpired ? 'featured':'', isExpired?'expired-chip':'', isLive?'live-chip':''].filter(Boolean).join(' ');
       const safeId = (m.id || m.matchId || '').replace(/'/g, "\\'");
 
-      // Future matches (beyond tomorrow) show "Coming Soon" instead of buy buttons
-      const isFuture = !isExpired && !isToday && !isTomorrow;
-      const actionButtons = isFuture
-        ? `<div class="chip-actions"><button class="chip-btn" style="background:rgba(255,204,0,0.08);color:rgba(255,204,0,0.6);border:1px solid rgba(255,204,0,0.2);flex:1;font-size:10px;cursor:pointer" onclick="event.stopPropagation();showComingSoonModal(window._allMatchData?.['${safeId}'])">⏳ Team on Match Day</button></div>`
-        : `<div class="chip-actions"><button class="chip-btn btn-safe" onclick="event.stopPropagation();chipBuy('${safeId}','safe')">🛡️ Safe ₹9</button><button class="chip-btn btn-bold" onclick="event.stopPropagation();chipBuy('${safeId}','bold')">🔥 Bold ₹11</button><button class="chip-btn btn-both" onclick="event.stopPropagation();chipBuy('${safeId}','both')">⚡ Both ₹15</button></div>`;
+      // Use isTodayOrTomorrow() — correctly includes IPL_LAUNCH_DATES (Mar 28 & 29)
+      // so those first two matches always show buy/view buttons, not "Team on Match Day"
+      const isAccessible = !isExpired && isTodayOrTomorrow(m.date || '');
 
-      return `<div class="${chipClasses}" id="chip-${safeId}" onclick="handleChipClick(this,'${safeId}')"><div class="chip-selected-indicator">✓</div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><div class="chip-time">${timeLabel}</div>${badgeHTML}</div><div class="chip-teams">${shortName}</div><div class="chip-venue">📍 ${venueName}${city?', '+city:''}</div>${tossLine}${actionButtons}</div>`;
+      let actionButtons;
+      if (isExpired) {
+        actionButtons = `<div class="chip-actions"><button class="chip-btn" style="opacity:0.4;cursor:not-allowed;flex:1;font-size:10px">✅ Match Completed</button></div>`;
+      } else if (!isAccessible) {
+        // Future match beyond today/tomorrow window — show coming soon
+        actionButtons = `<div class="chip-actions"><button class="chip-btn" style="background:rgba(255,204,0,0.08);color:rgba(255,204,0,0.6);border:1px solid rgba(255,204,0,0.2);flex:1;font-size:10px;cursor:pointer" onclick="event.stopPropagation();showComingSoonModal(window._allMatchData?.['${safeId}'])">⏳ Team on Match Day</button></div>`;
+      } else if (isPassHolderLoggedIn()) {
+        // Logged-in pass holder — show View Team button on chip too
+        actionButtons = `<div class="chip-actions"><button class="chip-btn" style="background:linear-gradient(135deg,#00e676,#00bcd4);color:#000;font-weight:700;border:none;flex:1;font-size:11px;cursor:pointer" onclick="event.stopPropagation();handleChipClick(document.getElementById('chip-${safeId}'),'${safeId}');setTimeout(viewPassHolderTeam,150)">🏏 View Team</button></div>`;
+      } else {
+        // Normal user — show buy buttons
+        actionButtons = `<div class="chip-actions"><button class="chip-btn btn-safe" onclick="event.stopPropagation();chipBuy('${safeId}','safe')">🛡️ Safe ₹9</button><button class="chip-btn btn-bold" onclick="event.stopPropagation();chipBuy('${safeId}','bold')">🔥 Bold ₹11</button><button class="chip-btn btn-both" onclick="event.stopPropagation();chipBuy('${safeId}','both')">⚡ Both ₹15</button></div>`;
+      }
+
+      return `<div class="${chipClasses}" id="chip-${safeId}" onclick="handleChipClick(this,'${safeId}')"><div class="chip-selected-indicator">✓</div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><div class="chip-time">${timeLabel}</div>${badgeHTML}</div><div class="chip-teams">${shortName}</div><div class="chip-venue">📍 ${venueName}${city?', '+city:''}</div>${tossLine}${postponeLine}${actionButtons}</div>`;
     }).join('');
 
-    // Store matches globally for chip lookup
+    // Store ALL matches globally (including completed) for team access lookups
+    // Users who bought a completed match can still view their team via paymentId
     window._allMatchData = {};
     allMatches.forEach(m => { const id = m.id || m.matchId; if (id) window._allMatchData[id] = m; });
 
-    // Auto-select best match
-    const best = allMatches.find(m => { const {isExpired,isToday} = classifyMatch(m); return isToday && !isExpired; })
-              || allMatches.find(m => { const {isTomorrow,isExpired} = classifyMatch(m); return isTomorrow && !isExpired; })
-              || allMatches.find(m => !classifyMatch(m).isExpired);
+    // Auto-select best visible match — prefer today, then tomorrow, then first upcoming
+    const best = visibleMatches.find(m => { const {isToday,isExpired} = classifyMatch(m); return isToday && !isExpired; })
+              || visibleMatches.find(m => { const {isTomorrow,isExpired} = classifyMatch(m); return isTomorrow && !isExpired; })
+              || visibleMatches.find(m => !classifyMatch(m).isExpired)
+              || visibleMatches[0]; // fallback: first visible (may be expired but still shown today)
     if (best) {
       const chipEl = document.getElementById('chip-' + (best.id || best.matchId));
       selectMatchChip(best, chipEl);
