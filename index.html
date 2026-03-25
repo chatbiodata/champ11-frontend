@@ -1397,6 +1397,8 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 
 </style>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <!-- html2canvas — for PIN card screenshot download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -2289,7 +2291,7 @@ function renderTeamCanvas(canvasId, team, strategy) {
   if (!canvas || !team) return;
   const dpr    = Math.min(window.devicePixelRatio || 1, 2);
   const W      = canvas.parentElement.clientWidth || 340;
-  const ROW_H  = 50;
+  const ROW_H  = 54;  // increased from 50 for better name readability
   const HEADER = 70;
   const FOOTER = 56;
   const H      = HEADER + (team.players.length * ROW_H) + FOOTER;
@@ -2382,12 +2384,19 @@ function renderTeamCanvas(canvasId, team, strategy) {
 
     // Name — gold for C, green for VC, white for others
     const nameX = (isCap || isVC) ? 46 : 14;
-    ctx.font = 'bold 13px "Barlow Condensed",Arial';
-    ctx.fillStyle = isCap ? '#f0d060' : isVC ? '#a8e04a' : '#fff';
-    ctx.fillText(p.name, nameX, midY - 2);
-    ctx.font = '10px "Barlow Condensed",Arial';
-    ctx.fillStyle = tc + 'cc';
-    ctx.fillText(p.team, nameX, midY + 11);
+    // Drop shadow for readability
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur  = 4;
+    ctx.font = 'bold 15px "Barlow Condensed",Arial';
+    ctx.fillStyle = isCap ? '#ffd84d' : isVC ? '#b8ff5a' : '#ffffff';
+    ctx.fillText(p.name, nameX, midY - 3);
+    // Team label — bright with team color, larger
+    ctx.shadowBlur = 2;
+    ctx.font = 'bold 11px "Barlow Condensed",Arial';
+    ctx.fillStyle = tc; // full team color, no alpha dimming
+    ctx.fillText(p.team, nameX, midY + 12);
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur  = 0;
 
     // Role pill
     const rc = ROLE_COLORS[p.role] || ROLE_COLORS.BAT;
@@ -4250,14 +4259,61 @@ function closePinReveal() {
   document.getElementById('pinRevealOverlay').classList.remove('show');
 }
 
-function pinRevealScreenshot() {
-  // Prompt user to take a screenshot, then show a toast
-  showToast('📱 Take a screenshot now to save your PIN!');
-  // On mobile, flash the screen slightly to indicate "now"
-  document.getElementById('pinCard').style.border = '2px solid #00e676';
-  setTimeout(() => {
-    document.getElementById('pinCard').style.border = '2px solid rgba(0,212,255,0.3)';
-  }, 2000);
+async function pinRevealScreenshot() {
+  const card = document.getElementById('pinCard');
+  if (!card) { showToast('❌ PIN card not found'); return; }
+
+  // Check if html2canvas loaded
+  if (typeof html2canvas === 'undefined') {
+    // Fallback: prompt manual screenshot
+    showToast('📱 Take a screenshot now to save your PIN!');
+    card.style.border = '2px solid #00e676';
+    setTimeout(() => { card.style.border = '2px solid rgba(0,212,255,0.3)'; }, 2000);
+    return;
+  }
+
+  try {
+    showToast('📸 Capturing PIN card...');
+    // Flash green border to indicate capture
+    card.style.border = '2px solid #00e676';
+
+    const canvas = await html2canvas(card, {
+      backgroundColor: '#0a1a2e',
+      scale: 2,          // 2x for crisp mobile display
+      useCORS: true,
+      logging: false,
+    });
+
+    // Convert to image and trigger download
+    const imgData = canvas.toDataURL('image/png');
+    const link    = document.createElement('a');
+    const phone   = (_pinRevealData?.phone || 'pin').slice(-4);
+    link.download  = `champ11-pin-${phone}.png`;
+    link.href      = imgData;
+    link.click();
+
+    // Also open in new tab on mobile (where download may not trigger)
+    if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
+      const w = window.open('', '_blank');
+      if (w) {
+        w.document.write(`<html><body style="margin:0;background:#000">
+          <img src="${imgData}" style="max-width:100%;display:block">
+          <p style="color:#fff;font-family:sans-serif;text-align:center;padding:10px;font-size:12px">
+            Long press the image above → "Save to Photos" to keep your PIN
+          </p>
+        </body></html>`);
+      }
+    }
+
+    setTimeout(() => { card.style.border = '2px solid rgba(0,212,255,0.3)'; }, 1500);
+    showToast('✅ PIN card saved! Check your Downloads folder.');
+  } catch(e) {
+    console.error('[Screenshot]', e.message);
+    // Graceful fallback
+    showToast('📱 Take a manual screenshot now to save your PIN!');
+    card.style.border = '2px solid #00e676';
+    setTimeout(() => { card.style.border = '2px solid rgba(0,212,255,0.3)'; }, 2000);
+  }
 }
 
 function pinRevealWhatsApp() {
