@@ -1557,6 +1557,18 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 <!-- MAIN -->
 <main class="main">
 
+  <!-- PASS HOLDER VIEW — shown only when logged in via pass -->
+  <div id="passHolderSection" style="display:none;padding:24px 20px 0;max-width:700px;margin:0 auto;text-align:center">
+    <div style="font-family:'Barlow Condensed';font-size:13px;font-weight:700;letter-spacing:2px;color:rgba(0,212,255,0.7);text-transform:uppercase;margin-bottom:6px">YOUR PASS IS ACTIVE</div>
+    <div id="passHolderMsg" style="font-family:'Rajdhani';font-size:15px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:16px">
+      Select a match above — today's and tomorrow's AI teams are ready for you.<br>
+      Future matches will show <span style="color:rgba(255,204,0,0.7)">⏳ AI Team in Progress</span> until match day.
+    </div>
+  </div>
+
+  <!-- NON-PASS SECTION — hidden when pass holder is logged in -->
+  <div id="nonPassSection">
+
   <!-- HOW IT WORKS -->
   <div class="section-hdr">
     <div class="section-eyebrow">The Process</div>
@@ -1636,6 +1648,8 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
       <button class="price-cta" style="background:rgba(255,179,0,0.15);color:#FFB300;border:1px solid rgba(255,179,0,0.3)">Login →</button>
     </div>
   </div>
+
+  </div><!-- end nonPassSection -->
 
 </main>
 
@@ -2150,11 +2164,9 @@ function selectMatchChip(matchData, chipEl) {
     } else if (isFuture) {
       btnsEl.innerHTML = `<button class="sel-btn" style="background:rgba(255,204,0,0.08);color:rgba(255,204,0,0.6);border:1px solid rgba(255,204,0,0.2);cursor:pointer" onclick="showComingSoonModal(selectedMatchData)">⏳ Team Available on Match Day</button>`;
     } else if (isPassHolderLoggedIn()) {
-      // Pass holder is logged in — show View Team button instead of buy buttons
-      const teamReady = matchData.teamsGenerated || matchData.xiConfirmed;
-      btnsEl.innerHTML = teamReady
-        ? `<button class="sel-btn" style="background:linear-gradient(135deg,#00e676,#00bcd4);color:#000;font-weight:700;border:none;font-size:15px;padding:10px 24px;cursor:pointer" onclick="viewPassHolderTeam()">🏏 VIEW MY AI TEAM →</button>`
-        : `<button class="sel-btn" style="background:rgba(0,230,118,0.08);color:rgba(0,230,118,0.6);border:1px solid rgba(0,230,118,0.2);cursor:not-allowed">⏳ AI Team Generating...</button>`;
+      // Pass holder — always show View Team button. Let the API decide if team exists.
+      // Don't rely on teamsGenerated flag — it may be stale or not yet set.
+      btnsEl.innerHTML = `<button class="sel-btn" style="background:linear-gradient(135deg,#00e676,#00bcd4);color:#000;font-weight:700;border:none;font-size:15px;padding:10px 28px;border-radius:12px;letter-spacing:1px;cursor:pointer" onclick="viewPassHolderTeam()">🏏 VIEW MY AI TEAM →</button>`;
     } else {
       btnsEl.innerHTML = `
         <button class="sel-btn sel-btn-safe" onclick="buyForSelected('safe')">🛡️ Safe ₹9</button>
@@ -2982,8 +2994,49 @@ function showPassBanner(phone, passType, expiresAt) {
   if (!banner) { banner = document.createElement('div'); banner.id = 'passBanner'; document.body.appendChild(banner); }
   const label  = passType === 'season' ? '🏆 Season Pass' : '📅 Weekly Pass';
   const expiry = expiresAt ? new Date(expiresAt).toLocaleDateString('en-IN') : 'All 84 matches';
-  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:500;background:linear-gradient(135deg,#0d2020,#0a1a20);border-bottom:2px solid rgba(0,212,255,0.4);padding:10px 20px;display:flex;align-items:center;gap:12px;font-family:Barlow Condensed,sans-serif';
-  banner.innerHTML = `<div style="flex:1"><span style="font-size:13px;font-weight:700;letter-spacing:1px;color:rgba(0,212,255,0.9)">${label} ACTIVE</span><span style="font-size:11px;color:rgba(255,255,255,0.4);margin-left:10px">📱 ••••${phone.slice(-4)} · ${expiry}</span></div><button onclick="document.getElementById('passBanner').remove();localStorage.removeItem('c11_pass_phone')" style="background:none;border:none;color:rgba(255,255,255,0.3);cursor:pointer;font-size:18px">×</button>`;
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:500;background:linear-gradient(135deg,#0d2020,#0a1a20);border-bottom:2px solid rgba(0,212,255,0.4);padding:8px 16px;display:flex;align-items:center;gap:12px;font-family:Barlow Condensed,sans-serif';
+  banner.innerHTML = `
+    <div style="flex:1">
+      <span style="font-size:13px;font-weight:700;letter-spacing:1px;color:rgba(0,212,255,0.9)">${label} ACTIVE</span>
+      <span style="font-size:11px;color:rgba(255,255,255,0.4);margin-left:10px">📱 ••••${phone.slice(-4)} · Valid: ${expiry}</span>
+    </div>
+    <button onclick="logoutPassHolder()" style="background:rgba(255,82,82,0.12);border:1px solid rgba(255,82,82,0.3);color:rgba(255,82,82,0.8);cursor:pointer;font-family:'Barlow Condensed';font-size:12px;font-weight:700;letter-spacing:1px;padding:5px 12px;border-radius:6px">🚪 LOGOUT</button>`;
+  // Show the pass holder UI section, hide pricing/how-it-works
+  applyPassHolderUI(true);
+}
+
+// Called on logout — clears session and restores full landing page
+function logoutPassHolder() {
+  // Clear device lock on backend (fire-and-forget)
+  const phone    = localStorage.getItem('c11_pass_phone');
+  const deviceId = localStorage.getItem('c11_device_id');
+  if (phone && deviceId) {
+    fetch(`${API_BASE}/api/auth/logout-device`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ phone, deviceId }),
+    }).catch(() => {});
+  }
+  // Clear all pass-related localStorage
+  ['c11_pass_phone','c11_pass_type','c11_pass_expiry','c11_device_id'].forEach(k => localStorage.removeItem(k));
+  currentUserPhone = '';
+  window._loginMobile = '';
+  // Remove banner
+  const banner = document.getElementById('passBanner');
+  if (banner) banner.remove();
+  // Restore full landing page
+  applyPassHolderUI(false);
+  // Refresh match bar to show buy buttons again
+  if (selectedMatchData) selectMatchChip(selectedMatchData, document.getElementById('chip-' + (selectedMatchData.id || selectedMatchData.matchId)));
+  showToast('✅ Logged out successfully');
+}
+
+// Show/hide sections based on pass holder login state
+function applyPassHolderUI(isLoggedIn) {
+  const nonPass  = document.getElementById('nonPassSection');
+  const passView = document.getElementById('passHolderSection');
+  if (nonPass)  nonPass.style.display  = isLoggedIn ? 'none' : 'block';
+  if (passView) passView.style.display = isLoggedIn ? 'block' : 'none';
 }
 
 // Auto-restore pass on page load
@@ -2997,7 +3050,7 @@ window.addEventListener('load', () => {
       .then(r => r.json())
       .then(d => {
         if (d.hasPass) {
-          showPassBanner(savedPhone, passType, expiry);
+          showPassBanner(savedPhone, passType, expiry); // also calls applyPassHolderUI(true)
           // Refresh match bar so returning pass holder sees View Team button
           setTimeout(() => {
             if (selectedMatchData) selectMatchChip(selectedMatchData, document.getElementById('chip-' + (selectedMatchData.id || selectedMatchData.matchId)));
