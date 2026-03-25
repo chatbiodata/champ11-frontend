@@ -1646,6 +1646,9 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
     <!-- Logo + tagline -->
     <div class="footer-logo"><span style="color:var(--lime)">CHAMP</span><span style="color:var(--gold)">11</span><span style="color:rgba(255,255,255,0.5)">.IN</span></div>
     <div class="footer-tagline">AI Fantasy Cricket Coach · IPL 2026</div>
+    <div style="text-align:center;margin-top:6px;margin-bottom:4px;font-family:'Barlow Condensed';font-size:13px;letter-spacing:1px;color:rgba(255,255,255,0.35)">
+      ✉️ Write to us &nbsp;<a href="/cdn-cgi/l/email-protection#0f7c7a7f7f607d7b4f6c676e627f3e3e216661" style="color:rgba(0,212,255,0.7);text-decoration:none;font-weight:700;letter-spacing:0.5px" onmouseover="this.style.color='#00d4ff'" onmouseout="this.style.color='rgba(0,212,255,0.7)'"><span class="__cf_email__" data-cfemail="4c3f393c3c233e380c2f242d213c7d7d622522">[email&#160;protected]</span></a>
+    </div>
 
     <!-- Responsible gaming disclaimer — prominent -->
     <div class="footer-disclaimer">
@@ -1783,7 +1786,7 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
     <input type="tel" maxlength="10" id="loginPhoneInput" placeholder="10-digit mobile number"
       oninput="this.value=this.value.replace(/[^0-9]/g,'')"
       style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:#fff;padding:13px 16px;border-radius:12px;font-size:16px;outline:none;font-family:'Barlow Condensed';letter-spacing:1px;margin-bottom:8px"/>
-    <div id="loginError" style="font-size:11px;color:#ff5252;display:none;margin-bottom:8px;font-family:'Barlow Condensed'">⚠️ Enter valid 10-digit mobile number</div>
+    <div id="passLoginError" style="font-size:11px;color:#ff5252;display:none;margin-bottom:8px;font-family:'Barlow Condensed'">⚠️ Enter valid 10-digit mobile number</div>
     <button onclick="loginWithPhone()" style="width:100%;background:linear-gradient(135deg,#00bcd4,#0097a7);border:none;color:#000;padding:14px;border-radius:12px;font-family:'Bebas Neue';font-size:18px;letter-spacing:3px;cursor:pointer;margin-bottom:10px">
       ACCESS MY TEAMS →
     </button>
@@ -1852,10 +1855,52 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   </div>
 </div>
 
+<!-- PIN REVEAL MODAL — shown after weekly/season purchase -->
+<div class="login-overlay" id="pinRevealOverlay" style="z-index:1100">
+  <div class="login-box" style="max-width:380px;text-align:center" onclick="event.stopPropagation()">
+    <div style="font-family:'Bebas Neue';font-size:24px;letter-spacing:3px;color:#00e676;margin-bottom:4px">🎉 PASS ACTIVATED!</div>
+    <div id="pinRevealPlanLabel" style="font-family:'Barlow Condensed';font-size:13px;color:rgba(255,255,255,0.5);letter-spacing:1px;margin-bottom:20px"></div>
+
+    <!-- The PIN card — this is what gets screenshotted -->
+    <div id="pinCard" style="background:linear-gradient(135deg,#0a1a2e,#061220);border:2px solid rgba(0,212,255,0.3);border-radius:16px;padding:22px 20px;margin-bottom:18px;position:relative">
+      <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.3);margin-bottom:8px">YOUR LOGIN PIN</div>
+      <div id="pinRevealCode" style="font-family:'Bebas Neue';font-size:52px;letter-spacing:14px;color:#00d4ff;line-height:1;margin-bottom:10px">••••••</div>
+      <div style="width:100%;height:1px;background:rgba(255,255,255,0.07);margin-bottom:10px"></div>
+      <div id="pinRevealPhone" style="font-family:'Barlow Condensed';font-size:12px;color:rgba(255,255,255,0.45);letter-spacing:1px">📱 +91 ••••••••••</div>
+      <div id="pinRevealExpiry" style="font-family:'Barlow Condensed';font-size:11px;color:rgba(0,212,255,0.5);letter-spacing:1px;margin-top:4px"></div>
+      <div style="font-family:'Barlow Condensed';font-size:9px;color:rgba(255,255,255,0.15);letter-spacing:2px;margin-top:8px">CHAMP11.IN · CONFIDENTIAL</div>
+    </div>
+
+    <div style="background:rgba(255,179,0,0.08);border:1px solid rgba(255,179,0,0.2);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-family:'Barlow Condensed';font-size:12px;color:rgba(255,179,0,0.85);letter-spacing:0.5px;line-height:1.7;text-align:left">
+      ⚠️ <strong>Save this PIN now.</strong> You will need it every time you login.<br>
+      This PIN is linked to your mobile number only.<br>
+      Do not share it — it is personal to you.
+    </div>
+
+    <!-- Action buttons -->
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px">
+      <button onclick="pinRevealScreenshot()" style="width:100%;background:linear-gradient(135deg,#00e676,#00bcd4);border:none;color:#000;padding:13px;border-radius:12px;font-family:'Bebas Neue';font-size:17px;letter-spacing:2px;cursor:pointer">
+        📸 SCREENSHOT &amp; SAVE PIN
+      </button>
+      <button onclick="pinRevealWhatsApp()" style="width:100%;background:#25D366;border:none;color:#fff;padding:13px;border-radius:12px;font-family:'Bebas Neue';font-size:17px;letter-spacing:2px;cursor:pointer">
+        💬 SAVE TO WHATSAPP (SEND TO SELF)
+      </button>
+    </div>
+
+    <div style="font-size:11px;color:rgba(255,255,255,0.25);font-family:'Barlow Condensed';line-height:1.7">
+      Forgot PIN later? Write to <a href="/cdn-cgi/l/email-protection#7a090f0a0a15080e3a19121b170a4b4b541314" style="color:rgba(0,212,255,0.5);text-decoration:none"><span class="__cf_email__" data-cfemail="62111712120d101622010a030f1253534c0b0c">[email&#160;protected]</span></a>
+    </div>
+
+    <button onclick="closePinReveal()" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);padding:11px;border-radius:10px;font-family:'Barlow Condensed';font-size:14px;letter-spacing:1px;cursor:pointer;margin-top:14px">
+      I'VE SAVED MY PIN → CONTINUE
+    </button>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false">
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false">
 const API_BASE = 'https://champ11-backend-production.up.railway.app';
 let currentPlan = 'both';
 let currentMatch = '';
@@ -2457,6 +2502,17 @@ function showTeamsAfterPayment(teams, paymentId) {
   // Render canvases after modal is visible (needs layout)
   setTimeout(renderBothCanvases, 120);
 
+  // Show notification prompt to paid users after 4 seconds of viewing their team
+  // Only if they haven't already enabled or permanently dismissed it
+  if (canShowNotifBanner()) {
+    setTimeout(() => {
+      // Check team modal is still open before showing
+      if (document.getElementById('teamsModal').classList.contains('open')) {
+        showNotifBannerForPaidUser();
+      }
+    }, 4000);
+  }
+
   // Save to localStorage — expires at match lock time
   if (paymentId) {
     savePurchaseToLocal(paymentId, currentMatch, currentPlan,
@@ -2781,7 +2837,7 @@ function showPassLogin() {
 
 async function loginWithPhone() {
   const phone = document.getElementById('loginPhoneInput').value.replace(/[^0-9]/g, '');
-  const err   = document.getElementById('loginError');
+  const err   = document.getElementById('passLoginError');
   if (!phone || phone.length !== 10 || !/^[6-9]/.test(phone)) {
     err.style.display = 'block'; return;
   }
@@ -2806,6 +2862,10 @@ async function loginWithPhone() {
     const expiry = data.expiresAt ? new Date(data.expiresAt).toLocaleDateString('en-IN') : 'All 84 matches';
     showToast(`✅ ${label} active! Valid: ${expiry}`);
     showPassBanner(phone, data.passType, data.expiresAt);
+    // Offer notifications to logged-in pass holders too
+    if (canShowNotifBanner()) {
+      setTimeout(showNotifBannerForPaidUser, 3000);
+    }
   } catch(e) {
     if (btn) { btn.textContent = 'ACCESS MY TEAMS →'; btn.disabled = false; }
     err.textContent = 'Could not connect. Try again.';
@@ -2969,8 +3029,22 @@ async function doPayment() {
             return;
           }
 
-          showTeamsAfterPayment(result.teams || null, response.razorpay_payment_id);
-          showToast('✅ Payment verified! Teams unlocked.');
+          // If weekly/season pass — show PIN reveal instead of team modal
+          if ((currentPlan === 'weekly' || currentPlan === 'season') && result.pin) {
+            closeModal('payModal');
+            const planLabel = currentPlan === 'season'
+              ? '🏆 SEASON PASS · All 84 IPL 2026 Matches · ₹399'
+              : '📅 WEEKLY PASS · 9 Matches · 7 Days · ₹59';
+            showPinReveal(result.pin, currentUserPhone || '', planLabel, result.expiresAt || null);
+            // Also save pass info locally so auto-restore works
+            localStorage.setItem('c11_pass_phone',  currentUserPhone || '');
+            localStorage.setItem('c11_pass_type',   currentPlan);
+            localStorage.setItem('c11_pass_expiry', result.expiresAt || '');
+            showPassBanner(currentUserPhone || '', currentPlan, result.expiresAt || null);
+          } else {
+            showTeamsAfterPayment(result.teams || null, response.razorpay_payment_id);
+            showToast('✅ Payment verified! Teams unlocked.');
+          }
 
         } catch(e) {
           // FIX #4: network/fetch error — do NOT show teams, show support message
@@ -3009,37 +3083,72 @@ async function doPayment() {
 </script>
 
 
-<!-- ── LOGIN MODAL ── -->
+<!-- ── LOGIN MODAL — 2-step PIN login ── -->
 <div class="login-overlay" id="loginOverlay" onclick="if(event.target===this)closeLoginModal()">
   <div class="login-box">
     <div class="login-box-header">
       <div class="login-box-title">🔑 Access Your Pass</div>
       <button class="login-box-close" onclick="closeLoginModal()">✕</button>
     </div>
-    <div class="login-box-icon">📱</div>
-    <div class="login-box-sub">
-      Enter the <strong>mobile number</strong> used during purchase.<br>
-      Your AI team will unlock instantly.
+
+    <!-- STEP 1: Mobile number -->
+    <div id="loginStep1">
+      <div class="login-box-icon">📱</div>
+      <div class="login-box-sub">
+        Enter the <strong>mobile number</strong> used during purchase.
+      </div>
+      <div class="login-input-wrap">
+        <span class="login-input-prefix">+91</span>
+        <input class="login-mobile-input" id="loginMobileInput" type="tel"
+          maxlength="10" placeholder="98765 43210"
+          onkeyup="this.value=this.value.replace(/[^0-9]/g,'')"
+          onkeydown="if(event.key==='Enter')loginStep1Next()">
+      </div>
+      <div class="login-error" id="loginError"></div>
+      <button class="login-submit-btn" id="loginStep1Btn" onclick="loginStep1Next()">
+        Continue →
+      </button>
+      <div class="login-divider">— OR —</div>
+      <span class="login-purchase-link" onclick="closeLoginModal();scrollToPricing()">
+        New here? Get AI teams from ₹9 →
+      </span>
     </div>
-    <div class="login-input-wrap">
-      <span class="login-input-prefix">+91</span>
-      <input class="login-mobile-input" id="loginMobileInput" type="tel"
-        maxlength="10" placeholder="98765 43210"
-        onkeyup="this.value=this.value.replace(/[^0-9]/g,'')"
-        onkeydown="if(event.key==='Enter')submitLogin()">
+
+    <!-- STEP 2: 6-digit PIN -->
+    <div id="loginStep2" style="display:none">
+      <div class="login-box-icon">🔐</div>
+      <div class="login-box-sub">
+        Enter your <strong>6-digit PIN</strong> for<br>
+        <span id="loginStep2Phone" style="color:#00d4ff;font-weight:700"></span>
+      </div>
+      <div class="login-input-wrap">
+        <input class="login-mobile-input" id="loginPinInput" type="tel"
+          maxlength="6" placeholder="••••••" autocomplete="one-time-code"
+          style="letter-spacing:8px;font-size:22px;text-align:center"
+          onkeyup="this.value=this.value.replace(/[^0-9]/g,'')"
+          onkeydown="if(event.key==='Enter')loginStep2Submit()">
+      </div>
+      <div class="login-error" id="loginPinError"></div>
+      <button class="login-submit-btn" id="loginStep2Btn" onclick="loginStep2Submit()">
+        Unlock My Team →
+      </button>
+      <div style="text-align:center;margin-top:14px">
+        <span style="font-size:11px;color:rgba(255,255,255,0.3);font-family:'Barlow Condensed'">
+          Forgot your PIN? Write to us at
+          <a href="/cdn-cgi/l/email-protection#daa9afaaaab5a8ae9ab9b2bbb7aaebebf4b3b4" style="color:rgba(0,212,255,0.6);text-decoration:none"><span class="__cf_email__" data-cfemail="c0b3b5b0b0afb2b480a3a8a1adb0f1f1eea9ae">[email&#160;protected]</span></a>
+        </span>
+      </div>
+      <div style="text-align:center;margin-top:10px">
+        <span onclick="loginGoBack()" style="font-size:11px;color:rgba(255,255,255,0.3);cursor:pointer;font-family:'Barlow Condensed';text-decoration:underline">
+          ← Use a different number
+        </span>
+      </div>
     </div>
-    <div class="login-error" id="loginError"></div>
-    <button class="login-submit-btn" id="loginSubmitBtn" onclick="submitLogin()">
-      Unlock My Team →
-    </button>
-    <div class="login-divider">— OR —</div>
-    <span class="login-purchase-link" onclick="closeLoginModal();scrollToPricing()">
-      New here? Get AI teams from ₹9 →
-    </span>
+
   </div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ═══════════════════════════════════════════════════════
 // BELL NOTIFICATION SYSTEM — Champ11
 // Timeline:
@@ -3051,7 +3160,22 @@ async function doPayment() {
 // ═══════════════════════════════════════════════════════
 
 const BELL_KEY   = 'champ11_notif';
-const BANNER_KEY = 'champ11_notif_dismissed';
+const BANNER_KEY        = 'champ11_notif_dismissed';
+const BANNER_COOLDOWN_MS = 3 * 60 * 60 * 1000; // 3 hours in ms
+
+// Returns true if the user can be shown the notification prompt
+// - Never shown if already subscribed (BELL_KEY = 'granted')
+// - Shown if never dismissed before
+// - Shown again after 5 hours since last dismiss
+function canShowNotifBanner() {
+  if (localStorage.getItem(BELL_KEY) === 'granted') return false;
+  const dismissed = localStorage.getItem(BANNER_KEY);
+  if (!dismissed) return true; // never dismissed
+  // Check if 5-hour cooldown has passed since last dismiss
+  const dismissedAt = parseInt(dismissed, 10);
+  if (isNaN(dismissedAt)) return false; // old '1' value — treat as permanent (edge case)
+  return (Date.now() - dismissedAt) >= BANNER_COOLDOWN_MS;
+}
 
 // Init on load
 
@@ -3239,7 +3363,10 @@ window.addEventListener('load', () => {
   if (localStorage.getItem(BELL_KEY) === 'granted') {
     setBellSubscribed(true);
     registerServiceWorker(false);
-  } else if (!localStorage.getItem(BANNER_KEY)) {
+  } else if (canShowNotifBanner()) {
+    // Show notification prompt to ALL visitors after 20s if not subscribed.
+    // Re-shows after 5-hour cooldown if previously dismissed — so returning
+    // visitors are reminded again. Once they subscribe, never shown again.
     setTimeout(showNotifBanner, 20000);
   }
   // Poll every 2 min for XI confirmation
@@ -3261,6 +3388,9 @@ window.addEventListener('load', () => {
 // ── Login Modal ──────────────────────────────────────────────────
 function openLoginModal() {
   document.getElementById('loginOverlay').classList.add('show');
+  document.getElementById('loginStep1').style.display = 'block';
+  document.getElementById('loginStep2').style.display = 'none';
+  document.getElementById('loginMobileInput').value = '';
   document.getElementById('loginMobileInput').focus();
   document.getElementById('loginError').textContent = '';
 }
@@ -3268,15 +3398,27 @@ function openLoginModal() {
 function closeLoginModal() {
   document.getElementById('loginOverlay').classList.remove('show');
   document.getElementById('loginMobileInput').value = '';
+  document.getElementById('loginPinInput').value = '';
   document.getElementById('loginError').textContent = '';
+  document.getElementById('loginPinError').textContent = '';
 }
 
-async function submitLogin() {
-  const mobile = (document.getElementById('loginMobileInput').value || '').trim();
-  const errEl  = document.getElementById('loginError');
-  const btn    = document.getElementById('loginSubmitBtn');
+function loginGoBack() {
+  document.getElementById('loginStep2').style.display = 'none';
+  document.getElementById('loginStep1').style.display = 'block';
+  document.getElementById('loginPinInput').value = '';
+  document.getElementById('loginPinError').textContent = '';
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('loginMobileInput').focus();
+}
 
-  if (!mobile || mobile.length !== 10) {
+// ── STEP 1: Validate mobile, check they have a pass ──────────────
+async function loginStep1Next() {
+  const mobile = (document.getElementById('loginMobileInput').value || '').replace(/[^0-9]/g,'');
+  const errEl  = document.getElementById('loginError');
+  const btn    = document.getElementById('loginStep1Btn');
+
+  if (!mobile || mobile.length !== 10 || !/^[6-9]/.test(mobile)) {
     errEl.textContent = '⚠️ Please enter a valid 10-digit mobile number.';
     return;
   }
@@ -3286,47 +3428,135 @@ async function submitLogin() {
   errEl.textContent = '';
 
   try {
-    const res  = await fetch(`${API_BASE}/api/purchases/by-mobile?mobile=${mobile}`);
+    // Quick check that this mobile has an active pass before showing PIN step
+    // We call pass-status which is a lightweight check — no PIN involved yet
+    const res  = await fetch(`${API_BASE}/api/auth/pass-status?phone=${mobile}`);
     const data = await res.json();
 
-    if (data.found && data.purchases && data.purchases.length > 0) {
-      // Filter to only today+tomorrow active purchases
-      const allActive = data.purchases.filter(p => Date.now() < (p.expiresAt || 0));
-      const todayTomorrow = allActive.filter(p => isTodayOrTomorrow(p.matchDate || ''));
-
-      if (todayTomorrow.length > 0) {
-        // Restore today/tomorrow purchases into localStorage
-        const index = JSON.parse(localStorage.getItem('c11_index') || '[]');
-        todayTomorrow.forEach(p => {
-          const key = 'c11_' + p.paymentId;
-          localStorage.setItem(key, JSON.stringify({
-            ...p, savedAt: Date.now()
-          }));
-          if (!index.includes(key)) index.push(key);
-        });
-        localStorage.setItem('c11_index', JSON.stringify(index));
-        if (todayTomorrow.length > 0) localStorage.setItem('c11_latest', 'c11_' + todayTomorrow[0].paymentId);
-
-        closeLoginModal();
-        const names = todayTomorrow.map(p => p.match || p.matchId).join(', ');
-        showInAppToast('✅', 'Teams Unlocked!', `${names} — tap "VIEW" below to see your AI team.`, '');
-        setTimeout(() => restorePurchaseOnLoad(), 500);
-      } else if (allActive.length > 0) {
-        // Has active passes but not for today/tomorrow
-        errEl.textContent = '⚠️ Your passes are for future matches. AI teams for today and tomorrow are available.';
-      } else {
-        errEl.textContent = '⏰ Your last purchase has expired. Buy a new team below.';
-        closeLoginModal();
-        scrollToPricing();
-      }
-    } else {
-      errEl.textContent = '❌ No purchase found for this number. Check the number or buy below.';
+    if (!data.hasPass) {
+      errEl.textContent = data.message || '❌ No active pass found for this number. Buy a pass below.';
+      btn.disabled = false;
+      btn.textContent = 'Continue →';
+      return;
     }
+
+    // Pass exists — move to PIN step
+    window._loginMobile = mobile;
+    document.getElementById('loginStep2Phone').textContent = '+91 ' + mobile.slice(0,5) + ' ' + mobile.slice(5);
+    document.getElementById('loginStep1').style.display = 'none';
+    document.getElementById('loginStep2').style.display = 'block';
+    document.getElementById('loginPinInput').value = '';
+    document.getElementById('loginPinError').textContent = '';
+    setTimeout(() => document.getElementById('loginPinInput').focus(), 100);
+
   } catch(e) {
     errEl.textContent = '⚠️ Connection error. Please try again.';
   } finally {
     btn.disabled = false;
+    btn.textContent = 'Continue →';
+  }
+}
+
+// ── STEP 2: Verify PIN + device lock ────────────────────────────
+async function loginStep2Submit() {
+  const pin    = (document.getElementById('loginPinInput').value || '').replace(/[^0-9]/g,'');
+  const errEl  = document.getElementById('loginPinError');
+  const btn    = document.getElementById('loginStep2Btn');
+  const mobile = window._loginMobile || '';
+
+  if (!pin || pin.length !== 6) {
+    errEl.textContent = '⚠️ Enter your 6-digit PIN.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Verifying...';
+  errEl.textContent = '';
+
+  try {
+    // Generate a stable device fingerprint for this browser/device
+    // Used to enforce single-device login — same device always gets the same ID
+    const deviceId = await getDeviceId();
+
+    const res  = await fetch(`${API_BASE}/api/auth/verify-pin`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ phone: mobile, pin, deviceId }),
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      // Device already logged in elsewhere
+      if (data.deviceLocked) {
+        errEl.textContent = '📵 This pass is already active on another device. Login on that device, or write to support@champ11.in to reset.';
+      } else if (data.attemptsLeft !== undefined) {
+        errEl.textContent = `❌ Wrong PIN. ${data.attemptsLeft} attempt${data.attemptsLeft===1?'':'s'} left this hour.`;
+      } else {
+        errEl.textContent = data.error || '❌ Invalid PIN. Try again.';
+      }
+      btn.disabled = false;
+      btn.textContent = 'Unlock My Team →';
+      return;
+    }
+
+    // Success — store pass info locally
+    localStorage.setItem('c11_pass_phone',  mobile);
+    localStorage.setItem('c11_pass_type',   data.passType);
+    localStorage.setItem('c11_pass_expiry', data.expiresAt || '');
+    localStorage.setItem('c11_device_id',   deviceId);
+    currentUserPhone = mobile;
+
+    closeLoginModal();
+    const label  = data.passType === 'season' ? '🏆 Season Pass' : '📅 Weekly Pass';
+    const expiry = data.expiresAt
+      ? new Date(data.expiresAt).toLocaleDateString('en-IN')
+      : 'All 84 matches';
+    showToast(`✅ ${label} active! Valid: ${expiry}`);
+    showPassBanner(mobile, data.passType, data.expiresAt);
+    // Offer notifications to PIN-logged-in pass holders
+    if (canShowNotifBanner()) {
+      setTimeout(showNotifBannerForPaidUser, 3000);
+    }
+
+  } catch(e) {
+    errEl.textContent = '⚠️ Connection error. Please try again.';
+    btn.disabled = false;
     btn.textContent = 'Unlock My Team →';
+  }
+}
+
+// ── Device fingerprint — stable per browser/device ───────────────
+// Combines screen, timezone, language into a hash.
+// Same device/browser always produces the same ID.
+// Different device (or incognito) = different ID.
+async function getDeviceId() {
+  // Try cached ID first (persists across sessions on same device)
+  const cached = localStorage.getItem('c11_device_id');
+  if (cached && cached.length > 8) return cached;
+
+  // Build fingerprint from stable browser properties
+  const raw = [
+    navigator.userAgent,
+    navigator.language,
+    screen.width + 'x' + screen.height,
+    screen.colorDepth,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+    navigator.hardwareConcurrency || '',
+    navigator.platform || '',
+  ].join('|');
+
+  // SHA-256 hash via SubtleCrypto (available in all modern browsers)
+  try {
+    const buf    = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+    const hex    = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+    const id     = hex.slice(0, 32); // 32 chars is plenty
+    localStorage.setItem('c11_device_id', id);
+    return id;
+  } catch {
+    // Fallback: random stable ID stored in localStorage
+    const fallback = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+    localStorage.setItem('c11_device_id', fallback);
+    return fallback;
   }
 }
 
@@ -3348,9 +3578,23 @@ function handleBellClick() {
 function showNotifBanner() {
   document.getElementById('notifBanner').classList.add('show');
 }
+
+// Contextual version — shown to paid users after they view their team
+// Better message: explains the team auto-updates and they can get notified
+function showNotifBannerForPaidUser() {
+  const banner = document.getElementById('notifBanner');
+  // Update the message to be more relevant to someone who just paid
+  const msgEl = banner.querySelector('.notif-banner-msg');
+  if (msgEl) {
+    msgEl.innerHTML = `Your team will <strong style="color:var(--lime)">auto-update after toss</strong> with confirmed Playing XI.<br>
+    <span style="color:var(--gold,#FFB300);font-weight:600">⚡ Enable alerts so you know the moment your final team is ready!</span>`;
+  }
+  banner.classList.add('show');
+}
 function dismissBanner() {
   document.getElementById('notifBanner').classList.remove('show');
-  localStorage.setItem(BANNER_KEY, '1');
+  // Store timestamp of dismiss — allows re-showing after 5-hour cooldown
+  localStorage.setItem(BANNER_KEY, String(Date.now()));
 }
 
 async function requestNotifPermission() {
@@ -3382,10 +3626,11 @@ async function registerServiceWorker(loud) {
   }
 }
 
-// Polling fallback — checks Firebase every 2 min
+// Polling — checks Firebase every 2 min for ALL users (not just bell subscribers)
+// The in-app toast fires for everyone with the page open.
+// The browser push notification only fires for bell subscribers (requires permission).
 let _lastXIKey = localStorage.getItem('champ11_last_xi') || '';
 async function pollForXINotification() {
-  if (localStorage.getItem(BELL_KEY) !== 'granted') return;
   try {
     const res = await fetch(`${API_BASE}/api/matches/today-status`);
     if (!res.ok) return;
@@ -3396,11 +3641,16 @@ async function pollForXINotification() {
         if (_lastXIKey !== key) {
           _lastXIKey = key;
           localStorage.setItem('champ11_last_xi', key);
+
+          // IN-APP TOAST: fires for ALL users who have the page open
           fireXINotification(m);
-          // Also check if we need to fire reminder (within 15 min window)
-          const minsNow = Math.round((new Date(m.dateTimeGMT) - new Date()) / 60000);
-          if (minsNow <= 15 && minsNow > 5) {
-            fireReminderNotification(m, minsNow);
+
+          // BROWSER PUSH: only fires if user enabled bell notifications
+          if (localStorage.getItem(BELL_KEY) === 'granted') {
+            const minsNow = Math.round((new Date(m.dateTimeGMT) - new Date()) / 60000);
+            if (minsNow <= 15 && minsNow > 5) {
+              fireReminderNotification(m, minsNow);
+            }
           }
           break;
         }
@@ -3627,6 +3877,66 @@ function setBellSubscribed(on) {
     initTicker();
   }
 })();
+
+
+// ══════════════════════════════════════════════════════════════
+// PIN REVEAL — shown after weekly/season purchase
+// ══════════════════════════════════════════════════════════════
+let _pinRevealData = {}; // { pin, phone, planLabel, expiresAt }
+
+function showPinReveal(pin, phone, planLabel, expiresAt) {
+  _pinRevealData = { pin, phone, planLabel, expiresAt };
+
+  document.getElementById('pinRevealCode').textContent    = pin;
+  document.getElementById('pinRevealPlanLabel').textContent = planLabel;
+  document.getElementById('pinRevealPhone').textContent   =
+    '📱 +91 ' + phone.slice(0,5) + ' ' + phone.slice(5);
+  document.getElementById('pinRevealExpiry').textContent  = expiresAt
+    ? 'Valid till: ' + new Date(expiresAt).toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'})
+    : 'Valid for all 84 IPL 2026 matches';
+
+  document.getElementById('pinRevealOverlay').classList.add('show');
+}
+
+function closePinReveal() {
+  document.getElementById('pinRevealOverlay').classList.remove('show');
+}
+
+function pinRevealScreenshot() {
+  // Prompt user to take a screenshot, then show a toast
+  showToast('📱 Take a screenshot now to save your PIN!');
+  // On mobile, flash the screen slightly to indicate "now"
+  document.getElementById('pinCard').style.border = '2px solid #00e676';
+  setTimeout(() => {
+    document.getElementById('pinCard').style.border = '2px solid rgba(0,212,255,0.3)';
+  }, 2000);
+}
+
+function pinRevealWhatsApp() {
+  const { pin, phone, planLabel, expiresAt } = _pinRevealData;
+  const expStr = expiresAt
+    ? new Date(expiresAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})
+    : 'All 84 IPL 2026 matches';
+  const msg = encodeURIComponent(
+    `🏏 *Champ11 Pass Details* — SAVE THIS
+
+` +
+    `📱 Mobile: +91 ${phone}
+` +
+    `🔐 Login PIN: *${pin}*
+` +
+    `🎟️ Plan: ${planLabel}
+` +
+    `✅ Valid: ${expStr}
+
+` +
+    `Login at: https://champ11.in
+` +
+    `⚠️ Do not share this PIN with anyone.`
+  );
+  // Open WhatsApp with message to self (no recipient = send to self)
+  window.open('https://wa.me/?text=' + msg, '_blank');
+}
 </script>
 
 <!-- ═══════════════════════════════════════════════
@@ -3659,11 +3969,4 @@ function setBellSubscribed(on) {
   <h2>Best Dream11 Captain Picks for IPL 2026</h2>
   <p>Champ11 AI selects the best Dream11 captain and vice-captain based on recent fantasy points, venue history, and match conditions. All-rounders with 3+ recent wickets get a captain bonus. Low-owned players with breakout potential are highlighted in our Bold team for grand league wins.</p>
 
-  <h2>Frequently Asked Questions — Champ11 Fantasy Cricket</h2>
-  <dl>
-    <dt>Is Champ11 better than manual Dream11 research?</dt>
-    <dd>Yes. Champ11 AI analyzes hundreds of data points in seconds — player form, venue stats, pitch reports, weather, and ownership data — that would take hours to research manually. Our 68% accuracy speaks for itself.</dd>
-    <dt>Which IPL matches does Champ11 cover in 2026?</dt>
-    <dd>All 84 IPL 2026 matches including all league games and playoffs (Qualifier 1, Eliminator, Qualifier 2, and the Final).</dd>
-    <dt>Can beginners use Champ11 for Dream11?</dt>
-    <dd>Absolutely. Champ11 
+  <h2>Frequently Aske
