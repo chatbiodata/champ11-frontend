@@ -1659,8 +1659,28 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
 
 <script>
 // ─── STATE ───────────────────────────────────────────────────────────────────
-let API_BASE = '';
-let ADMIN_SECRET = '';
+let API_BASE     = sessionStorage.getItem('c11_admin_url')    || '';
+let ADMIN_SECRET = sessionStorage.getItem('c11_admin_secret') || '';
+
+// Auto-restore session if credentials are saved — skip login screen
+(function restoreAdminSession() {
+  if (API_BASE && ADMIN_SECRET) {
+    document.addEventListener('DOMContentLoaded', () => {
+      const screen = document.getElementById('loginScreen');
+      const app    = document.getElementById('app');
+      if (screen && app) {
+        screen.style.display = 'none';
+        app.style.display    = 'block';
+        try {
+          document.getElementById('apiStatusText').textContent = new URL(API_BASE).host;
+          document.getElementById('apiUrl').value      = API_BASE;
+          document.getElementById('adminSecret').value = ADMIN_SECRET;
+        } catch(e) {}
+        setTimeout(loadOverview, 200);
+      }
+    });
+  }
+})();
 // FIX: Firebase project ID kept in JS variable, not baked into HTML hrefs.
 // Set this to your Firebase project ID — it is only rendered after login.
 const FB_PROJECT = 'champ11-prod';
@@ -1683,6 +1703,9 @@ async function doLogin() {
     });
     if (r.status === 403) { showLoginErr('❌ Invalid admin secret. Check and try again.'); return; }
     if (!r.ok) throw new Error('Backend unreachable');
+    // Persist credentials so refresh buttons work after page reload
+    sessionStorage.setItem('c11_admin_url',    API_BASE);
+    sessionStorage.setItem('c11_admin_secret', ADMIN_SECRET);
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     document.getElementById('apiStatusText').textContent = new URL(API_BASE).host;
@@ -1795,9 +1818,10 @@ async function loadOverview() {
       document.getElementById('ov-accuracy').textContent = parseFloat(aiData.accuracy || 55).toFixed(1) + '%';
     } catch { renderWeightBars('safeWeights', DEFAULT_SAFE_W, 'var(--cyan)'); renderWeightBars('boldWeights', DEFAULT_BOLD_W, 'var(--amber)'); document.getElementById('ov-accuracy').textContent = '55.0%'; }
 
+    toast('✅ Overview refreshed');
   } catch(e) {
     document.getElementById('apiStatusText').textContent = 'Connection error';
-    toast('Failed to load overview data', '❌');
+    toast('❌ Failed to load overview — check Railway is running', '❌');
   }
 }
 
