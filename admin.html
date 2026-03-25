@@ -971,6 +971,49 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
           </div>
         </div>
       </div>
+
+      <!-- ── EXTEND MATCH TIME — for delayed / postponed matches ── -->
+      <div class="section-card" style="border-color:rgba(255,152,0,0.25)">
+        <div class="section-head">
+          <div class="section-title">⏰ Extend Match Time (Delayed / Postponed)</div>
+        </div>
+        <div class="section-body">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7">
+            Use this when a match is delayed or starts late. Updates the lock time so users can still buy,
+            and shows the new time on the website with a <strong style="color:#ff9800">⏰ TIME UPDATED</strong> badge.
+            Also clears any existing lock so existing buyers are not blocked.
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+            <div>
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Match ID</div>
+              <input id="extMatchId" placeholder="e.g. ipl2026-match-01" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;width:200px;outline:none;font-family:'JetBrains Mono'"/>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">New Start Time (IST)</div>
+              <input id="extMatchTime" placeholder="e.g. 8:30 PM" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;width:140px;outline:none;font-family:'JetBrains Mono'"/>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">New Start GMT (ISO)</div>
+              <input id="extMatchGMT" placeholder="2026-03-28T15:00:00Z" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;width:220px;outline:none;font-family:'JetBrains Mono'"/>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px">
+            <div style="flex:1;min-width:280px">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">User-Facing Note (optional)</div>
+              <input id="extPostponeNote" placeholder="e.g. Rain delay — match starts at 8:30 PM IST" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;width:100%;outline:none;font-family:'JetBrains Mono'"/>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding-bottom:2px">
+              <input type="checkbox" id="extPostponed" style="width:16px;height:16px;cursor:pointer"/>
+              <label for="extPostponed" style="font-size:12px;color:var(--muted);cursor:pointer">Mark as Postponed</label>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:12px">
+            <button class="action-btn btn-amber" onclick="extendMatchTime()" style="padding:10px 20px">⏰ Update Match Time</button>
+            <button class="action-btn btn-red" onclick="clearMatchExtension()" style="padding:10px 20px">✕ Clear Extension</button>
+          </div>
+          <div id="extStatus" style="margin-top:12px;font-size:12px;font-family:'JetBrains Mono';color:var(--muted)"></div>
+        </div>
+      </div>
     </div>
 
     <!-- ── LOGS ── -->
@@ -1114,48 +1157,6 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
         </div>
       </div>
 
-      <!-- ── EXTEND MATCH TIME — for delayed / postponed matches ── -->
-      <div class="section-card" style="border-color:rgba(255,152,0,0.25)">
-        <div class="section-head">
-          <div class="section-title">⏰ Extend Match Time (Delayed / Postponed)</div>
-        </div>
-        <div class="section-body">
-          <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7">
-            Use this when a match is delayed or starts late. Updates the lock time so users can still buy,
-            and shows the new time on the website with a <strong style="color:#ff9800">⏰ TIME UPDATED</strong> badge.
-            Also clears any existing lock so existing buyers are not blocked.
-          </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-            <div>
-              <div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Match ID</div>
-              <input id="extMatchId" placeholder="e.g. ipl2026-match-01" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;width:200px;outline:none;font-family:'JetBrains Mono'"/>
-            </div>
-            <div>
-              <div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">New Start Time (IST)</div>
-              <input id="extMatchTime" placeholder="e.g. 8:30 PM" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;width:140px;outline:none;font-family:'JetBrains Mono'"/>
-            </div>
-            <div>
-              <div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">New Start GMT (ISO)</div>
-              <input id="extMatchGMT" placeholder="2026-03-28T15:00:00Z" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;width:220px;outline:none;font-family:'JetBrains Mono'"/>
-            </div>
-          </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px">
-            <div style="flex:1;min-width:280px">
-              <div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">User-Facing Note (optional)</div>
-              <input id="extPostponeNote" placeholder="e.g. Rain delay — match starts at 8:30 PM IST" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;width:100%;outline:none;font-family:'JetBrains Mono'"/>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;padding-bottom:2px">
-              <input type="checkbox" id="extPostponed" style="width:16px;height:16px;cursor:pointer"/>
-              <label for="extPostponed" style="font-size:12px;color:var(--muted);cursor:pointer">Mark as Postponed</label>
-            </div>
-          </div>
-          <div style="display:flex;gap:10px;margin-top:12px">
-            <button class="action-btn btn-amber" onclick="extendMatchTime()" style="padding:10px 20px">⏰ Update Match Time</button>
-            <button class="action-btn btn-red" onclick="clearMatchExtension()" style="padding:10px 20px">✕ Clear Extension</button>
-          </div>
-          <div id="extStatus" style="margin-top:12px;font-size:12px;font-family:'JetBrains Mono';color:var(--muted)"></div>
-        </div>
-      </div>
     </div>
 
     <!-- ── DEV TOOLS ── -->
