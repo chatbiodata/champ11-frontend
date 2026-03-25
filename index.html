@@ -2016,6 +2016,96 @@ function buyForSelected(plan) {
   );
 }
 
+// ── PASS HOLDER HELPERS ─────────────────────────────────────────
+// Check if a valid pass holder is currently logged in
+function isPassHolderLoggedIn() {
+  const phone   = localStorage.getItem('c11_pass_phone');
+  const expiry  = localStorage.getItem('c11_pass_expiry');
+  if (!phone) return false;
+  // If no expiry stored (season pass), assume valid
+  if (!expiry) return true;
+  return new Date(expiry) > new Date();
+}
+
+// View team for a logged-in pass holder — fetches from backend by phone + matchId
+async function viewPassHolderTeam() {
+  if (!selectedMatchData) { showToast('⬆️ Select a match first'); return; }
+
+  const phone   = localStorage.getItem('c11_pass_phone');
+  const matchId = selectedMatchData.id || selectedMatchData.matchId;
+
+  if (!phone) { openLoginModal(); return; }
+
+  const btn = document.querySelector('.sel-buy-btns button');
+  if (btn) { btn.textContent = '⏳ Loading...'; btn.disabled = true; }
+
+  try {
+    // Fetch team using phone + matchId — backend validates pass is active
+    const res  = await fetch(`${API_BASE}/api/teams/${matchId}?userId=phone_91${phone}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (res.status === 402) {
+        // No team yet — could be pre-toss
+        showToast('⏳ AI team generating — check back on match day morning');
+      } else if (res.status === 403) {
+        showToast('⚠️ ' + (data.message || 'Access denied. Contact support@champ11.in'));
+      } else {
+        showToast('❌ ' + (data.error || 'Could not load team. Try again.'));
+      }
+      if (btn) { btn.textContent = '🏏 VIEW MY AI TEAM →'; btn.disabled = false; }
+      return;
+    }
+
+    // Determine plan from pass type — season/weekly holders get both teams
+    const passType = localStorage.getItem('c11_pass_type') || 'weekly';
+    currentPlan     = 'both'; // pass holders always get both safe + bold
+    currentMatch    = selectedMatchData.shortName || matchId;
+    currentMatchId  = matchId;
+    currentSession  = {
+      match:    currentMatch,
+      maskedId: '••••' + phone.slice(-4) + ' · PASS',
+      txnId:    phone,
+    };
+
+    if (data.safe?.players) currentSafeTeam = data.safe;
+    if (data.bold?.players) currentBoldTeam = data.bold;
+
+    // Update team modal header
+    document.getElementById('teamsModalMatch').textContent = currentMatch + ' · AI Teams';
+    document.getElementById('secNoticeText').textContent =
+      `Pass holder ••••${phone.slice(-4)} · Sharing violates Terms · Account ban applies`;
+
+    // Show both tabs
+    document.getElementById('tabSafe').style.display = '';
+    document.getElementById('tabBold').style.display = '';
+    document.getElementById('tabSafe').innerHTML = '🛡️ SAFE ✅';
+    document.getElementById('tabBold').innerHTML = '🔥 BOLD ✅';
+    document.getElementById('bothBanner').classList.add('show');
+
+    // Toss banner
+    const tossBannerSafe = document.getElementById('tossBannerSafe');
+    const tossBannerBold = document.getElementById('tossBannerBold');
+    if (data.xiConfirmed && data.tossWinner) {
+      const msg = `✅ Playing XI Confirmed · ${data.tossWinner} elected to ${data.tossChoice === 'bat' ? '🏏 bat' : '🎯 bowl'} first. Team auto-updated.`;
+      tossBannerSafe.textContent = msg; tossBannerSafe.style.display = 'block';
+      tossBannerBold.textContent = msg; tossBannerBold.style.display = 'block';
+    } else {
+      const msg = '⏳ Pre-toss team — auto-updates with confirmed Playing XI after toss. No action needed.';
+      tossBannerSafe.textContent = msg; tossBannerSafe.style.display = 'block';
+      tossBannerBold.textContent = msg; tossBannerBold.style.display = 'block';
+    }
+
+    document.getElementById('teamsModal').classList.add('open');
+    switchTab('safe');
+    setTimeout(renderBothCanvases, 120);
+
+  } catch(e) {
+    showToast('⚠️ Could not load team. Check your connection.');
+    if (btn) { btn.textContent = '🏏 VIEW MY AI TEAM →'; btn.disabled = false; }
+  }
+}
+
 function scrollToMatchSelector() {
   const el = document.getElementById('matchSelectorSection') || document.getElementById('matchesStrip');
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -2059,6 +2149,12 @@ function selectMatchChip(matchData, chipEl) {
       btnsEl.innerHTML = `<div style="font-family:'Barlow Condensed';font-size:12px;color:rgba(255,82,82,0.7);padding:6px 0">🔒 Match started — teams locked</div>`;
     } else if (isFuture) {
       btnsEl.innerHTML = `<button class="sel-btn" style="background:rgba(255,204,0,0.08);color:rgba(255,204,0,0.6);border:1px solid rgba(255,204,0,0.2);cursor:pointer" onclick="showComingSoonModal(selectedMatchData)">⏳ Team Available on Match Day</button>`;
+    } else if (isPassHolderLoggedIn()) {
+      // Pass holder is logged in — show View Team button instead of buy buttons
+      const teamReady = matchData.teamsGenerated || matchData.xiConfirmed;
+      btnsEl.innerHTML = teamReady
+        ? `<button class="sel-btn" style="background:linear-gradient(135deg,#00e676,#00bcd4);color:#000;font-weight:700;border:none;font-size:15px;padding:10px 24px;cursor:pointer" onclick="viewPassHolderTeam()">🏏 VIEW MY AI TEAM →</button>`
+        : `<button class="sel-btn" style="background:rgba(0,230,118,0.08);color:rgba(0,230,118,0.6);border:1px solid rgba(0,230,118,0.2);cursor:not-allowed">⏳ AI Team Generating...</button>`;
     } else {
       btnsEl.innerHTML = `
         <button class="sel-btn sel-btn-safe" onclick="buyForSelected('safe')">🛡️ Safe ₹9</button>
@@ -2899,7 +2995,19 @@ window.addEventListener('load', () => {
     currentUserPhone = savedPhone;
     fetch(`${API_BASE}/api/auth/pass-status?phone=${savedPhone}`)
       .then(r => r.json())
-      .then(d => { if (d.hasPass) showPassBanner(savedPhone, passType, expiry); else localStorage.removeItem('c11_pass_phone'); })
+      .then(d => {
+        if (d.hasPass) {
+          showPassBanner(savedPhone, passType, expiry);
+          // Refresh match bar so returning pass holder sees View Team button
+          setTimeout(() => {
+            if (selectedMatchData) selectMatchChip(selectedMatchData, document.getElementById('chip-' + (selectedMatchData.id || selectedMatchData.matchId)));
+          }, 1200); // slight delay — match strip may still be loading
+        } else {
+          localStorage.removeItem('c11_pass_phone');
+          localStorage.removeItem('c11_pass_type');
+          localStorage.removeItem('c11_pass_expiry');
+        }
+      })
       .catch(() => {});
   }
 });
@@ -3524,6 +3632,8 @@ async function loginStep2Submit() {
       : 'All 84 matches';
     showToast(`✅ ${label} active! Valid: ${expiry}`);
     showPassBanner(mobile, data.passType, data.expiresAt);
+    // Refresh match bar buttons → shows "View My AI Team" immediately
+    if (selectedMatchData) selectMatchChip(selectedMatchData, document.getElementById('chip-' + (selectedMatchData.id || selectedMatchData.matchId)));
     // Offer notifications to PIN-logged-in pass holders
     if (canShowNotifBanner()) {
       setTimeout(showNotifBannerForPaidUser, 3000);
