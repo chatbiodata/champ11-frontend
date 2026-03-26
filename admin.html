@@ -2548,92 +2548,210 @@ async function loadMatchSquadForIntel() {
 
 // ── Manual squad entry when CricAPI/DB has no data ───────────────────
 // Uses confirmed squads from news sources for IPL 2026 known matches
-const KNOWN_SQUADS = {
-  // Patterns checked against lowercase match name — order-independent
-  // Short codes AND full names both covered
-  'rcb vs srh': [
-    // RCB
-    { name:'Phil Salt',          team:'RCB', role:'WK',  credits:9.0  },
-    { name:'Virat Kohli',        team:'RCB', role:'BAT', credits:9.5  },
-    { name:'Devdutt Padikkal',   team:'RCB', role:'BAT', credits:8.5  },
-    { name:'Rajat Patidar',      team:'RCB', role:'BAT', credits:8.5  },
-    { name:'Jacob Bethell',      team:'RCB', role:'ALL', credits:8.5  },
-    { name:'Tim David',          team:'RCB', role:'BAT', credits:9.0  },
-    { name:'Jitesh Sharma',      team:'RCB', role:'WK',  credits:8.0  },
-    { name:'Krunal Pandya',      team:'RCB', role:'ALL', credits:8.0  },
-    { name:'Bhuvneshwar Kumar',  team:'RCB', role:'BOWL',credits:8.5  },
-    { name:'Jacob Duffy',        team:'RCB', role:'BOWL',credits:7.5  },
-    { name:'Mangesh Yadav',      team:'RCB', role:'BOWL',credits:7.0  },
-    // SRH
-    { name:'Abhishek Sharma',    team:'SRH', role:'BAT', credits:9.5  },
-    { name:'Travis Head',        team:'SRH', role:'BAT', credits:9.0  },
-    { name:'Ishan Kishan',       team:'SRH', role:'WK',  credits:9.0  },
-    { name:'Heinrich Klaasen',   team:'SRH', role:'WK',  credits:9.0  },
-    { name:'Liam Livingstone',   team:'SRH', role:'ALL', credits:9.0  },
-    { name:'Nitish Kumar Reddy', team:'SRH', role:'ALL', credits:8.5  },
-    { name:'Aniket Verma',       team:'SRH', role:'BAT', credits:7.5  },
-    { name:'Harsh Dubey',        team:'SRH', role:'ALL', credits:7.5  },
-    { name:'Jaydev Unadkat',     team:'SRH', role:'BOWL',credits:7.5  },
-    { name:'Harshal Patel',      team:'SRH', role:'BOWL',credits:8.5  },
-    { name:'Eshan Malinga',      team:'SRH', role:'BOWL',credits:8.5  },
+// ── ALL IPL 2026 TEAM SQUADS ─────────────────────────────────────────
+// Source: ESPNcricinfo / Cricbuzz confirmed squads, March 2026
+// Injuries noted: Hazlewood (RCB) out early, Cummins (SRH) out early,
+//                 Yash Dayal (RCB) out full season
+const IPL_SQUADS = {
+  RCB: [
+    { name:'Phil Salt',          role:'WK',  credits:9.0  },
+    { name:'Virat Kohli',        role:'BAT', credits:9.5  },
+    { name:'Devdutt Padikkal',   role:'BAT', credits:8.5  },
+    { name:'Rajat Patidar',      role:'BAT', credits:8.5  },
+    { name:'Jacob Bethell',      role:'ALL', credits:8.5  },
+    { name:'Tim David',          role:'BAT', credits:9.0  },
+    { name:'Jitesh Sharma',      role:'WK',  credits:8.0  },
+    { name:'Krunal Pandya',      role:'ALL', credits:8.0  },
+    { name:'Romario Shepherd',   role:'ALL', credits:8.0  },
+    { name:'Bhuvneshwar Kumar',  role:'BOWL',credits:8.5  },
+    { name:'Josh Hazlewood',     role:'BOWL',credits:9.5  },
+    { name:'Jacob Duffy',        role:'BOWL',credits:7.5  },
+    { name:'Mangesh Yadav',      role:'BOWL',credits:7.0  },
+    { name:'Suyash Sharma',      role:'BOWL',credits:7.5  },
+    { name:'Rasikh Dar',         role:'BOWL',credits:7.0  },
+    { name:'Venkatesh Iyer',     role:'ALL', credits:8.0  },
   ],
-  'mi vs kkr': [
-    { name:'Rohit Sharma',       team:'MI',  role:'BAT', credits:10.0 },
-    { name:'Ryan Rickelton',     team:'MI',  role:'WK',  credits:8.5  },
-    { name:'Suryakumar Yadav',   team:'MI',  role:'BAT', credits:10.0 },
-    { name:'Hardik Pandya',      team:'MI',  role:'ALL', credits:10.0 },
-    { name:'Tilak Varma',        team:'MI',  role:'BAT', credits:9.0  },
-    { name:'Naman Dhir',         team:'MI',  role:'ALL', credits:7.5  },
-    { name:'Romario Shepherd',   team:'MI',  role:'ALL', credits:8.0  },
-    { name:'Jasprit Bumrah',     team:'MI',  role:'BOWL',credits:10.5 },
-    { name:'Deepak Chahar',      team:'MI',  role:'BOWL',credits:8.0  },
-    { name:'Trent Boult',        team:'MI',  role:'BOWL',credits:8.5  },
-    { name:'Karn Sharma',        team:'MI',  role:'BOWL',credits:7.5  },
-    { name:'Ajinkya Rahane',     team:'KKR', role:'BAT', credits:8.0  },
-    { name:'Quinton de Kock',    team:'KKR', role:'WK',  credits:9.0  },
-    { name:'Venkatesh Iyer',     team:'KKR', role:'ALL', credits:8.5  },
-    { name:'Andre Russell',      team:'KKR', role:'ALL', credits:9.5  },
-    { name:'Rinku Singh',        team:'KKR', role:'BAT', credits:8.5  },
-    { name:'Sunil Narine',       team:'KKR', role:'ALL', credits:9.5  },
-    { name:'Mitchell Starc',     team:'KKR', role:'BOWL',credits:9.0  },
-    { name:'Varun Chakravarthy', team:'KKR', role:'BOWL',credits:8.5  },
-    { name:'Harshit Rana',       team:'KKR', role:'BOWL',credits:8.0  },
-    { name:'Anrich Nortje',      team:'KKR', role:'BOWL',credits:8.5  },
+  SRH: [
+    { name:'Abhishek Sharma',    role:'BAT', credits:9.5  },
+    { name:'Travis Head',        role:'BAT', credits:9.0  },
+    { name:'Ishan Kishan',       role:'WK',  credits:9.0  },
+    { name:'Heinrich Klaasen',   role:'WK',  credits:9.0  },
+    { name:'Liam Livingstone',   role:'ALL', credits:9.0  },
+    { name:'Nitish Kumar Reddy', role:'ALL', credits:8.5  },
+    { name:'Pat Cummins',        role:'ALL', credits:10.0 },
+    { name:'Aniket Verma',       role:'BAT', credits:7.5  },
+    { name:'Harsh Dubey',        role:'ALL', credits:7.5  },
+    { name:'Jaydev Unadkat',     role:'BOWL',credits:7.5  },
+    { name:'Harshal Patel',      role:'BOWL',credits:8.5  },
+    { name:'Eshan Malinga',      role:'BOWL',credits:8.5  },
+    { name:'Brydon Carse',       role:'BOWL',credits:8.0  },
+    { name:'Zeeshan Ansari',     role:'BOWL',credits:7.0  },
+    { name:'Kamindu Mendis',     role:'ALL', credits:8.0  },
+    { name:'Shivam Mavi',        role:'BOWL',credits:8.0  },
+  ],
+  MI: [
+    { name:'Rohit Sharma',       role:'BAT', credits:10.0 },
+    { name:'Ryan Rickelton',     role:'WK',  credits:8.5  },
+    { name:'Suryakumar Yadav',   role:'BAT', credits:10.0 },
+    { name:'Hardik Pandya',      role:'ALL', credits:10.0 },
+    { name:'Tilak Varma',        role:'BAT', credits:9.0  },
+    { name:'Naman Dhir',         role:'ALL', credits:7.5  },
+    { name:'Romario Shepherd',   role:'ALL', credits:8.0  },
+    { name:'Jasprit Bumrah',     role:'BOWL',credits:10.5 },
+    { name:'Deepak Chahar',      role:'BOWL',credits:8.0  },
+    { name:'Trent Boult',        role:'BOWL',credits:8.5  },
+    { name:'Karn Sharma',        role:'BOWL',credits:7.5  },
+    { name:'Will Jacks',         role:'ALL', credits:8.0  },
+    { name:'Ashwani Kumar',      role:'BOWL',credits:7.0  },
+  ],
+  KKR: [
+    { name:'Quinton de Kock',    role:'WK',  credits:9.0  },
+    { name:'Ajinkya Rahane',     role:'BAT', credits:8.0  },
+    { name:'Venkatesh Iyer',     role:'ALL', credits:8.5  },
+    { name:'Andre Russell',      role:'ALL', credits:9.5  },
+    { name:'Rinku Singh',        role:'BAT', credits:8.5  },
+    { name:'Sunil Narine',       role:'ALL', credits:9.5  },
+    { name:'Angkrish Raghuvanshi',role:'BAT',credits:7.5  },
+    { name:'Mitchell Starc',     role:'BOWL',credits:9.0  },
+    { name:'Varun Chakravarthy', role:'BOWL',credits:8.5  },
+    { name:'Harshit Rana',       role:'BOWL',credits:8.0  },
+    { name:'Anrich Nortje',      role:'BOWL',credits:8.5  },
+    { name:'Moeen Ali',          role:'ALL', credits:8.0  },
+    { name:'Spencer Johnson',    role:'BOWL',credits:7.5  },
+  ],
+  CSK: [
+    { name:'Ruturaj Gaikwad',    role:'BAT', credits:9.5  },
+    { name:'MS Dhoni',           role:'WK',  credits:9.0  },
+    { name:'Shivam Dube',        role:'ALL', credits:8.5  },
+    { name:'Ravindra Jadeja',    role:'ALL', credits:9.5  },
+    { name:'Devon Conway',       role:'WK',  credits:8.5  },
+    { name:'Rachin Ravindra',    role:'ALL', credits:8.5  },
+    { name:'Deepak Chahar',      role:'BOWL',credits:8.0  },
+    { name:'Matheesha Pathirana',role:'BOWL',credits:8.5  },
+    { name:'Khaleel Ahmed',      role:'BOWL',credits:7.5  },
+    { name:'Noor Ahmad',         role:'BOWL',credits:8.0  },
+    { name:'Shaik Rasheed',      role:'BAT', credits:7.5  },
+    { name:'Anshul Kamboj',      role:'BOWL',credits:7.5  },
+    { name:'Sam Curran',         role:'ALL', credits:8.5  },
+  ],
+  RR: [
+    { name:'Yashasvi Jaiswal',   role:'BAT', credits:10.0 },
+    { name:'Sanju Samson',       role:'WK',  credits:9.5  },
+    { name:'Jos Buttler',        role:'WK',  credits:9.5  },
+    { name:'Riyan Parag',        role:'ALL', credits:8.5  },
+    { name:'Dhruv Jurel',        role:'WK',  credits:8.0  },
+    { name:'Shimron Hetmyer',    role:'BAT', credits:8.5  },
+    { name:'Wanindu Hasaranga',  role:'ALL', credits:9.0  },
+    { name:'Trent Boult',        role:'BOWL',credits:8.5  },
+    { name:'Jofra Archer',       role:'BOWL',credits:9.0  },
+    { name:'Maheesh Theekshana', role:'BOWL',credits:8.0  },
+    { name:'Sandeep Sharma',     role:'BOWL',credits:7.5  },
+    { name:'Kumar Kartikeya',    role:'BOWL',credits:7.5  },
+    { name:'Nitish Rana',        role:'BAT', credits:8.0  },
+  ],
+  PBKS: [
+    { name:'Prabhsimran Singh',  role:'WK',  credits:8.5  },
+    { name:'Shashank Singh',     role:'BAT', credits:8.0  },
+    { name:'Shreyas Iyer',       role:'BAT', credits:9.5  },
+    { name:'Glenn Maxwell',      role:'ALL', credits:9.5  },
+    { name:'Marcus Stoinis',     role:'ALL', credits:8.5  },
+    { name:'Liam Livingstone',   role:'ALL', credits:9.0  },
+    { name:'Arshdeep Singh',     role:'BOWL',credits:9.0  },
+    { name:'Yuzvendra Chahal',   role:'BOWL',credits:8.5  },
+    { name:'Harshal Patel',      role:'BOWL',credits:8.5  },
+    { name:'Azmatullah Omarzai', role:'ALL', credits:8.0  },
+    { name:'Harpreet Brar',      role:'ALL', credits:7.5  },
+    { name:'Priyansh Arya',      role:'BAT', credits:7.5  },
+    { name:'Josh Inglis',        role:'WK',  credits:8.0  },
+  ],
+  GT: [
+    { name:'Shubman Gill',       role:'BAT', credits:10.0 },
+    { name:'Jos Buttler',        role:'WK',  credits:9.5  },
+    { name:'Sai Sudharsan',      role:'BAT', credits:9.0  },
+    { name:'Shahrukh Khan',      role:'BAT', credits:8.0  },
+    { name:'Rahul Tewatia',      role:'ALL', credits:8.0  },
+    { name:'Rashid Khan',        role:'ALL', credits:10.0 },
+    { name:'Mohammed Siraj',     role:'BOWL',credits:9.0  },
+    { name:'Kagiso Rabada',      role:'BOWL',credits:9.5  },
+    { name:'Noor Ahmad',         role:'BOWL',credits:8.0  },
+    { name:'Vijay Shankar',      role:'ALL', credits:7.5  },
+    { name:'Umesh Yadav',        role:'BOWL',credits:7.5  },
+    { name:'Washington Sundar',  role:'ALL', credits:8.5  },
+    { name:'Matthew Wade',       role:'WK',  credits:8.0  },
+  ],
+  LSG: [
+    { name:'KL Rahul',           role:'WK',  credits:10.0 },
+    { name:'Quinton de Kock',    role:'WK',  credits:9.0  },
+    { name:'Nicholas Pooran',    role:'WK',  credits:9.5  },
+    { name:'Deepak Hooda',       role:'ALL', credits:8.0  },
+    { name:'Krunal Pandya',      role:'ALL', credits:8.5  },
+    { name:'Ravi Bishnoi',       role:'BOWL',credits:8.5  },
+    { name:'Avesh Khan',         role:'BOWL',credits:8.0  },
+    { name:'Mark Wood',          role:'BOWL',credits:9.0  },
+    { name:'Mohsin Khan',        role:'BOWL',credits:7.5  },
+    { name:'Ayush Badoni',       role:'BAT', credits:7.5  },
+    { name:'Kyle Mayers',        role:'ALL', credits:8.5  },
+    { name:'Yash Thakur',        role:'BOWL',credits:7.5  },
+  ],
+  DC: [
+    { name:'David Warner',       role:'BAT', credits:9.5  },
+    { name:'Axar Patel',         role:'ALL', credits:9.5  },
+    { name:'Rishabh Pant',       role:'WK',  credits:10.0 },
+    { name:'Jake Fraser-McGurk', role:'BAT', credits:8.5  },
+    { name:'Tristan Stubbs',     role:'BAT', credits:8.0  },
+    { name:'Sameer Rizvi',       role:'BAT', credits:7.5  },
+    { name:'Kuldeep Yadav',      role:'BOWL',credits:9.0  },
+    { name:'Mitchell Starc',     role:'BOWL',credits:9.0  },
+    { name:'Ishant Sharma',      role:'BOWL',credits:8.0  },
+    { name:'Mukesh Kumar',       role:'BOWL',credits:7.5  },
+    { name:'T Natarajan',        role:'BOWL',credits:8.0  },
+    { name:'Harry Brook',        role:'BAT', credits:9.0  },
+    { name:'Faf du Plessis',     role:'BAT', credits:9.0  },
   ],
 };
 
-function showManualSquadEntry(matchId, matchName) {
-  // matchName is like "RCB vs SRH · 03-28" — normalise to lowercase for matching
+// Build match → squad lookup from team codes
+// Covers all 20 first-phase matches + any repeat pairings
+function getSquadForMatch(matchName) {
   const key = matchName.toLowerCase();
-  let knownSquad = null;
 
-  for (const [pattern, squad] of Object.entries(KNOWN_SQUADS)) {
-    if (!squad) continue;
-    const parts = pattern.split(' vs ');
-    const t1 = parts[0].trim();
-    const t2 = parts[1]?.trim();
-    if (t1 && t2 && key.includes(t1) && key.includes(t2)) {
-      knownSquad = squad;
-      break;
-    }
-  }
-  // Also try full team name substrings for "Royal Challengers...vs Sunrisers..." format
-  if (!knownSquad) {
-    const ALIASES = {
-      'rcb vs srh': [['royal challengers','sunrisers'],['bengaluru','hyderabad']],
-      'mi vs kkr':  [['mumbai indians','kolkata'],['mumbai','knight riders']],
-    };
-    for (const [pattern, aliasSets] of Object.entries(ALIASES)) {
-      const squad = KNOWN_SQUADS[pattern];
-      if (!squad) continue;
-      for (const [a, b] of aliasSets) {
-        if (key.includes(a) && key.includes(b)) { knownSquad = squad; break; }
-      }
-      if (knownSquad) break;
-    }
+  // Team code → full aliases for matching
+  const TEAM_ALIASES = {
+    rcb: ['rcb','royal challengers'],
+    srh: ['srh','sunrisers'],
+    mi:  ['mi','mumbai indians','mumbai'],
+    kkr: ['kkr','kolkata','knight riders'],
+    csk: ['csk','chennai super kings','chennai'],
+    rr:  ['rr','rajasthan royals','rajasthan'],
+    pbks:['pbks','punjab kings','punjab'],
+    gt:  ['gt','gujarat titans','gujarat'],
+    lsg: ['lsg','lucknow super giants','lucknow'],
+    dc:  ['dc','delhi capitals','delhi'],
+  };
+
+  // Find which 2 teams are in this match name
+  const teamsFound = [];
+  for (const [code, aliases] of Object.entries(TEAM_ALIASES)) {
+    if (aliases.some(a => key.includes(a))) teamsFound.push(code.toUpperCase());
+    if (teamsFound.length === 2) break;
   }
 
-  if (knownSquad) {
+  if (teamsFound.length < 2) return null;
+
+  const [t1, t2] = teamsFound;
+  const squad1 = (IPL_SQUADS[t1] || []).map(p => ({ ...p, team: t1 }));
+  const squad2 = (IPL_SQUADS[t2] || []).map(p => ({ ...p, team: t2 }));
+  return [...squad1, ...squad2];
+}
+
+// Legacy KNOWN_SQUADS kept for backward compat — now delegates to IPL_SQUADS
+const KNOWN_SQUADS = {};
+
+
+function showManualSquadEntry(matchId, matchName) {
+  const knownSquad = getSquadForMatch(matchName);
+
+  if (knownSquad && knownSquad.length >= 10) {
     api('/api/admin/player-intel').then(intelData => {
       const intelList = intelData.players || intelData || [];
       const intelMap  = {};
@@ -2660,13 +2778,12 @@ function showManualSquadEntry(matchId, matchName) {
       document.getElementById('piSquadTitle').textContent =
         `Squad — ${matchName.split('·')[0].trim()} (${piCurrentPlayers.length} players)`;
 
-      // Amber notice bar
-      const existingNotice = document.getElementById('squadSourceNotice');
-      if (!existingNotice) {
+      // Amber notice — show only once
+      if (!document.getElementById('squadSourceNotice')) {
         const notice = document.createElement('div');
         notice.id = 'squadSourceNotice';
         notice.style.cssText = 'padding:9px 16px;background:rgba(255,179,0,0.08);border-left:3px solid var(--amber);font-size:12px;color:var(--amber);font-family:"Barlow Condensed";letter-spacing:.3px';
-        notice.innerHTML = '⚡ Squad loaded from confirmed IPL 2026 sources. Click any player row to enter their stats from ai11.in.';
+        notice.innerHTML = '⚡ Squad loaded from IPL 2026 confirmed roster. Click any player to enter stats from ai11.in.';
         const tableWrap = document.querySelector('[style*="overflow-x:auto"]');
         if (tableWrap) tableWrap.insertAdjacentElement('beforebegin', notice);
       }
@@ -2675,7 +2792,6 @@ function showManualSquadEntry(matchId, matchName) {
       updateSavedCount();
 
     }).catch(() => {
-      // Even if intel fetch fails, still show the squad
       piCurrentPlayers = knownSquad.map(p => ({ ...p, playerId: p.name, id: p.name, stats: {} }));
       document.getElementById('piSquadTitle').textContent =
         `Squad — ${matchName.split('·')[0].trim()} (${piCurrentPlayers.length} players)`;
@@ -2687,7 +2803,7 @@ function showManualSquadEntry(matchId, matchName) {
       <tr><td colspan="11" style="padding:30px;text-align:center">
         <div style="color:var(--muted);font-size:13px;margin-bottom:14px">
           ⚠️ No squad data found for this match.<br>
-          <span style="font-size:11px">Try syncing the schedule first, or run Train AI for this match.</span>
+          <span style="font-size:11px">Try syncing the schedule or run Train AI for this match.</span>
         </div>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
           <button onclick="syncMatchesAndReload('${matchId}')"
