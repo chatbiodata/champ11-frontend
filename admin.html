@@ -2549,7 +2549,8 @@ async function loadMatchSquadForIntel() {
 // ── Manual squad entry when CricAPI/DB has no data ───────────────────
 // Uses confirmed squads from news sources for IPL 2026 known matches
 const KNOWN_SQUADS = {
-  // Key = partial match name match (lowercase)
+  // Patterns checked against lowercase match name — order-independent
+  // Short codes AND full names both covered
   'rcb vs srh': [
     // RCB
     { name:'Phil Salt',          team:'RCB', role:'WK',  credits:9.0  },
@@ -2576,7 +2577,6 @@ const KNOWN_SQUADS = {
     { name:'Harshal Patel',      team:'SRH', role:'BOWL',credits:8.5  },
     { name:'Eshan Malinga',      team:'SRH', role:'BOWL',credits:8.5  },
   ],
-  'srh vs rcb': null, // will be mapped to rcb vs srh
   'mi vs kkr': [
     { name:'Rohit Sharma',       team:'MI',  role:'BAT', credits:10.0 },
     { name:'Ryan Rickelton',     team:'MI',  role:'WK',  credits:8.5  },
@@ -2603,55 +2603,79 @@ const KNOWN_SQUADS = {
 };
 
 function showManualSquadEntry(matchId, matchName) {
-  // Try to find a known squad for this match
+  // matchName is like "RCB vs SRH · 03-28" — normalise to lowercase for matching
   const key = matchName.toLowerCase();
   let knownSquad = null;
+
   for (const [pattern, squad] of Object.entries(KNOWN_SQUADS)) {
-    if (key.includes(pattern.split(' ')[0]) && key.includes(pattern.split(' ')[2])) {
+    if (!squad) continue;
+    const parts = pattern.split(' vs ');
+    const t1 = parts[0].trim();
+    const t2 = parts[1]?.trim();
+    if (t1 && t2 && key.includes(t1) && key.includes(t2)) {
       knownSquad = squad;
       break;
     }
   }
+  // Also try full team name substrings for "Royal Challengers...vs Sunrisers..." format
+  if (!knownSquad) {
+    const ALIASES = {
+      'rcb vs srh': [['royal challengers','sunrisers'],['bengaluru','hyderabad']],
+      'mi vs kkr':  [['mumbai indians','kolkata'],['mumbai','knight riders']],
+    };
+    for (const [pattern, aliasSets] of Object.entries(ALIASES)) {
+      const squad = KNOWN_SQUADS[pattern];
+      if (!squad) continue;
+      for (const [a, b] of aliasSets) {
+        if (key.includes(a) && key.includes(b)) { knownSquad = squad; break; }
+      }
+      if (knownSquad) break;
+    }
+  }
 
   if (knownSquad) {
-    // Load known squad + enrich from intel
     api('/api/admin/player-intel').then(intelData => {
-      allPlayers = intelData.players || intelData || [];
-      const intelMap = {};
-      allPlayers.forEach(p => { intelMap[(p.name||'').toLowerCase().trim()] = p; });
+      const intelList = intelData.players || intelData || [];
+      const intelMap  = {};
+      intelList.forEach(p => { intelMap[(p.name||'').toLowerCase().trim()] = p; });
 
-      piCurrentPlayers = knownSquad.map((p, i) => {
+      piCurrentPlayers = knownSquad.map(p => {
         const intel = intelMap[(p.name||'').toLowerCase().trim()] || {};
         return {
           ...p,
-          playerId:       p.name,
-          id:             p.name,
-          ownershipPct:   intel.ownershipPct   || null,
-          captainPct:     intel.captainPct     || null,
-          vcPct:          intel.vcPct          || null,
-          battingPosition:intel.battingPosition|| null,
-          avgOvers:       intel.avgOvers       || null,
-          recentFormScore:intel.recentFormScore|| null,
-          captainScore:   intel.captainScore   || null,
-          breakoutScore:  intel.breakoutScore  || null,
-          stats:          intel.stats          || {},
+          playerId:        p.name,
+          id:              p.name,
+          ownershipPct:    intel.ownershipPct    ?? null,
+          captainPct:      intel.captainPct      ?? null,
+          vcPct:           intel.vcPct           ?? null,
+          battingPosition: intel.battingPosition ?? null,
+          avgOvers:        intel.avgOvers        ?? null,
+          recentFormScore: intel.recentFormScore ?? null,
+          captainScore:    intel.captainScore    ?? null,
+          breakoutScore:   intel.breakoutScore   ?? null,
+          stats:           intel.stats           || {},
         };
       });
 
       document.getElementById('piSquadTitle').textContent =
-        `Squad — ${matchName.split('·')[0].trim()} (${piCurrentPlayers.length} players — preloaded)`;
+        `Squad — ${matchName.split('·')[0].trim()} (${piCurrentPlayers.length} players)`;
 
-      // Show notice
-      const notice = document.createElement('div');
-      notice.style.cssText = 'padding:10px 16px;background:rgba(255,179,0,0.08);border-left:3px solid var(--amber);font-size:12px;color:var(--amber);font-family:"Barlow Condensed";margin-bottom:4px';
-      notice.textContent = '⚡ Squad loaded from confirmed IPL 2026 sources (CricAPI unavailable). Click any player to enter their stats.';
-      const tableWrap = document.querySelector('#piSquadCard .section-body, #piSquadCard > div');
-      const tbody = document.getElementById('playersBody');
-      if (tbody && tbody.parentElement) tbody.parentElement.insertAdjacentElement('beforebegin', notice);
+      // Amber notice bar
+      const existingNotice = document.getElementById('squadSourceNotice');
+      if (!existingNotice) {
+        const notice = document.createElement('div');
+        notice.id = 'squadSourceNotice';
+        notice.style.cssText = 'padding:9px 16px;background:rgba(255,179,0,0.08);border-left:3px solid var(--amber);font-size:12px;color:var(--amber);font-family:"Barlow Condensed";letter-spacing:.3px';
+        notice.innerHTML = '⚡ Squad loaded from confirmed IPL 2026 sources. Click any player row to enter their stats from ai11.in.';
+        const tableWrap = document.querySelector('[style*="overflow-x:auto"]');
+        if (tableWrap) tableWrap.insertAdjacentElement('beforebegin', notice);
+      }
 
       renderPlayersTable(piCurrentPlayers);
       updateSavedCount();
+
     }).catch(() => {
+      // Even if intel fetch fails, still show the squad
       piCurrentPlayers = knownSquad.map(p => ({ ...p, playerId: p.name, id: p.name, stats: {} }));
       document.getElementById('piSquadTitle').textContent =
         `Squad — ${matchName.split('·')[0].trim()} (${piCurrentPlayers.length} players)`;
@@ -2659,12 +2683,11 @@ function showManualSquadEntry(matchId, matchName) {
     });
 
   } else {
-    // No known squad — show helpful message with generate teams button
     document.getElementById('playersBody').innerHTML = `
       <tr><td colspan="11" style="padding:30px;text-align:center">
         <div style="color:var(--muted);font-size:13px;margin-bottom:14px">
-          ⚠️ No squad data in database for this match yet.<br>
-          <span style="font-size:11px">CricAPI may not have this match loaded, or IPL schedule sync is needed.</span>
+          ⚠️ No squad data found for this match.<br>
+          <span style="font-size:11px">Try syncing the schedule first, or run Train AI for this match.</span>
         </div>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
           <button onclick="syncMatchesAndReload('${matchId}')"
