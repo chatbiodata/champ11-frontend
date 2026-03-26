@@ -2526,22 +2526,22 @@ async function loadMatchSquadForIntel() {
   try {
     // Use dedicated squad endpoint — reads match_schedule → match_intel → CricAPI
     const data = await api(`/api/admin/match-squad/${matchId}`);
-    allPlayers = data.players || [];
-    piCurrentPlayers = allPlayers;
+    const serverPlayers = data.players || [];
 
-    if (piCurrentPlayers.length === 0) {
+    if (serverPlayers.length >= 18) {
+      // Good data from server — use it directly
+      allPlayers = serverPlayers;
+      piCurrentPlayers = serverPlayers;
+      document.getElementById('piSquadTitle').textContent =
+        `Squad — ${matchName.split('·')[0].trim()} (${piCurrentPlayers.length} players)`;
+      renderPlayersTable(piCurrentPlayers);
+      updateSavedCount();
+    } else {
+      // Server has incomplete data — use hardcoded squads
       showManualSquadEntry(matchId, matchName);
-      return;
     }
-
-    document.getElementById('piSquadTitle').textContent =
-      `Squad — ${matchName.split('·')[0].trim()} (${piCurrentPlayers.length} players)`;
-    renderPlayersTable(piCurrentPlayers);
-    updateSavedCount();
-
   } catch(e) {
-    // Squad not in DB yet — show manual entry option
-    console.warn('[PlayerIntel] Squad fetch failed:', e.message);
+    // 404 or any error — use hardcoded squads
     showManualSquadEntry(matchId, matchName);
   }
 }
