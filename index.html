@@ -530,11 +530,13 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 
 /* ── MATCH SELECTOR ── */
 .match-selector-label{
-  font-family:'Barlow Condensed';font-size:11px;font-weight:700;
-  letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.35);
-  margin-bottom:10px;display:flex;align-items:center;gap:8px;
+  font-family:'Barlow Condensed';font-size:13px;font-weight:700;
+  letter-spacing:3px;text-transform:uppercase;
+  color:rgba(255,255,255,0.75);  /* was 0.35 — much more visible */
+  margin-bottom:14px;display:flex;align-items:center;gap:10px;
 }
-.match-selector-label::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.07)}
+.match-selector-label::before{content:'';flex:0 0 28px;height:2px;background:linear-gradient(90deg,var(--cyan),transparent)}
+.match-selector-label::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.1)}
 
 /* ── MATCH CHIP ENHANCEMENTS ── */
 .match-chip{position:relative}
@@ -682,19 +684,27 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 
 /* ── TODAY MATCHES STRIP ── */
 .matches-strip{
-  display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;margin-bottom:40px;
-  scrollbar-width:none;
+  display:flex;gap:12px;overflow-x:auto;
+  padding-bottom:12px;margin-bottom:40px;
+  /* Thin visible scrollbar — tells users there's more to scroll */
+  scrollbar-width:thin;
+  scrollbar-color:rgba(0,212,255,0.3) rgba(255,255,255,0.04);
+  -webkit-overflow-scrolling:touch;
+  scroll-snap-type:x mandatory;
 }
-.matches-strip::-webkit-scrollbar{display:none}
+.matches-strip::-webkit-scrollbar{height:4px}
+.matches-strip::-webkit-scrollbar-track{background:rgba(255,255,255,0.04);border-radius:4px}
+.matches-strip::-webkit-scrollbar-thumb{background:rgba(0,212,255,0.35);border-radius:4px}
 .match-chip{
   flex-shrink:0;
   background:rgba(2,5,15,0.75);
   border:1px solid rgba(255,255,255,0.18);
   border-radius:12px;padding:14px 18px;
   cursor:pointer;transition:.25s;
-  min-width:220px;
+  min-width:230px;max-width:230px; /* equal width for all chips */
   backdrop-filter:blur(12px);
   -webkit-backdrop-filter:blur(12px);
+  scroll-snap-align:start;
 }
 .match-chip:hover{
   background:rgba(0,30,50,0.85);
@@ -756,12 +766,13 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 /* ── SECTION HEADER ── */
 .section-hdr{margin-bottom:28px}
 .section-eyebrow{
-  font-family:'Barlow Condensed';font-size:11px;font-weight:700;
-  letter-spacing:3px;text-transform:uppercase;
-  color:rgba(255,255,255,0.3);margin-bottom:8px;
+  font-family:'Barlow Condensed';font-size:12px;font-weight:700;
+  letter-spacing:4px;text-transform:uppercase;
+  color:var(--cyan);  /* was rgba(255,255,255,0.3) — barely visible */
+  margin-bottom:10px;
 }
 .section-title{
-  font-family:'Bebas Neue';font-size:34px;letter-spacing:3px;color:#fff;
+  font-family:'Bebas Neue';font-size:36px;letter-spacing:3px;color:#fff;
 }
 
 /* ── HOW IT WORKS ── */
@@ -781,9 +792,17 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 .how-card.c2::before{background:linear-gradient(90deg,var(--lime),transparent)}
 .how-card.c3::before{background:linear-gradient(90deg,var(--gold),transparent)}
 .how-card.c4::before{background:linear-gradient(90deg,var(--orange),transparent)}
+/* Number glows in card accent colour */
+.how-card.c1 .how-num{color:rgba(0,212,255,0.65);text-shadow:0 0 16px rgba(0,212,255,0.4)}
+.how-card.c2 .how-num{color:rgba(184,255,0,0.65);text-shadow:0 0 16px rgba(184,255,0,0.4)}
+.how-card.c3 .how-num{color:rgba(255,179,0,0.65);text-shadow:0 0 16px rgba(255,179,0,0.4)}
+.how-card.c4 .how-num{color:rgba(255,107,0,0.65);text-shadow:0 0 16px rgba(255,107,0,0.4)}
 .how-num{
-  font-family:'Bebas Neue';font-size:52px;letter-spacing:2px;line-height:1;
-  opacity:0.08;position:absolute;top:10px;right:16px;
+  font-family:'Bebas Neue';font-size:42px;letter-spacing:1px;line-height:1;
+  position:absolute;top:14px;right:14px;
+  /* Solid — works on ALL browsers including Android Chrome */
+  color:rgba(255,255,255,0.55);
+  text-shadow:0 0 20px rgba(0,212,255,0.3),1px 1px 0 rgba(0,0,0,0.6);
 }
 .how-icon{font-size:28px;margin-bottom:12px}
 .how-title{
@@ -1294,14 +1313,44 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 
   /* ── HERO ── */
   .hero-title{font-size:clamp(44px,14vw,72px);}
-  .hero-sub{font-size:12px;letter-spacing:2px;}
+  .hero-sub{font-size:13px;letter-spacing:1px;line-height:1.6;}
   .hero-desc{font-size:15px;padding:14px 16px;}
 
+  /* ── SELECTED MATCH BAR — buy buttons wrap cleanly on mobile ── */
+  .sel-buy-btns{flex-wrap:wrap;gap:6px;}
+  .sel-btn{font-size:11px;padding:8px 10px;flex:1 1 calc(33% - 6px);min-width:80px;}
+  .sel-match-name{font-size:16px;}
+  .sel-match-meta{font-size:11px;}
+
+  /* ── HOW CARDS — single column ── */
+  .how-card{padding:16px;}
+  .how-num{font-size:38px;top:8px;right:12px;}
+  .how-icon{font-size:24px;margin-bottom:8px;}
+  .how-title{font-size:14px;}
+  .how-desc{font-size:12px;}
+
+  /* ── SECTION TITLES ── */
+  .section-title{font-size:28px;}
+  .section-eyebrow{font-size:10px;}
+
+  /* ── PRICING CARDS ── */
+  .pricing-grid{grid-template-columns:1fr 1fr;gap:8px;}
+  .price-amount{font-size:28px;}
+  .price-label{font-size:12px;}
+  .price-sub{font-size:10px;}
+  .price-cta{font-size:11px;padding:9px 8px;}
+
+  /* ── PASS HOLDER SECTION ── */
+  #passHolderSection{padding:16px 12px 0;}
+
   /* ── MATCH STRIP ── */
-  .matches-strip{padding:0 16px;gap:12px;}
+  .matches-strip{
+    padding:0 16px 10px;gap:10px;
+    /* Slightly peek next chip so user knows there's more to scroll */
+  }
   .match-chip{
-    min-width:calc(88vw);
-    padding:16px 18px;
+    min-width:82vw;max-width:82vw; /* shows ~1.1 chip — peek cue */
+    padding:14px 16px;
     background:rgba(2,5,15,0.88)!important;
     border:1px solid rgba(255,255,255,0.2)!important;
   }
@@ -1333,14 +1382,17 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
   section,.section{padding-left:16px;padding-right:16px;}
 }
 
-/* Extra small phones */
+/* Extra small phones (≤380px) */
 @media(max-width:380px){
-  .chip-btn{font-size:10px;padding:7px 7px;}
-  .match-chip{min-width:calc(92vw);}
-  .hero-title{font-size:42px;}
-  /* login-nav-btn stays visible — users need to login on mobile */
+  .chip-btn{font-size:10px;padding:7px 5px;}
+  .match-chip{min-width:88vw;max-width:88vw;}
+  .hero-title{font-size:40px;}
   .login-nav-btn{font-size:9px;padding:4px 7px;letter-spacing:0;}
-  .nav-badge{display:none;} /* hide IPL badge on very small screens to make room */
+  .nav-badge{display:none;}
+  .stat-val{font-size:24px;}
+  .sel-btn{font-size:10px;padding:7px 6px;}
+  .pricing-grid{grid-template-columns:1fr;}
+  .how-num{font-size:32px;}
 }
 
 /* ── LOGIN MODAL ── */
@@ -1498,7 +1550,7 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
       <span class="gold">LEAGUE</span>
     </div>
     <div class="hero-sub">
-      Get <strong>2 AI-optimised teams</strong> per match — Safe strategy and Bold differential picks. Starting from ₹9. No guesswork.
+      Get <strong>2 AI-optimised teams</strong> per match — Safe strategy and Bold differential picks. Starting from ₹9. <strong style="color:var(--lime)">No Guesswork.</strong> <span style="color:rgba(255,255,255,0.9)">Let AI Build the Smartest Team for You.</span>
     </div>
 
     <!-- Smart Match Selector — Dynamic from Firebase -->
