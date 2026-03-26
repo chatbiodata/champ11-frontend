@@ -650,7 +650,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
           </div>
         </div>
         <div style="font-size:11px;color:var(--muted);padding:0 16px 10px;line-height:1.7">
-          Click any player row to expand their edit form. Fill values from ai11.in → Save.<br>
+          Click the <strong style="color:var(--cyan)">✏️ Edit</strong> / <strong style="color:var(--green)">✏️ Add Data</strong> button on any row, or click anywhere on the row to open the edit form. Fill values from ai11.in → Save.<br>
           <span style="color:var(--green)">✅ Green row</span> = already has data saved.
           <span style="color:var(--amber)">⬜ Plain row</span> = needs data entry.
         </div>
@@ -664,7 +664,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
               <th title="Avg overs bowled">Ovs</th>
               <th title="Avg wickets">Wk</th>
               <th title="Economy rate">Eco</th>
-              <th>Status</th>
+              <th>Action</th>
             </tr></thead>
             <tbody id="playersBody">
               <tr><td colspan="11" style="text-align:center;padding:30px;color:var(--muted)">Select a match above to load squad</td></tr>
@@ -2550,7 +2550,24 @@ function renderPlayersTable(players) {
     const pid   = JSON.stringify(p.playerId||p.id||p.name||'').replace(/"/g,'&quot;');
     const pname = (p.name||'—').replace(/'/g,"\'");
     const rc    = p.role==='BAT'?'badge-cyan':p.role==='BOWL'?'badge-red':p.role==='ALL'?'badge-green':'badge-amber';
-    return `<tr style="cursor:pointer;${hasSomeData?'background:rgba(0,230,118,0.03);':''}" onclick="openPlayerEdit(${pid},'${pname}',${idx})">
+    // Edit button — always visible, colour changes based on data state
+    const editBtn = hasSomeData
+      ? `<button onclick="event.stopPropagation();openPlayerEdit(${pid},'${pname}',${idx})"
+           style="background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);color:var(--green);
+                  padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;
+                  font-family:'Barlow Condensed';letter-spacing:.5px;white-space:nowrap">
+           ✏️ Edit
+         </button>`
+      : `<button onclick="event.stopPropagation();openPlayerEdit(${pid},'${pname}',${idx})"
+           style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--cyan);
+                  padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;
+                  font-family:'Barlow Condensed';letter-spacing:.5px;white-space:nowrap">
+           ✏️ Add Data
+         </button>`;
+    return `<tr style="cursor:pointer;transition:background .15s;${hasSomeData?'background:rgba(0,230,118,0.03);':''}"
+              onclick="openPlayerEdit(${pid},'${pname}',${idx})"
+              onmouseover="this.style.background='rgba(0,212,255,0.06)'"
+              onmouseout="this.style.background='${hasSomeData?'rgba(0,230,118,0.03)':'transparent'}'">
       <td style="font-weight:600;font-size:13px">${p.name||'—'}${hasSomeData?' <span style="color:var(--green);font-size:9px">✓</span>':''}</td>
       <td><span class="badge badge-dim" style="font-size:10px">${p.team||'—'}</span></td>
       <td><span class="badge ${rc}" style="font-size:10px">${p.role||'—'}</span></td>
@@ -2561,7 +2578,7 @@ function renderPlayersTable(players) {
       <td style="font-family:'JetBrains Mono';font-size:11px">${ovs}</td>
       <td style="font-family:'JetBrains Mono';font-size:11px">${wk}</td>
       <td style="font-family:'JetBrains Mono';font-size:11px;color:${s.avgEco&&s.avgEco<8?'var(--green)':'var(--text)'}">${eco}</td>
-      <td style="font-size:11px;color:${hasSomeData?'var(--green)':'var(--muted)'}">${hasSomeData?'✅':'⬜'}</td>
+      <td>${editBtn}</td>
     </tr>`;
   }).join('') : '<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--muted)">No players found</td></tr>';
 }
