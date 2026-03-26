@@ -238,7 +238,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="preconnect" href="https://champ11-backend-production.up.railway.app"/>
-<link rel="dns-prefetch" href="https://checkout.razorpay.com"/>
+<link rel="dns-prefetch" href="https://sdk.cashfree.com"/>
 
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Barlow+Condensed:wght@300;400;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
@@ -1260,13 +1260,13 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 .footer-col-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:10px;font-family:'JetBrains Mono',monospace}
 .footer-col-text{font-size:12px;color:rgba(255,255,255,0.45);line-height:1.8}
 .footer-col-text strong{color:rgba(255,255,255,0.7);font-weight:700}
-.footer-razorpay{
+.footer-cashfree{
   display:inline-flex;align-items:center;gap:8px;
   background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
   border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;
   letter-spacing:1px;color:rgba(255,255,255,0.45);margin-top:8px;
 }
-.footer-razorpay span{color:#528FF0;font-size:13px}
+.footer-cashfree span{color:#00CFB4;font-size:13px}
 .footer-divider{border:none;border-top:1px solid rgba(255,255,255,0.06);margin:20px 0}
 .footer-bottom{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:11px;color:rgba(255,255,255,0.25);text-align:center}
 .footer-disclaimer{
@@ -1448,7 +1448,7 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
 }
 
 </style>
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
   <!-- html2canvas — for PIN card screenshot download -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
 </head>
@@ -1758,12 +1758,12 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
       <div>
         <div class="footer-col-title">Payments &amp; Security</div>
         <div class="footer-col-text">
-          All payments are secured and processed by Razorpay — India's most trusted payment gateway, regulated by the RBI.
+          All payments are secured and processed by Cashfree — India's trusted payment gateway, regulated by the RBI.
         </div>
-        <div class="footer-razorpay">
-          <span>🔒</span> Secured by <strong style="color:#528FF0">Razorpay</strong>
+        <div class="footer-cashfree">
+          <span>🔒</span> Secured by <strong style="color:#00CFB4">Cashfree</strong>
         </div>
-        <div class="footer-razorpay" style="margin-left:0;margin-top:6px">
+        <div class="footer-cashfree" style="margin-left:0;margin-top:6px">
           <span>🏦</span> RBI Regulated · SSL Encrypted
         </div>
       </div>
@@ -1829,9 +1829,9 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
           ⚠️ Enter valid 10-digit number starting with 6-9
         </div>
       </div>
-      <button class="modal-pay-btn" onclick="doPayment()">PAY WITH RAZORPAY</button>
-      <div class="modal-note">🔒 Secured by Razorpay · UPI · Cards · Net Banking</div>
-      <!-- Razorpay trust badges -->
+      <button class="modal-pay-btn" onclick="doPayment()">PAY — UPI / CARDS</button>
+      <div class="modal-note">🔒 Secured by Cashfree · UPI · Cards · Net Banking</div>
+      <!-- Cashfree trust badges -->
       <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap">
         <div style="display:flex;align-items:center;gap:5px;font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.3)">
           <span style="font-size:13px">🔐</span> SSL ENCRYPTED
@@ -1842,7 +1842,7 @@ html,body{background:var(--dark);color:#fff;font-family:'Rajdhani',sans-serif;mi
         </div>
         <div style="width:1px;height:14px;background:rgba(255,255,255,0.1)"></div>
         <div style="display:flex;align-items:center;gap:5px;font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:1px;color:rgba(0,212,255,0.5)">
-          <span style="font-size:13px">✅</span> POWERED BY RAZORPAY
+          <span style="font-size:13px">✅</span> SECURED BY CASHFREE
         </div>
       </div>
     </div>
@@ -2266,21 +2266,21 @@ function selectPlan(p) {
   // Update upsell + button
   if (p === 'safe') {
     if (upsell) { upsell.classList.add('show'); upsell.querySelector('.upsell-text').innerHTML = 'Also get the <strong>Bold team for just ₹6 more!</strong> Champ Bundle = Safe + Bold for ₹15. Double your chances.'; }
-    if (btn) btn.textContent = 'PAY ₹9 WITH RAZORPAY';
+    if (btn) btn.textContent = 'PAY ₹9 — UPI / CARDS';
   } else if (p === 'bold') {
     if (upsell) { upsell.classList.add('show'); upsell.querySelector('.upsell-text').innerHTML = 'Also get the <strong>Safe team for just ₹4 more!</strong> Champ Bundle = Safe + Bold for ₹15. Double your chances.'; }
-    if (btn) btn.textContent = 'PAY ₹11 WITH RAZORPAY';
+    if (btn) btn.textContent = 'PAY ₹11 — UPI / CARDS';
   } else if (p === 'weekly') {
     if (upsell) upsell.classList.remove('show');
     if (passInfo) passInfo.innerHTML = '<div class="pass-info-box">🗓️ <strong>Weekly Pass</strong><br>9 matches · Any team combination<br><span style="color:#00e676;font-size:1.1em;font-weight:700;">₹59 total</span> — saves ₹76 vs buying per match</div>';
-    if (btn) btn.textContent = 'PAY ₹59 WITH RAZORPAY';
+    if (btn) btn.textContent = 'PAY ₹59 — UPI / CARDS';
   } else if (p === 'season') {
     if (upsell) upsell.classList.remove('show');
     if (passInfo) passInfo.innerHTML = '<div class="pass-info-box">🏆 <strong>Season Pass</strong><br>All 84 IPL 2026 matches · Both teams every match<br><span style="color:#00e676;font-size:1.1em;font-weight:700;">₹399 total</span> — best value, saves ₹861</div>';
-    if (btn) btn.textContent = 'PAY ₹399 WITH RAZORPAY';
+    if (btn) btn.textContent = 'PAY ₹399 — UPI / CARDS';
   } else {
     if (upsell) upsell.classList.remove('show');
-    if (btn) btn.textContent = 'PAY ₹15 WITH RAZORPAY';
+    if (btn) btn.textContent = 'PAY ₹15 — UPI / CARDS';
   }
 }
 
@@ -3250,8 +3250,8 @@ async function doPayment() {
     currentUserPhone = ph;
   }
 
-  // Check Razorpay SDK loaded
-  if (typeof Razorpay === 'undefined') {
+  // Check Cashfree SDK loaded
+  if (typeof window.Cashfree === 'undefined') {
     showToast('❌ Payment SDK not loaded. Check your internet connection.');
     return;
   }
@@ -3261,8 +3261,7 @@ async function doPayment() {
   btn.textContent = '⏳ Creating order...';
 
   try {
-    // Step 1: Create Razorpay order on backend
-    // For passes, use fixed matchId — not tied to a specific match
+    // Step 1: Create Cashfree order on backend
     const matchIdForPayment = (currentPlan === 'weekly') ? 'weekly-pass-ipl2026'
       : (currentPlan === 'season') ? 'season-pass-ipl2026'
       : (currentMatchId || currentMatch || 'unknown-match');
@@ -3283,137 +3282,30 @@ async function doPayment() {
       throw new Error(err.error || `Server error ${res.status}`);
     }
     const order = await res.json();
+    // order = { orderId, paymentSessionId, amount, plan, matchId }
 
-    // Step 2: Open Razorpay checkout
-    const options = {
-      key: order.razorpayKeyId,
-      amount: order.amount,
-      currency: 'INR',
-      name: 'Champ11',
-      description: `${currentPlan.toUpperCase()} Team · ${currentMatch}`,
-      order_id: order.orderId,
-      prefill: { contact: currentUserPhone || '' },
-      theme: { color: '#00e676' },
-      handler: async function(response) {
-        // Step 3: Verify payment on backend
-        btn.textContent = '⏳ Verifying payment...';
-        try {
-          const res2 = await fetch(`${API_BASE}/api/payment/verify`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              razorpay_order_id:  response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature:  response.razorpay_signature,
-              plan:    currentPlan,
-              // Use same matchId that was sent to create-order — consistent across both calls
-              // For passes: 'weekly-pass-ipl2026' or 'season-pass-ipl2026'
-              // For per-match: Firebase doc ID like 'ipl2026-match-01'
-              matchId: matchIdForPayment,
-              // send phone so it's stored in purchase record for pass-status and piracy lookups
-              phone:   currentUserPhone || null,
-            })
-          });
+    // Step 2: Open Cashfree checkout
+    const cashfree = window.Cashfree({ mode: 'production' });
 
-          // Log the raw response for debugging
-          const resultText = await res2.text();
-          let result = {};
-          try { result = JSON.parse(resultText); } catch(e) {}
+    btn.textContent = '⏳ Opening payment...';
 
-          if (!res2.ok) {
-            // FIX #4: server returned an error — do NOT show teams
-            console.error('Verify failed:', res2.status, resultText);
-            btn.disabled = false;
-            btn.textContent = `PAY ₹${price} WITH RAZORPAY`;
-            showToast('❌ Payment verification failed. Please contact support@champ11.in with your payment ID: ' + response.razorpay_payment_id.slice(-6));
-            return;
-          }
-
-          if (!result.success) {
-            btn.disabled = false;
-            btn.textContent = `PAY ₹${price} WITH RAZORPAY`;
-            showToast('❌ ' + (result.error || 'Verification failed. Contact support.'));
-            return;
-          }
-
-          // If weekly/season pass — show PIN reveal instead of team modal
-          if ((currentPlan === 'weekly' || currentPlan === 'season') && result.pin) {
-            closeModal('payModal');
-            const planLabel = currentPlan === 'season'
-              ? '🏆 SEASON PASS · All 84 IPL 2026 Matches · ₹399'
-              : '📅 WEEKLY PASS · 9 Matches · 7 Days · ₹59';
-            showPinReveal(result.pin, currentUserPhone || '', planLabel, result.expiresAt || null);
-            // Also save pass info locally so auto-restore works
-            localStorage.setItem('c11_pass_phone',  currentUserPhone || '');
-            localStorage.setItem('c11_pass_type',   currentPlan);
-            localStorage.setItem('c11_pass_expiry', result.expiresAt || '');
-            showPassBanner(currentUserPhone || '', currentPlan, result.expiresAt || null);
-          } else {
-            // Fetch real team immediately from Firebase — do NOT use demo teams
-            // payment/verify never returns team data (security), so we call team-access here
-            showToast('⏳ Loading your AI team...');
-            try {
-              const matchIdForFetch = currentMatchId || result.matchId || '';
-              const teamRes = await fetch(
-                `${API_BASE}/api/payment/team-access?paymentId=${encodeURIComponent(response.razorpay_payment_id)}&matchId=${encodeURIComponent(matchIdForFetch)}`
-              );
-              if (teamRes.ok) {
-                const teamData = await teamRes.json();
-                const safeTeam = teamData.safe || teamData.teams?.safe || null;
-                const boldTeam = teamData.bold || teamData.teams?.bold || null;
-                if (safeTeam || boldTeam) {
-                  currentSafeTeam = safeTeam;
-                  currentBoldTeam = boldTeam;
-                  showTeamsAfterPayment({ safe: safeTeam, bold: boldTeam }, response.razorpay_payment_id);
-                  showToast('✅ Payment verified! AI team unlocked.');
-                } else {
-                  // Teams not generated yet for this match
-                  showTeamsAfterPayment(null, response.razorpay_payment_id);
-                  showToast('⏳ Payment verified! AI team generating — check back on match day morning.');
-                }
-              } else {
-                // team-access failed — still show modal (will use cached/demo)
-                showTeamsAfterPayment(null, response.razorpay_payment_id);
-                showToast('✅ Payment verified! Team loading...');
-              }
-            } catch(fetchErr) {
-              console.error('[TeamFetch]', fetchErr.message);
-              showTeamsAfterPayment(null, response.razorpay_payment_id);
-              showToast('✅ Payment verified! Teams unlocked.');
-            }
-          }
-
-        } catch(e) {
-          // FIX #4: network/fetch error — do NOT show teams, show support message
-          console.error('Verify error:', e);
-          btn.disabled = false;
-          btn.textContent = `PAY ₹${price} WITH RAZORPAY`;
-          showToast('⚠️ Could not verify payment. Your money is safe — contact support@champ11.in with payment ID: ' + (response.razorpay_payment_id || '').slice(-6));
-        }
-      },
-      modal: {
-        ondismiss: function() {
-          // User closed checkout — re-enable button, do NOT show teams
-          btn.disabled = false;
-          btn.textContent = `PAY ₹${price} WITH RAZORPAY`;
-          showToast('Payment cancelled.');
-        }
-      }
-    };
-
-    const rzp = new Razorpay(options);
-    rzp.on('payment.failed', function(response) {
-      showToast('❌ Payment failed: ' + (response.error.description || 'Please try again.'));
-      btn.disabled = false;
-      btn.textContent = `PAY ₹${price} WITH RAZORPAY`;
+    // Use redirect mode — most reliable across all browsers & UPI apps
+    cashfree.checkout({
+      paymentSessionId: order.paymentSessionId,
+      redirectTarget:   '_self',  // redirect same tab → user comes back via return_url
     });
-    rzp.open();
+
+    // NOTE: After redirect, user lands on /payment-return?order_id=xxx
+    // That page calls /api/payment/verify-cashfree and shows team / PIN
 
   } catch(e) {
+    // Network/server error
+    console.error('Payment error:', e);
+    btn.disabled = false;
     // Network/server error — do NOT show teams
     console.error('Payment error:', e);
     btn.disabled = false;
-    btn.textContent = `PAY ₹${price} WITH RAZORPAY`;
+    btn.textContent = `PAY ₹${price} — UPI / CARDS`;
     showToast('❌ ' + (e.message || 'Could not connect. Try again.'));
   }
 }
@@ -4393,6 +4285,75 @@ function pinRevealWhatsApp() {
   // Open WhatsApp with message to self (no recipient = send to self)
   window.open('https://wa.me/?text=' + msg, '_blank');
 }
+
+  // ── Cashfree Payment Return Handler ──────────────────────────────
+  // Cashfree redirects back to champ11.in?order_id=xxx after payment
+  (async function handleCashfreeReturn() {
+    const params   = new URLSearchParams(window.location.search);
+    const orderId  = params.get('order_id');
+    if (!orderId) return; // not a payment return
+
+    // Clean URL immediately so user can't refresh and double-verify
+    window.history.replaceState({}, '', window.location.pathname);
+
+    showToast('⏳ Verifying your payment...');
+
+    try {
+      const res = await fetch(`${API_BASE}/api/payment/verify-cashfree`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ orderId }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || !result.success) {
+        showToast('❌ ' + (result.error || 'Payment could not be verified. Contact support@champ11.in'));
+        return;
+      }
+
+      // Pass / weekly / season → show PIN
+      if ((result.plan === 'weekly' || result.plan === 'season') && result.pin) {
+        const planLabel = result.plan === 'season'
+          ? '🏆 SEASON PASS · All IPL 2026 Matches · ₹399'
+          : '📅 WEEKLY PASS · 9 Matches · 7 Days · ₹59';
+        showPinReveal(result.pin, result.phone || '', planLabel, result.expiresAt || null);
+        if (result.phone) {
+          localStorage.setItem('c11_pass_phone',  result.phone);
+          localStorage.setItem('c11_pass_type',   result.plan);
+          localStorage.setItem('c11_pass_expiry', result.expiresAt || '');
+          showPassBanner(result.phone, result.plan, result.expiresAt || null);
+        }
+        return;
+      }
+
+      // Per-match → fetch and show team
+      showToast('✅ Payment verified! Loading your AI team...');
+      try {
+        const teamRes = await fetch(
+          `${API_BASE}/api/payment/team-access?paymentId=${encodeURIComponent(result.paymentId)}&matchId=${encodeURIComponent(result.matchId || '')}`
+        );
+        if (teamRes.ok) {
+          const teamData = await teamRes.json();
+          const safeTeam = teamData.safe || teamData.teams?.safe || null;
+          const boldTeam = teamData.bold || teamData.teams?.bold || null;
+          showTeamsAfterPayment({ safe: safeTeam, bold: boldTeam }, result.paymentId);
+          showToast('✅ AI team unlocked!');
+        } else {
+          showTeamsAfterPayment(null, result.paymentId);
+          showToast('✅ Payment verified! Team loading...');
+        }
+      } catch(e) {
+        showTeamsAfterPayment(null, result.paymentId);
+        showToast('✅ Payment verified!');
+      }
+
+    } catch(e) {
+      console.error('[CashfreeReturn]', e);
+      showToast('⚠️ Could not verify payment. Please contact support@champ11.in');
+    }
+  })();
+
 </script>
 
 <!-- ═══════════════════════════════════════════════
