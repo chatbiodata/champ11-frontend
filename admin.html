@@ -616,33 +616,169 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
         <button class="refresh-btn" onclick="loadPlayers()">↺ Refresh</button>
       </div>
 
-      <div class="two-col">
-        <div class="section-card">
-          <div class="section-head"><div class="section-title">🔥 Top Form Players</div></div>
-          <div class="section-body" id="topFormPlayers"></div>
+      <!-- ── STEP 1: Select Match ── -->
+      <div class="section-card" style="border-color:rgba(0,212,255,0.2)">
+        <div class="section-head">
+          <div class="section-title">🏏 Step 1 — Select Match</div>
+          <span class="badge badge-dim" id="piMatchBadge">No match selected</span>
         </div>
-        <div class="section-card">
-          <div class="section-head"><div class="section-title">⚡ Differential Picks</div><div style="font-size:11px;color:var(--muted)">Low ownership, high upside</div></div>
-          <div class="section-body" id="diffPlayers"></div>
+        <div class="section-body">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <select id="piMatchSelect" onchange="loadMatchSquadForIntel()"
+              style="flex:1;min-width:260px;background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:9px 12px;border-radius:8px;font-size:13px;outline:none;font-family:'Barlow Condensed'">
+              <option value="">— Select a match —</option>
+            </select>
+            <a id="piAI11Link" href="#" target="_blank"
+              style="display:none;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);color:var(--cyan);padding:9px 14px;border-radius:8px;font-size:12px;font-family:'Barlow Condensed';letter-spacing:.5px;text-decoration:none;white-space:nowrap">
+              📊 Open ai11.in for this match →
+            </a>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6">
+            Select a match → all 22 squad players appear below → click a player row to edit their stats from ai11.in
+          </div>
         </div>
       </div>
 
-      <div class="section-card">
+      <!-- ── STEP 2: Squad table — 22 players for selected match ── -->
+      <div class="section-card" id="piSquadCard" style="display:none">
         <div class="section-head">
-          <div class="section-title">All Player Intel</div>
-          <input id="playerSearch" type="text" placeholder="Search player..." onkeyup="filterPlayers()" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;width:200px;outline:none"/>
+          <div class="section-title" id="piSquadTitle">Squad Players</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="playerSearch" type="text" placeholder="Filter player..." onkeyup="filterPlayers()"
+              style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:5px 10px;border-radius:7px;font-size:12px;width:150px;outline:none"/>
+            <span id="piSavedCount" style="font-size:11px;font-family:'JetBrains Mono';color:var(--green)"></span>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);padding:0 16px 10px;line-height:1.7">
+          Click any player row to expand their edit form. Fill values from ai11.in → Save.<br>
+          <span style="color:var(--green)">✅ Green row</span> = already has data saved.
+          <span style="color:var(--amber)">⬜ Plain row</span> = needs data entry.
         </div>
         <div style="overflow-x:auto">
           <table class="data-table" id="playersTable">
             <thead><tr>
-              <th>Player</th><th>Team</th><th>Role</th><th>Credits</th>
-              <th>Form Score</th><th>Ownership</th><th>Venue</th><th>H2H</th>
+              <th>Player</th><th>Team</th><th>Role</th><th>Cr</th>
+              <th title="Selection % from ai11.in">S%</th>
+              <th title="Batting average">Avg</th>
+              <th title="Strike rate">SR</th>
+              <th title="Avg overs bowled">Ovs</th>
+              <th title="Avg wickets">Wk</th>
+              <th title="Economy rate">Eco</th>
+              <th>Status</th>
             </tr></thead>
-            <tbody id="playersBody"><tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">Loading player data...</td></tr></tbody>
+            <tbody id="playersBody">
+              <tr><td colspan="11" style="text-align:center;padding:30px;color:var(--muted)">Select a match above to load squad</td></tr>
+            </tbody>
           </table>
         </div>
+
+        <!-- Inline player edit form -->
+        <div id="playerEditPanel" style="display:none;margin:0 16px 16px;padding:18px;background:var(--card2);border:1px solid rgba(0,212,255,0.2);border-radius:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <div style="font-family:'Syne';font-size:14px;font-weight:700;color:var(--cyan)">✏️ <span id="editPlayerName">—</span> <span id="editPlayerTeamRole" style="font-size:11px;color:var(--muted);font-family:'Barlow Condensed'"></span></div>
+            <button onclick="document.getElementById('playerEditPanel').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1">×</button>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:14px">
+            Copy values from ai11.in table · leave blank to keep existing value
+          </div>
+          <input type="hidden" id="editPlayerId"/>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:14px">
+
+            <div style="grid-column:1/-1">
+              <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:rgba(0,212,255,0.7);font-family:'Barlow Condensed';margin-bottom:8px">📊 FANTASY SELECTION (S% · C · VC from ai11.in)</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+                <div>
+                  <div style="font-size:10px;color:var(--muted);margin-bottom:3px">S% OWNED</div>
+                  <input id="editOwnership" type="number" min="0" max="100" step="0.1" placeholder="e.g. 87.78"
+                    style="width:100%;background:var(--card);border:1px solid rgba(0,212,255,0.2);color:var(--text);padding:6px 8px;border-radius:7px;font-size:13px;font-family:'JetBrains Mono';outline:none"/>
+                </div>
+                <div>
+                  <div style="font-size:10px;color:var(--muted);margin-bottom:3px">C CAPTAIN %</div>
+                  <input id="editCaptainPct" type="number" min="0" max="100" step="0.1" placeholder="e.g. 22.89"
+                    style="width:100%;background:var(--card);border:1px solid rgba(0,212,255,0.2);color:var(--text);padding:6px 8px;border-radius:7px;font-size:13px;font-family:'JetBrains Mono';outline:none"/>
+                </div>
+                <div>
+                  <div style="font-size:10px;color:var(--muted);margin-bottom:3px">VC VICE-CAP %</div>
+                  <input id="editVCPct" type="number" min="0" max="100" step="0.1" placeholder="e.g. 17.32"
+                    style="width:100%;background:var(--card);border:1px solid rgba(0,212,255,0.2);color:var(--text);padding:6px 8px;border-radius:7px;font-size:13px;font-family:'JetBrains Mono';outline:none"/>
+                </div>
+              </div>
+            </div>
+
+            <div style="grid-column:1/-1">
+              <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:rgba(184,255,0,0.7);font-family:'Barlow Condensed';margin-bottom:8px">🏏 BATTING (Avg · SR · Bat position)</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+                <div>
+                  <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Avg RUNS</div>
+                  <input id="editAvgRuns" type="number" min="0" max="200" step="0.01" placeholder="e.g. 41.92"
+                    style="width:100%;background:var(--card);border:1px solid rgba(184,255,0,0.15);color:var(--text);padding:6px 8px;border-radius:7px;font-size:13px;font-family:'JetBrains Mono';outline:none"/>
+                </div>
+                <div>
+                  <div style="font-size:10px;color:var(--muted);margin-bottom:3px">SR STRIKE RATE</div>
+                  <input id="editAvgSR" type="number" min="0" max="400" step="0.01" placeholder="e.g. 134.67"
+                    style="width:100%;background:var(--card);border:1px solid rgba(184,255,0,0.15);color:var(--text);padding:6px 8px;border-radius:7px;font-size:13px;font-family:'JetBrains Mono';outline:none"/>
+                </div>
+                <div>
+                  <div style="font-size:10px;color:var(--muted);margin-bottom:3px">BAT ORDER 1-11</div>
+                  <input id="editBatPos" type="number" min="1" max="11" step="1" placeholder="e.g. 1"
+                    style="width:100%;background:var(--card);border:1px solid rgba(184,255,0,0.15);color:var(--text);padding:6px 8px;border-radius:7px;font-size:13px;font-family:'JetBrains Mono';outline:none"/>
+                </div>
+              </div>
+            </div>
+
+            <div style="grid-column:1/-1">
+              <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:rgba(255,107,0,0.7);font-family:'Barlow Condensed';margin-bottom:8px">🎯 BOWLING (Wk · Ov · Eco)</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+                <div>
+                  <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Wk AVG/MATCH</div>
+                  <input id="editAvgWkts" type="number" min="0" max="6" step="0.1" placeholder="e.g. 2.1"
+                    style="width:100%;background:var(--card);border:1px solid rgba(255,107,0,0.15);color:var(--text);padding:6px 8px;border-radius:7px;font-size:13px;font-family:'JetBrains Mono';outline:none"/>
+                </div>
+                <div>
+                  <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Ov AVG OVERS</div>
+                  <input id="editAvgOvers" type="number" min="0" max="4" step="0.1" placeholder="e.g. 3.5"
+                    style="width:100%;background:var(--card);border:1px solid rgba(255,107,0,0.15);color:var(--text);padding:6px 8px;border-radius:7px;font-size:13px;font-family:'JetBrains Mono';outline:none"/>
+                </div>
+                <div>
+                  <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Eco ECONOMY</div>
+                  <input id="editAvgEco" type="number" min="0" max="20" step="0.01" placeholder="e.g. 8.46"
+                    style="width:100%;background:var(--card);border:1px solid rgba(255,107,0,0.15);color:var(--text);padding:6px 8px;border-radius:7px;font-size:13px;font-family:'JetBrains Mono';outline:none"/>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div style="display:flex;gap:10px;align-items:center">
+            <button class="action-btn btn-green" onclick="savePlayerEdit()" style="padding:9px 22px;font-size:13px">💾 Save</button>
+            <button class="action-btn" onclick="saveAndNextPlayer()" style="padding:9px 22px;font-size:13px;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);color:var(--cyan)">💾 Save + Next →</button>
+            <button onclick="document.getElementById('playerEditPanel').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:'Barlow Condensed'">✕ Cancel</button>
+          </div>
+          <div id="editStatus" style="margin-top:8px;font-size:12px;font-family:'Barlow Condensed';color:var(--muted)"></div>
+        </div>
       </div>
+
+      <!-- ── Overview cards (shown when no match selected) ── -->
+      <div id="piOverviewCards">
+        <div class="two-col">
+          <div class="section-card">
+            <div class="section-head"><div class="section-title">🔥 Top Form Players</div></div>
+            <div class="section-body" id="topFormPlayers">
+              <div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Select a match above to see squad players</div>
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-head"><div class="section-title">⚡ Differential Picks</div><div style="font-size:11px;color:var(--muted)">Low ownership, high upside</div></div>
+            <div class="section-body" id="diffPlayers">
+              <div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Will appear after ownership data entered</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
+
 
     <!-- ── TRAIN AI ── -->
     <div class="page" id="page-trainai">
@@ -657,9 +793,14 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
       <div class="section-card" style="border-color:rgba(0,212,255,0.25)">
         <div class="section-head"><div class="section-title">📎 Paste ESPN Match Stats URL</div></div>
         <div class="section-body">
-          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.7">
-            Go to ESPNcricinfo → match page → Stats tab → copy URL and paste below.<br>
-            Example: <code style="font-size:11px">espncricinfo.com/series/ipl-2026-.../match-statistics</code>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.8">
+            <strong style="color:var(--cyan)">How it works:</strong> Claude AI uses its IPL knowledge + the URL context to extract player stats. No ESPN API key needed.<br><br>
+            <strong style="color:var(--text)">Option A — ESPN Stats URL:</strong><br>
+            Go to <a href="https://www.espncricinfo.com/series/ipl-2026-1510719" target="_blank" style="color:var(--cyan)">espncricinfo.com</a> → click the match → click the <strong>Statistics</strong> tab → copy that URL.<br>
+            URL format: <code style="font-size:10px;color:var(--lime)">espncricinfo.com/series/ipl-2026-1510719/rcb-vs-srh-1st-match-1527674/match-statistics</code><br><br>
+            <strong style="color:var(--text)">Option B — Match page URL also works:</strong><br>
+            Even the scorecard URL works: <code style="font-size:10px;color:var(--lime)">espncricinfo.com/series/ipl-2026-1510719/rcb-vs-srh-1st-match-1527674/full-scorecard</code><br><br>
+            <span style="color:var(--amber)">⚠️ Requires <code>ANTHROPIC_API_KEY</code> set in Railway env vars.</span>
           </div>
           <div style="display:flex;gap:10px;align-items:flex-start">
             <input id="espnUrlInput" type="text" placeholder="https://www.espncricinfo.com/series/ipl-2026-1510719/rcb-vs-srh.../match-statistics"
@@ -2303,62 +2444,212 @@ function generateMockAccuracy(count) {
 }
 
 // ─── PLAYERS ─────────────────────────────────────────────────────────────────
+// ─── PLAYER INTEL — Match-wise ────────────────────────────────────────────────
+
+let piCurrentPlayers = [];
+let piCurrentPlayerIdx = -1;
+
 async function loadPlayers() {
+  try {
+    const data = await api('/api/admin/matches-list');
+    const matches = (data.matches || []).filter(m => (m.date||'') >= '2026-03-28');
+    const sel = document.getElementById('piMatchSelect');
+    if (sel) {
+      sel.innerHTML = '<option value="">— Select a match —</option>' +
+        matches.map(m => `<option value="${m.id}">${m.shortName||m.name} · ${(m.date||'').slice(5)}</option>`).join('');
+    }
+    loadPlayersOverview();
+  } catch(e) { toast('Could not load matches: ' + e.message, '❌'); }
+}
+
+async function loadPlayersOverview() {
   try {
     const data = await api('/api/admin/player-intel');
     allPlayers = data.players || data || [];
-
-    // Top form
-    const topForm = [...allPlayers].sort((a,b)=>(b.recentFormScore||0)-(a.recentFormScore||0)).slice(0,8);
+    const topForm = [...allPlayers].sort((a,b)=>(b.recentFormScore||0)-(a.recentFormScore||0)).slice(0,6);
     document.getElementById('topFormPlayers').innerHTML = topForm.length ? topForm.map(p => `
       <div class="player-intel-row">
         <div style="width:28px;height:28px;border-radius:50%;background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--green);flex-shrink:0">${p.role||'?'}</div>
         <div style="flex:1"><div class="pi-name">${p.name||'—'}</div><div class="pi-team">${p.team||'—'} · ₹${p.credits||'?'}cr</div></div>
         <div class="pi-bar-wrap"><div class="pi-bar" style="width:${Math.round((p.recentFormScore||0.5)*100)}%"></div></div>
         <div class="pi-score" style="color:var(--green)">${Math.round((p.recentFormScore||0.5)*100)}%</div>
-      </div>
-    `).join('') : '<div style="color:var(--muted);font-size:12px">No player intel yet. Will populate after CricAPI is connected.</div>';
-
-    // Differentials (low ownership)
-    const diffs = [...allPlayers].filter(p=>(p.ownershipPct||1)<=0.3).sort((a,b)=>(b.recentFormScore||0)-(a.recentFormScore||0)).slice(0,8);
+      </div>`).join('') : '<div style="color:var(--muted);font-size:12px;padding:16px;text-align:center">Select a match and enter form scores</div>';
+    const diffs = [...allPlayers].filter(p=>(p.ownershipPct||1)<=0.3).sort((a,b)=>(b.recentFormScore||0)-(a.recentFormScore||0)).slice(0,6);
     document.getElementById('diffPlayers').innerHTML = diffs.length ? diffs.map(p => `
       <div class="player-intel-row">
         <div style="width:28px;height:28px;border-radius:50%;background:rgba(255,179,0,0.1);border:1px solid rgba(255,179,0,0.2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--amber);flex-shrink:0">${p.role||'?'}</div>
         <div style="flex:1"><div class="pi-name">${p.name||'—'}</div><div class="pi-team">${p.team||'—'} · ${Math.round((p.ownershipPct||0)*100)}% owned</div></div>
         <div class="pi-bar-wrap"><div class="pi-bar" style="width:${Math.round((p.recentFormScore||0.5)*100)}%;background:var(--amber)"></div></div>
         <div class="pi-score" style="color:var(--amber)">${Math.round((p.ownershipPct||0)*100)}%</div>
-      </div>
-    `).join('') : '<div style="color:var(--muted);font-size:12px">Differential picks appear after ownership data is available.</div>';
+      </div>`).join('') : '<div style="color:var(--muted);font-size:12px;padding:16px;text-align:center">Enter S% values to see differentials</div>';
+  } catch(e) { }
+}
 
-    // Full table
-    renderPlayersTable(allPlayers);
+async function loadMatchSquadForIntel() {
+  const matchId = document.getElementById('piMatchSelect').value;
+  if (!matchId) { document.getElementById('piSquadCard').style.display = 'none'; return; }
+
+  document.getElementById('piSquadCard').style.display = 'block';
+  document.getElementById('playersBody').innerHTML = '<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--muted)">⏳ Loading squad...</td></tr>';
+  document.getElementById('playerEditPanel').style.display = 'none';
+
+  try {
+    const [teamData, intelData] = await Promise.all([
+      api(`/api/admin/team-view/${matchId}`).catch(() => null),
+      api('/api/admin/player-intel').catch(() => ({ players: [] })),
+    ]);
+    allPlayers = intelData.players || intelData || [];
+    const intelMap = {};
+    allPlayers.forEach(p => { intelMap[(p.name||'').toLowerCase().trim()] = p; });
+
+    let squadPlayers = [];
+    if (teamData) {
+      const seen = new Set();
+      [...(teamData.safe?.players||[]), ...(teamData.bold?.players||[])].forEach(p => {
+        const key = (p.name||'').toLowerCase().trim();
+        if (!seen.has(key)) { seen.add(key); squadPlayers.push(p); }
+      });
+    }
+
+    if (squadPlayers.length === 0) {
+      document.getElementById('playersBody').innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--muted)">No squad data yet — generate teams first via Controls</td></tr>';
+      return;
+    }
+
+    piCurrentPlayers = squadPlayers.map(p => {
+      const intel = intelMap[(p.name||'').toLowerCase().trim()] || {};
+      return { ...intel, ...p, stats: { ...(intel.stats||{}), ...(p.stats||{}) } };
+    });
+
+    const matchName = document.getElementById('piMatchSelect').selectedOptions[0]?.text || matchId;
+    document.getElementById('piMatchBadge').textContent = matchName;
+    document.getElementById('piSquadTitle').textContent = `Squad — ${matchName.split('·')[0].trim()} (${piCurrentPlayers.length} players)`;
+    renderPlayersTable(piCurrentPlayers);
+    updateSavedCount();
   } catch(e) {
-    document.getElementById('playersBody').innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">Player intel populates automatically after matches begin.</td></tr>`;
-    document.getElementById('topFormPlayers').innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Will appear after IPL matches begin</div>';
-    document.getElementById('diffPlayers').innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Will appear after ownership data available</div>';
+    document.getElementById('playersBody').innerHTML = `<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--red)">❌ ${e.message}</td></tr>`;
   }
 }
 
+function updateSavedCount() {
+  const saved = piCurrentPlayers.filter(p => p.ownershipPct || p.stats?.avgRuns || p.captainScore).length;
+  const el = document.getElementById('piSavedCount');
+  if (el) el.textContent = saved > 0 ? `${saved}/${piCurrentPlayers.length} players have data` : '';
+}
+
 function renderPlayersTable(players) {
-  document.getElementById('playersBody').innerHTML = players.length ? players.slice(0,50).map(p => {
-    const form = Math.round((p.recentFormScore||0.5)*100);
-    const formColor = form>=70?'var(--green)':form>=50?'var(--amber)':'var(--red)';
-    return `<tr>
-      <td style="font-weight:600;font-size:13px">${p.name||'—'}</td>
-      <td><span class="badge badge-dim">${p.team||'—'}</span></td>
-      <td><span class="badge ${p.role==='BAT'?'badge-cyan':p.role==='BOWL'?'badge-red':p.role==='ALL'?'badge-green':'badge-amber'}">${p.role||'—'}</span></td>
-      <td style="font-family:'JetBrains Mono';font-size:12px">₹${p.credits||'?'}</td>
-      <td><div style="display:flex;align-items:center;gap:8px"><div style="width:50px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px"><div style="height:100%;width:${form}%;background:${formColor};border-radius:2px"></div></div><span style="font-family:'JetBrains Mono';font-size:11px;font-weight:700;color:${formColor}">${form}%</span></div></td>
-      <td style="font-family:'JetBrains Mono';font-size:11px">${p.ownershipPct?Math.round(p.ownershipPct*100)+'%':'—'}</td>
-      <td style="font-family:'JetBrains Mono';font-size:11px">${p.venueScore?Math.round(p.venueScore*100)+'%':'—'}</td>
-      <td style="font-family:'JetBrains Mono';font-size:11px">${p.h2hScore?Math.round(p.h2hScore*100)+'%':'—'}</td>
+  document.getElementById('playersBody').innerHTML = players.length ? players.map((p, idx) => {
+    const s = p.stats || {};
+    const hasSomeData = !!(p.ownershipPct || s.avgRuns || p.captainScore || p.avgOvers);
+    const owned = p.ownershipPct ? Math.round(p.ownershipPct*100)+'%' : '—';
+    const avg   = s.avgRuns   ? s.avgRuns.toFixed(1) : '—';
+    const sr    = s.avgSR     ? s.avgSR.toFixed(0)   : '—';
+    const ovs   = p.avgOvers  != null ? p.avgOvers    : '—';
+    const wk    = s.avgWkts   != null ? s.avgWkts.toFixed(1) : '—';
+    const eco   = s.avgEco    != null ? s.avgEco.toFixed(2)  : '—';
+    const pid   = JSON.stringify(p.playerId||p.id||p.name||'').replace(/"/g,'&quot;');
+    const pname = (p.name||'—').replace(/'/g,"\'");
+    const rc    = p.role==='BAT'?'badge-cyan':p.role==='BOWL'?'badge-red':p.role==='ALL'?'badge-green':'badge-amber';
+    return `<tr style="cursor:pointer;${hasSomeData?'background:rgba(0,230,118,0.03);':''}" onclick="openPlayerEdit(${pid},'${pname}',${idx})">
+      <td style="font-weight:600;font-size:13px">${p.name||'—'}${hasSomeData?' <span style="color:var(--green);font-size:9px">✓</span>':''}</td>
+      <td><span class="badge badge-dim" style="font-size:10px">${p.team||'—'}</span></td>
+      <td><span class="badge ${rc}" style="font-size:10px">${p.role||'—'}</span></td>
+      <td style="font-family:'JetBrains Mono';font-size:11px">₹${p.credits||'?'}</td>
+      <td style="font-family:'JetBrains Mono';font-size:11px;color:${p.ownershipPct>=0.6?'var(--amber)':'var(--text)'}">${owned}</td>
+      <td style="font-family:'JetBrains Mono';font-size:11px">${avg}</td>
+      <td style="font-family:'JetBrains Mono';font-size:11px;color:${s.avgSR>=160?'var(--green)':'var(--text)'}">${sr}</td>
+      <td style="font-family:'JetBrains Mono';font-size:11px">${ovs}</td>
+      <td style="font-family:'JetBrains Mono';font-size:11px">${wk}</td>
+      <td style="font-family:'JetBrains Mono';font-size:11px;color:${s.avgEco&&s.avgEco<8?'var(--green)':'var(--text)'}">${eco}</td>
+      <td style="font-size:11px;color:${hasSomeData?'var(--green)':'var(--muted)'}">${hasSomeData?'✅':'⬜'}</td>
     </tr>`;
-  }).join('') : `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">No players found</td></tr>`;
+  }).join('') : '<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--muted)">No players found</td></tr>';
 }
 
 function filterPlayers() {
-  const q = document.getElementById('playerSearch').value.toLowerCase();
-  renderPlayersTable(allPlayers.filter(p => (p.name||'').toLowerCase().includes(q) || (p.team||'').toLowerCase().includes(q)));
+  const q = (document.getElementById('playerSearch').value||'').toLowerCase();
+  const src = piCurrentPlayers.length ? piCurrentPlayers : allPlayers;
+  renderPlayersTable(src.filter(p => (p.name||'').toLowerCase().includes(q) || (p.team||'').toLowerCase().includes(q)));
+}
+
+function openPlayerEdit(playerId, playerName, idx) {
+  piCurrentPlayerIdx = (idx != null) ? idx : -1;
+  const panel = document.getElementById('playerEditPanel');
+  const src = piCurrentPlayers.length ? piCurrentPlayers : allPlayers;
+  const p = src.find(x => (x.playerId||x.id||x.name) === playerId) || {};
+  const s = p.stats || {};
+  document.getElementById('editPlayerName').textContent = playerName;
+  const trEl = document.getElementById('editPlayerTeamRole');
+  if (trEl) trEl.textContent = `${p.team||''} · ${p.role||''} · ₹${p.credits||'?'}cr`;
+  document.getElementById('editPlayerId').value = playerId;
+  document.getElementById('editOwnership').value    = p.ownershipPct    ? (p.ownershipPct*100).toFixed(2) : '';
+  document.getElementById('editCaptainPct').value   = p.captainPct      ? (p.captainPct*100).toFixed(2)   : '';
+  document.getElementById('editVCPct').value        = p.vcPct           ? (p.vcPct*100).toFixed(2)        : '';
+  document.getElementById('editAvgRuns').value      = s.avgRuns   != null ? s.avgRuns    : '';
+  document.getElementById('editAvgSR').value        = s.avgSR     != null ? s.avgSR      : '';
+  document.getElementById('editBatPos').value       = p.battingPosition != null ? p.battingPosition : '';
+  document.getElementById('editAvgWkts').value      = s.avgWkts   != null ? s.avgWkts    : '';
+  document.getElementById('editAvgOvers').value     = p.avgOvers  != null ? p.avgOvers   : '';
+  document.getElementById('editAvgEco').value       = s.avgEco    != null ? s.avgEco     : '';
+  document.getElementById('editFormScore').value    = p.recentFormScore  ? Math.round(p.recentFormScore*100) : '';
+  document.getElementById('editCaptainScore').value = p.captainScore != null ? p.captainScore : '';
+  document.getElementById('editBreakout').value     = p.breakoutScore    ? Math.round(p.breakoutScore*100)   : '';
+  document.getElementById('editStatus').textContent = '';
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+async function savePlayerEdit(showToastMsg = true) {
+  const playerId = document.getElementById('editPlayerId').value;
+  const name     = document.getElementById('editPlayerName').textContent;
+  if (!playerId) return;
+  const v = id => document.getElementById(id).value;
+  const update = {}, stats = {};
+  if (v('editOwnership')    !== '') update.ownershipPct    = parseFloat(v('editOwnership'))    / 100;
+  if (v('editCaptainPct')   !== '') update.captainPct      = parseFloat(v('editCaptainPct'))   / 100;
+  if (v('editVCPct')        !== '') update.vcPct           = parseFloat(v('editVCPct'))        / 100;
+  if (v('editBatPos')       !== '') update.battingPosition = parseInt(v('editBatPos'));
+  if (v('editAvgOvers')     !== '') update.avgOvers        = parseFloat(v('editAvgOvers'));
+  if (v('editFormScore')    !== '') update.recentFormScore = parseFloat(v('editFormScore'))    / 100;
+  if (v('editCaptainScore') !== '') update.captainScore    = parseFloat(v('editCaptainScore'));
+  if (v('editBreakout')     !== '') update.breakoutScore   = parseFloat(v('editBreakout'))     / 100;
+  if (v('editAvgRuns')      !== '') stats.avgRuns  = parseFloat(v('editAvgRuns'));
+  if (v('editAvgSR')        !== '') stats.avgSR    = parseFloat(v('editAvgSR'));
+  if (v('editAvgWkts')      !== '') stats.avgWkts  = parseFloat(v('editAvgWkts'));
+  if (v('editAvgEco')       !== '') stats.avgEco   = parseFloat(v('editAvgEco'));
+  if (!update.captainScore && update.captainPct)
+    update.captainScore = parseFloat((update.captainPct * 100 / 3).toFixed(1));
+  if (!update.breakoutScore && update.ownershipPct)
+    update.breakoutScore = parseFloat(Math.max(0, (1 - update.ownershipPct) * 0.8).toFixed(2));
+  if (Object.keys(stats).length > 0) update.stats = stats;
+  if (Object.keys(update).length === 0) { if (showToastMsg) toast('No values to save', '⚠️'); return; }
+
+  const status = document.getElementById('editStatus');
+  status.textContent = '⏳ Saving...'; status.style.color = 'var(--muted)';
+  try {
+    await api('/api/admin/player-intel/update', 'POST', { playerId, update });
+    const src = piCurrentPlayers.length ? piCurrentPlayers : allPlayers;
+    const idx = src.findIndex(x => (x.playerId||x.id||x.name) === playerId);
+    if (idx >= 0) src[idx] = { ...src[idx], ...update, stats: { ...(src[idx].stats||{}), ...(stats||{}) } };
+    renderPlayersTable(src);
+    updateSavedCount();
+    status.textContent = '✅ Saved'; status.style.color = 'var(--green)';
+    if (showToastMsg) toast(`✅ ${name} saved`);
+  } catch(e) {
+    status.textContent = '❌ ' + e.message; status.style.color = 'var(--red)';
+  }
+}
+
+async function saveAndNextPlayer() {
+  await savePlayerEdit(false);
+  const nextIdx = piCurrentPlayerIdx + 1;
+  if (nextIdx < piCurrentPlayers.length) {
+    const next = piCurrentPlayers[nextIdx];
+    openPlayerEdit(next.playerId||next.id||next.name||'', next.name||'', nextIdx);
+  } else {
+    document.getElementById('playerEditPanel').style.display = 'none';
+    toast('✅ All players done! Ready to generate teams.');
+  }
 }
 
 // ─── CONTROLS ────────────────────────────────────────────────────────────────
