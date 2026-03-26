@@ -748,6 +748,31 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
               </div>
             </div>
 
+            <!-- AI SIGNALS — auto-derived but can be manually overridden -->
+            <div style="grid-column:1/-1;margin-top:4px">
+              <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:rgba(255,179,0,0.7);font-family:'Barlow Condensed';margin-bottom:8px">⚡ AI SIGNALS (optional — auto-calculated if left blank)</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+                <div>
+                  <div style="font-size:10px;color:var(--muted);margin-bottom:3px">FORM SCORE 0-100</div>
+                  <input id="editFormScore" type="number" min="0" max="100" step="1" placeholder="e.g. 80"
+                    style="width:100%;background:var(--card);border:1px solid rgba(255,179,0,0.15);color:var(--text);padding:6px 8px;border-radius:7px;font-size:13px;font-family:'JetBrains Mono';outline:none"/>
+                  <div style="font-size:9px;color:var(--muted);margin-top:2px">50=avg · 80=hot · 95=must</div>
+                </div>
+                <div>
+                  <div style="font-size:10px;color:var(--muted);margin-bottom:3px">CAPTAIN SCORE 1-10</div>
+                  <input id="editCaptainScore" type="number" min="0" max="10" step="0.5" placeholder="e.g. 8"
+                    style="width:100%;background:var(--card);border:1px solid rgba(255,179,0,0.15);color:var(--text);padding:6px 8px;border-radius:7px;font-size:13px;font-family:'JetBrains Mono';outline:none"/>
+                  <div style="font-size:9px;color:var(--muted);margin-top:2px">C%÷3 e.g. 22.89÷3≈7.6</div>
+                </div>
+                <div>
+                  <div style="font-size:10px;color:var(--muted);margin-bottom:3px">BREAKOUT 0-100</div>
+                  <input id="editBreakout" type="number" min="0" max="100" step="1" placeholder="e.g. 60"
+                    style="width:100%;background:var(--card);border:1px solid rgba(255,179,0,0.15);color:var(--text);padding:6px 8px;border-radius:7px;font-size:13px;font-family:'JetBrains Mono';outline:none"/>
+                  <div style="font-size:9px;color:var(--muted);margin-top:2px">100−S% e.g. 100−30=70</div>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <div style="display:flex;gap:10px;align-items:center">
@@ -2592,26 +2617,33 @@ function filterPlayers() {
 function openPlayerEdit(playerId, playerName, idx) {
   piCurrentPlayerIdx = (idx != null) ? idx : -1;
   const panel = document.getElementById('playerEditPanel');
+  if (!panel) { console.error('playerEditPanel not found in DOM'); return; }
+
   const src = piCurrentPlayers.length ? piCurrentPlayers : allPlayers;
   const p = src.find(x => (x.playerId||x.id||x.name) === playerId) || {};
   const s = p.stats || {};
-  document.getElementById('editPlayerName').textContent = playerName;
-  const trEl = document.getElementById('editPlayerTeamRole');
-  if (trEl) trEl.textContent = `${p.team||''} · ${p.role||''} · ₹${p.credits||'?'}cr`;
-  document.getElementById('editPlayerId').value = playerId;
-  document.getElementById('editOwnership').value    = p.ownershipPct    ? (p.ownershipPct*100).toFixed(2) : '';
-  document.getElementById('editCaptainPct').value   = p.captainPct      ? (p.captainPct*100).toFixed(2)   : '';
-  document.getElementById('editVCPct').value        = p.vcPct           ? (p.vcPct*100).toFixed(2)        : '';
-  document.getElementById('editAvgRuns').value      = s.avgRuns   != null ? s.avgRuns    : '';
-  document.getElementById('editAvgSR').value        = s.avgSR     != null ? s.avgSR      : '';
-  document.getElementById('editBatPos').value       = p.battingPosition != null ? p.battingPosition : '';
-  document.getElementById('editAvgWkts').value      = s.avgWkts   != null ? s.avgWkts    : '';
-  document.getElementById('editAvgOvers').value     = p.avgOvers  != null ? p.avgOvers   : '';
-  document.getElementById('editAvgEco').value       = s.avgEco    != null ? s.avgEco     : '';
-  document.getElementById('editFormScore').value    = p.recentFormScore  ? Math.round(p.recentFormScore*100) : '';
-  document.getElementById('editCaptainScore').value = p.captainScore != null ? p.captainScore : '';
-  document.getElementById('editBreakout').value     = p.breakoutScore    ? Math.round(p.breakoutScore*100)   : '';
-  document.getElementById('editStatus').textContent = '';
+
+  // Safe setter — silently skips if element doesn't exist
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+  setText('editPlayerName', playerName);
+  setText('editPlayerTeamRole', `${p.team||''} · ${p.role||''} · ₹${p.credits||'?'}cr`);
+  set('editPlayerId',      playerId);
+  set('editOwnership',     p.ownershipPct    ? (p.ownershipPct*100).toFixed(2) : '');
+  set('editCaptainPct',    p.captainPct      ? (p.captainPct*100).toFixed(2)   : '');
+  set('editVCPct',         p.vcPct           ? (p.vcPct*100).toFixed(2)        : '');
+  set('editAvgRuns',       s.avgRuns   != null ? s.avgRuns    : '');
+  set('editAvgSR',         s.avgSR     != null ? s.avgSR      : '');
+  set('editBatPos',        p.battingPosition != null ? p.battingPosition : '');
+  set('editAvgWkts',       s.avgWkts   != null ? s.avgWkts    : '');
+  set('editAvgOvers',      p.avgOvers  != null ? p.avgOvers   : '');
+  set('editAvgEco',        s.avgEco    != null ? s.avgEco     : '');
+  set('editFormScore',     p.recentFormScore  ? Math.round(p.recentFormScore*100) : '');
+  set('editCaptainScore',  p.captainScore != null ? p.captainScore : '');
+  set('editBreakout',      p.breakoutScore    ? Math.round(p.breakoutScore*100)   : '');
+  setText('editStatus', '');
+
   panel.style.display = 'block';
   panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
@@ -2620,7 +2652,7 @@ async function savePlayerEdit(showToastMsg = true) {
   const playerId = document.getElementById('editPlayerId').value;
   const name     = document.getElementById('editPlayerName').textContent;
   if (!playerId) return;
-  const v = id => document.getElementById(id).value;
+  const v = id => { const el = document.getElementById(id); return el ? el.value : ''; };
   const update = {}, stats = {};
   if (v('editOwnership')    !== '') update.ownershipPct    = parseFloat(v('editOwnership'))    / 100;
   if (v('editCaptainPct')   !== '') update.captainPct      = parseFloat(v('editCaptainPct'))   / 100;
